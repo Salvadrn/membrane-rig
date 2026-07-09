@@ -1,0 +1,18 @@
+# --- always needed (laptop sim + Pi) ---
+PyYAML>=6.0
+
+# --- web UI (laptop + Pi) ---
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2.0
+
+# --- plotting + Excel export (Q vs dP permeability chart). Optional: the
+#     numeric analysis still runs without them, only the PNG / xlsx are skipped. ---
+matplotlib>=3.7
+openpyxl>=3.1
+
+# --- hardware only (install on the Raspberry Pi, `mode: hardware`) ---
+# The Pi also needs the pigpio daemon running:  sudo systemctl enable --now pigpiod
+pigpio>=1.78 ; platform_machine == "aarch64" or platform_machine == "armv7l"
+adafruit-circuitpython-ads1x15>=2.2 ; platform_machine == "aarch64" or platform_machine == "armv7l"
+gpiozero>=2.0 ; platform_machine == "aarch64" or platform_machine == "armv7l"

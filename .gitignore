@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# macOS
+.DS_Store
+
+# Generated run outputs (the app regenerates these)
+/runs/*
+!/runs/.gitkeep
+
+# Scratch / logs
+*.log

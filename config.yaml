@@ -1,0 +1,126 @@
+# =============================================================================
+# Membrane permeability test rig — configuration
+# All parameters here can be changed WITHOUT editing code.
+# Every pressure value is expressed in `units` (kPa or psi); the software
+# converts everything to kPa internally.
+# =============================================================================
+
+units: kPa            # kPa or psi  -> unit for every pressure below + the UI
+mode: sim             # sim | hardware   (sim runs the whole logic with no I/O)
+
+# ------------------------------------------------------------------ sensor ---
+sensor:
+  # Front-end type (only used in hardware mode):
+  #   current_loop    -> 4-20 mA sensor read as voltage across a shunt resistor
+  #   voltage_divider -> 0.5-4.5 V (or 0-5V) sensor scaled into the ADS1115 range
+  type: current_loop
+  range_min: 0.0       # pressure at the sensor's minimum signal
+  range_max: 100.0     # pressure at the sensor's full-scale signal
+
+  # ADS1115
+  ads_channel: 0       # single-ended channel A0..A3
+  ads_gain: 1          # 1 -> +/-4.096 V full scale (see README)
+  read_hz: 20
+
+  # --- current_loop front-end ---
+  # 4-20 mA through a precision shunt. With 150 ohm: 4mA->0.60V, 20mA->3.00V,
+  # comfortably inside the ADS1115 +/-4.096V range at gain 1.
+  shunt_ohms: 150.0
+  signal_min: 0.004    # A  (4 mA)
+  signal_max: 0.020    # A  (20 mA)
+
+  # --- voltage_divider front-end ---
+  # A 0.5-4.5V sensor exceeds the ADS1115 input at a 3.3V supply, so divide it.
+  # divider_ratio = R2/(R1+R2). With R1=10k, R2=20k -> 0.667: 4.5V -> ~3.0V.
+  divider_ratio: 0.667
+  v_signal_min: 0.5    # V at range_min
+  v_signal_max: 4.5    # V at range_max
+
+# ----------------------------------------------------------- prop. valve ---
+# Pressure-control valve. command 0..100 == "pressure authority":
+#   0   -> valve fully OPEN  -> maximum bleed -> lowest pressure (== SAFE/vent)
+#   100 -> valve fully CLOSED -> minimum bleed -> highest pressure
+# type: servo  -> a hobby servo turning a needle/metering valve (LOW pressure, cheap)
+# type: pwm    -> a MOSFET-driven proportional solenoid (see src/hal/pwm_valve.py)
+valve:
+  type: servo
+  invert: false        # set true if your linkage/valve turns the other way
+  min_command: 0.0
+  max_command: 100.0
+
+  # --- servo-driven needle valve (type: servo) ---
+  # Calibrate the two endpoints to the valve's open/closed stops. A servo needs
+  # its OWN 5-6V supply (not the Pi rail). It holds position on power loss, so
+  # the mechanical relief valve is the hardware failsafe, not the servo.
+  servo_pin: 18        # BCM hardware-PWM pin: 12, 13, 18 or 19
+  servo_min_us: 700    # pulse width (us) at 0%   -> valve OPEN  (vent)
+  servo_max_us: 2300   # pulse width (us) at 100% -> valve CLOSED (max pressure)
+
+  # --- proportional solenoid (type: pwm) ---
+  pwm_pin: 18
+  pwm_freq_hz: 1000
+
+# --------------------------------------------------------------- diverter ---
+# 3-way solenoid. De-energised = waste/bypass (fail-safe). Energise to collect.
+diverter:
+  pin: 23              # BCM
+  active_high: true    # true: GPIO HIGH energises the coil (via driver)
+
+# -------------------------------------------------------------------- pid ---
+pid:
+  kp: 3.0
+  ki: 1.2
+  kd: 0.15
+  output_min: 0.0
+  output_max: 100.0
+  sample_hz: 20
+
+# ----------------------------------------------------------------- safety ---
+safety:
+  max_pressure: 80.0       # HARD cutoff -> vent + abort if exceeded
+  min_plausible: -5.0      # below this the sensor is considered faulted
+  max_plausible: 105.0     # above sensor full-scale -> faulted
+  fault_grace_reads: 3     # consecutive bad reads before declaring a fault
+
+# ------------------------------------------------------------------- test ---
+test:
+  tolerance_pct: 2.0         # +/- band as a % of the setpoint
+  dwell_s: 5.0               # must stay inside the band this long before collecting
+  collection_s: 60.0         # permeate collection duration
+  stabilize_timeout_s: 120.0 # give up stabilising a setpoint after this long
+  setpoints: [20, 40, 60]    # sequence of setpoints, in `units`
+
+# -------------------------------------------------------------------- sim ---
+# First-order plant model used only in mode: sim. Lets you tune logic + PID
+# on a laptop with no hardware. Values are in `units`.
+sim:
+  supply_pressure: 100.0   # compressor/reservoir pressure
+  k_fill: 0.4              # how fast pressure builds toward supply
+  k_bleed: 6.0             # bleed-valve authority (k_bleed >> k_fill)
+  process_noise: 0.05      # plant noise (std)
+  sensor_noise: 0.15       # measurement noise (std)
+  # Simulated permeate flow so sim mode auto-produces a Darcy Q-vs-dP line.
+  # Q(P) = flow_per_kpa_m3s * P_kPa + flow_intercept_m3s (+/- flow_noise_frac).
+  flow_per_kpa_m3s: 7.86e-7
+  flow_intercept_m3s: 1.3072e-5
+  flow_noise_frac: 0.02
+
+# ------------------------------------------------------------- membrane ---
+# Geometry + fluid props for the Darcy permeability calc (slope method):
+#   k = slope * mu * L / A   (slope = dQ/dP in (m^3/s)/Pa)
+#   mean hydraulic pore size  d = sqrt(32 * k)
+# Change these per membrane / mesh you test.
+membrane:
+  area_cm2: 0.64           # membrane active area
+  thickness_mm: 0.117      # membrane thickness L (avg of >=3 measured points)
+  viscosity_pa_s: 0.001    # water ~20 C (use 0.00089 at 25 C)
+  label: "60 mesh"
+
+# ------------------------------------------------------------- analysis ---
+analysis:
+  auto_plot: true          # auto-fit Q vs dP + save PNG when a run finishes
+  title: "Q vs ΔP"
+
+# --------------------------------------------------------------- logging ---
+logging:
+  dir: runs
