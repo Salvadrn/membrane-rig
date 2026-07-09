@@ -90,6 +90,9 @@ class TestConfig:
 @dataclass
 class SimConfig:
     supply_pressure_kpa: float = 100.0
+    # compressor cycling: sinusoidal supply-pressure disturbance the PID must reject
+    supply_wobble_kpa: float = 0.0
+    supply_wobble_period_s: float = 30.0
     k_fill: float = 0.4
     k_bleed: float = 6.0
     process_noise_kpa: float = 0.05
@@ -218,6 +221,8 @@ class Config:
         sm = raw.get("sim", {})
         sim = SimConfig(
             supply_pressure_kpa=k(sm.get("supply_pressure", 100.0)),
+            supply_wobble_kpa=k(sm.get("supply_wobble", 0.0)),
+            supply_wobble_period_s=float(sm.get("supply_wobble_period_s", 30.0)),
             k_fill=float(sm.get("k_fill", 0.4)),
             k_bleed=float(sm.get("k_bleed", 6.0)),
             process_noise_kpa=k(sm.get("process_noise", 0.05)),

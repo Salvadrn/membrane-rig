@@ -102,7 +102,11 @@ test:
 # First-order plant model used only in mode: sim. Lets you tune logic + PID
 # on a laptop with no hardware. Values are in `units`.
 sim:
-  supply_pressure: 100.0   # compressor/reservoir pressure
+  supply_pressure: 100.0   # compressor/reservoir pressure (mean)
+  # The real compressor does NOT hold constant pressure — it cycles. This
+  # wobbles the simulated supply so you can SEE the PID rejecting it.
+  supply_wobble: 8.0       # +/- amplitude of the supply oscillation
+  supply_wobble_period_s: 25
   k_fill: 0.4              # how fast pressure builds toward supply
   k_bleed: 6.0             # bleed-valve authority (k_bleed >> k_fill)
   process_noise: 0.05      # plant noise (std)

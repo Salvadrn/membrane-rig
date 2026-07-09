@@ -26,6 +26,13 @@ class MockPlant:
         self.noise = cfg.sim.process_noise_kpa
         self.pressure = 0.0
         self._command = 0.0  # 0..100, 100 == fully closed
+        # Compressor cycling: the real supply is NOT constant (the compressor
+        # kicks on/off), so the sim can wobble the supply pressure sinusoidally.
+        # The PID must reject this disturbance — that's the whole point of
+        # closed-loop control. Set sim.supply_wobble to 0 to disable.
+        self._wobble = cfg.sim.supply_wobble_kpa
+        self._wobble_period = max(1.0, cfg.sim.supply_wobble_period_s)
+        self._t = 0.0
         # simulated permeate flow so sim runs auto-produce a Darcy Q-vs-dP line
         self._flow_slope = cfg.sim.flow_per_kpa_m3s
         self._flow_intercept = cfg.sim.flow_intercept_m3s
@@ -44,8 +51,12 @@ class MockPlant:
     def step(self, dt: float) -> None:
         if dt <= 0:
             return
+        self._t += dt
+        supply = self.supply
+        if self._wobble:
+            supply += self._wobble * math.sin(2.0 * math.pi * self._t / self._wobble_period)
         opening = 1.0 - self._command / 100.0
-        dP = self.k_fill * (self.supply - self.pressure) - self.k_bleed * opening * self.pressure
+        dP = self.k_fill * (supply - self.pressure) - self.k_bleed * opening * self.pressure
         self.pressure += dP * dt
         if self.noise:
             self.pressure += random.gauss(0.0, self.noise) * math.sqrt(dt)
