@@ -277,6 +277,44 @@ your accumulated dataset, all in one place.
 
 ---
 
+## Build review — fix these before first power-on
+
+A design/BOM audit flagged the following. The `config.yaml` and BOM already
+reflect them; don't skip them or the rig won't assemble or won't control.
+
+**Assembly (won't connect otherwise):**
+- The transducer is **G1/4 (BSPP, flat-washer seal)**; the valves are **1/4" NPT
+  (tapered)** — they do **not** mate. Use a **G1/4-F × 1/4"-NPT-M adapter with a
+  sealing washer**; no PTFE on that flat seal (PTFE only on NPT joints).
+- Every threaded port needs an **NPT×barb** adapter to reach the silicone, every
+  barb a **clamp**, and the sensor + relief valve each a **tee**. The 12V barrel
+  plug needs a **barrel-jack→screw-terminal** pigtail. (All under "Fittings &
+  fixes" in the BOM.)
+
+**Electrical:**
+- Power the **ADS1115 at 3.3 V** and feed the 0.5–4.5 V sensor through a
+  **10k/20k divider** (→ ~3.0 V). Never feed 0.5–4.5 V straight in — it clips and
+  can over-volt the ADC. Config uses `sensor.type: voltage_divider`.
+- Add a **10k gate-to-source pulldown** + 150–330 Ω series gate resistor on the
+  MOSFET, or the diverter can energise at boot before the code runs.
+- Add ~1000 µF at the UBEC output and ~470 µF at the 12 V input for rail
+  stability, and an **inline 3 A fuse** on the 12 V.
+
+**Control (servo + ball valve = coarse):**
+- A quarter-turn ball valve is quick-opening, so expect **~±10–15 %** pressure
+  hold, not ±2 % (`tolerance_pct` is set to 10). The permeability `k` is **still
+  valid** because `Q` is regressed vs the *measured* mean ΔP per point.
+- A bleed valve only has authority with a **fixed restriction upstream** —
+  install the manual needle valve (in the BOM) between the source and the bleed
+  tee, or the loop can't regulate.
+
+**First test once assembled — static valve-authority sweep:** with the source
+pressurised and the diverter to waste, step the valve across its full stroke and
+log steady-state pressure. Confirm it's monotonic across 10–60 kPa and spread
+over a usable range *before* tuning the PID.
+
+---
+
 ## Tuning the PID
 
 Do this in **sim mode first** (`run.py web` or `run.py cli`), then refine on the
