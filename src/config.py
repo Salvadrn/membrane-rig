@@ -8,11 +8,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import yaml
 
 PSI_TO_KPA = 6.894757293168361
+
+
+def water_viscosity_pa_s(temp_c: float) -> float:
+    """Dynamic viscosity of liquid water vs temperature (0-100 C), in Pa·s.
+    μ = A·10^(B/(T-C)) with A=2.414e-5 Pa·s, B=247.8 K, C=140 K, T in Kelvin.
+    Checks: 20 C -> 1.00e-3, 25 C -> 8.9e-4. Use this when the rig runs at
+    ambient temperature (no controlled bath) so k tracks the real water temp."""
+    t_k = temp_c + 273.15
+    return 2.414e-5 * 10 ** (247.8 / (t_k - 140.0))
 
 
 def to_kpa(value: float, units: str) -> float:
@@ -110,7 +119,8 @@ class MembraneConfig:
     k = slope * mu * L / A, with slope = dQ/dP in (m^3/s)/Pa. All SI internally."""
     area_m2: float = 6.4e-5        # 0.64 cm^2
     thickness_m: float = 1.17e-4   # 0.117 mm
-    viscosity_pa_s: float = 1.0e-3  # water ~20 C
+    viscosity_pa_s: float = 1.0e-3  # effective mu (auto-computed if water_temp_c set)
+    water_temp_c: Optional[float] = None  # if set, mu is computed from this (ambient rig, no bath)
     label: str = ""
 
 
@@ -233,10 +243,17 @@ class Config:
         )
 
         mb = raw.get("membrane", {})
+        water_temp_c = mb.get("water_temp_c", None)
+        if water_temp_c is not None:
+            # ambient rig (no controlled bath): compute mu from the measured temp
+            viscosity = water_viscosity_pa_s(float(water_temp_c))
+        else:
+            viscosity = float(mb.get("viscosity_pa_s", 1.0e-3))
         membrane = MembraneConfig(
             area_m2=float(mb["area_cm2"]) * 1e-4 if "area_cm2" in mb else float(mb.get("area_m2", 6.4e-5)),
             thickness_m=float(mb["thickness_mm"]) * 1e-3 if "thickness_mm" in mb else float(mb.get("thickness_m", 1.17e-4)),
-            viscosity_pa_s=float(mb.get("viscosity_pa_s", 1.0e-3)),
+            viscosity_pa_s=viscosity,
+            water_temp_c=None if water_temp_c is None else float(water_temp_c),
             label=str(mb.get("label", "")),
         )
 

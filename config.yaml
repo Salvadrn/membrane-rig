@@ -136,7 +136,12 @@ sim:
 membrane:
   area_cm2: 0.64           # membrane active area
   thickness_mm: 0.117      # membrane thickness L (avg of >=3 measured points)
-  viscosity_pa_s: 0.001    # water ~20 C (use 0.00089 at 25 C)
+  # This rig runs at AMBIENT temperature (no controlled water bath), and mu
+  # depends on temperature. Measure the WATER temperature (any thermometer) and
+  # set it here -> mu is computed automatically (more accurate than a fixed guess
+  # as the room drifts). Comment water_temp_c out to use viscosity_pa_s directly.
+  water_temp_c: 21         # measured water temp (C); overrides viscosity_pa_s
+  viscosity_pa_s: 0.001    # fallback only, if water_temp_c is not set (20 C=0.001, 25 C=0.00089)
   label: "60 mesh"
 
 # ------------------------------------------------------------- analysis ---
