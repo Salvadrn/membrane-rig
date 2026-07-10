@@ -16,16 +16,18 @@ pigpio drives the servo with clean DMA-timed pulses via set_servo_pulsewidth().
 
 VALVE SENSE
 -----------
-`command` is 0..100 pressure authority:
-    0   -> servo_min_us -> valve OPEN  -> max bleed -> lowest pressure (vent/SAFE)
-    100 -> servo_max_us -> valve CLOSED -> min bleed -> highest pressure
-Set `valve.invert: true` if your linkage turns the other way. Calibrate the two
-pulse-width endpoints so 0/100% land exactly on the valve's open/closed stops
-(over-driving past a hard stop stalls and cooks the servo).
+`command` is 0..100 pressure authority (0 = lowest pressure = SAFE state,
+100 = highest). What 0% means physically depends on the plumbing topology:
+  * INLINE feed throttle (this rig): 0% = valve CLOSED (feed shut; the cell
+    drains through the membrane), 100% = fully open toward supply pressure.
+  * BLEED-to-waste: 0% = valve fully OPEN (vent), 100% = closed.
+Calibrate servo_min_us/servo_max_us so 0/100% land exactly on the valve's stops
+(over-driving past a hard stop stalls and cooks the servo); `valve.invert`
+flips the direction if the linkage turns the other way.
 
-Note: a servo HOLDS position on power loss (it does not spring open), so it is
-not a fail-safe vent — the mechanical relief valve is the hardware failsafe.
-`to_safe()` actively drives the valve open while powered.
+Note: a servo HOLDS position on power loss (it does not spring to safe), so it
+is not a fail-safe by itself — the mechanical relief valve is the hardware
+failsafe. `to_safe()` actively drives to the lowest-pressure stop while powered.
 
 pigpio is imported lazily so this file imports fine on a laptop.
 """
@@ -56,7 +58,7 @@ class ServoValve(ProportionalValve):
         self._apply(command)
 
     def to_safe(self) -> None:
-        # command 0 == valve open == vented (with invert this still maps to open)
+        # command 0 == lowest pressure (inline: feed shut / bleed: vented)
         self._apply(0.0)
 
     def close(self) -> None:

@@ -1,8 +1,8 @@
 Group,Part,Qty,Unit (USD),Subtotal (USD),Supplier,Link,Notes
-Servo control,"Metal-gear servo DS3218 (20 kg·cm, 270°)",1,18.00,18.00,Amazon,https://www.amazon.com/ANNIMOS-Digital-Waterproof-DS3218MG-Control/dp/B076CNKQX4,Turns the bleed valve (coarse control)
-Servo control,"1/4"" brass quarter-turn ball valve, lever",1,9.00,9.00,Amazon,https://www.amazon.com/Brass-Ball-Valve-Threaded-Irrigation/dp/B01MCVULBP,On/off-ish curve -> coarse only
-Servo control,Servo↔valve coupling + servo mount,1,0.00,0.00,In-house 3D print,,Printed by user; must fix the servo BODY to react torque
-Servo control,UBEC 12V→6V 3A (servo power),1,12.00,12.00,Amazon,https://www.amazon.com/Hobbywing-UBEC-3A-Input-Switch-Mode-Regulator/dp/B07T2CKC8G,"Powers servo off 12V, NOT the Pi"
+Válvula de control (inline),"Metal-gear servo DS3218 (20 kg·cm, 270°)",1,18.00,18.00,Amazon,https://www.amazon.com/ANNIMOS-Digital-Waterproof-DS3218MG-Control/dp/B076CNKQX4,Turns the INLINE feed valve; 0%=closed=no pressure
+Válvula de control (inline),"1/4"" brass quarter-turn ball valve, lever",1,9.00,9.00,Amazon,https://www.amazon.com/Brass-Ball-Valve-Threaded-Irrigation/dp/B01MCVULBP,Single valve in the feed line (like the manual rig)
+Válvula de control (inline),Servo↔valve coupling + servo mount,1,0.00,0.00,In-house 3D print,,Printed by user; must fix the servo BODY to react torque
+Válvula de control (inline),UBEC 12V→6V 3A (servo power),1,12.00,12.00,Amazon,https://www.amazon.com/Hobbywing-UBEC-3A-Input-Switch-Mode-Regulator/dp/B07T2CKC8G,"Powers servo off 12V, NOT the Pi"
 Sensing & electronics,Official Raspberry Pi 15W USB-C PSU (SC0218),1,10.00,10.00,Amazon,https://www.amazon.com/Raspberry-Model-Official-SC0218-Accessory/dp/B07W8XHMJZ,SKIP if you already have it
 Sensing & electronics,"Pressure transducer 0–15 PSI, 0.5–4.5V, G1/4",1,15.00,15.00,Amazon,https://www.amazon.com/0-5-4-5V-Stainless-Pressure-Transducer-0-15PSI/dp/B07G5DQZJ2,VERIFY 0-15 PSI / 100 kPa on the body
 Sensing & electronics,ADS1115 16-bit I2C ADC,1,9.00,9.00,Amazon,https://www.amazon.com/HiLetgo-Converter-Programmable-Amplifier-Development/dp/B01DLHKMO2,Power at 3.3V; sensor via 10k/20k divider
@@ -15,13 +15,12 @@ Fluidics & proto,Solderless breadboard 830 + jumper kit,1,12.00,12.00,Amazon,htt
 Fluidics & proto,"Silicone tubing 1/4"" ID",1,15.00,15.00,Amazon,https://www.amazon.com/Silicone-Tubing-JoyTube-Black-Transfer/dp/B0BLZ3PB9Q,
 Fluidics & proto,Hose barb fitting kit (barb-to-barb),1,12.00,12.00,Amazon,https://www.amazon.com/Fittings-Assortment-Connector-Catheter-Adapters/dp/B0CSKH6JXR,For tubing joins (NOT for threaded valves)
 Fittings & fixes (from audit),"G1/4-F × 1/4""-NPT-M adapter w/ sealing washer",1,8.00,8.00,Amazon,https://www.amazon.com/s?k=G1%2F4+female+to+1%2F4+NPT+male+adapter+sealing+washer,ONLY way to mount the G1/4 sensor onto NPT
-Fittings & fixes (from audit),"Brass 1/4"" NPT tee (barb×barb×FNPT)",3,6.00,18.00,Amazon,https://www.amazon.com/s?k=1%2F4+NPT+female+branch+tee+hose+barb+brass,Sensor + bleed branch + relief valve
+Fittings & fixes (from audit),"Brass 1/4"" NPT tee (barb×barb×FNPT)",2,6.00,12.00,Amazon,https://www.amazon.com/s?k=1%2F4+NPT+female+branch+tee+hose+barb+brass,Relief valve + spare (sensor fallback)
 Fittings & fixes (from audit),"1/4"" NPT-M × 1/4"" barb adapter",7,1.40,9.80,Amazon,https://www.amazon.com/s?k=1%2F4+NPT+male+to+1%2F4+hose+barb+brass,Reach the silicone at every valve/sensor port
 Fittings & fixes (from audit),PTFE thread-seal tape (roll),1,2.00,2.00,Amazon,https://www.amazon.com/s?k=PTFE+thread+seal+tape,NPT tapered joints only (NOT the G1/4 flat seal)
 Fittings & fixes (from audit),"Hose clamps (worm/Oetiker, ~10)",1,7.00,7.00,Amazon,https://www.amazon.com/s?k=1%2F4+inch+hose+clamp+small+assortment,Every barb-to-silicone joint
 Fittings & fixes (from audit),Barrel jack 5.5×2.1mm → screw terminal,1,6.00,6.00,Amazon,https://www.amazon.com/s?k=5.5x2.1mm+female+barrel+jack+to+screw+terminal+adapter,ONLY way to land the 12V into the breadboard
 Fittings & fixes (from audit),Inline blade-fuse holder + 3A fuse,1,6.00,6.00,Amazon,https://www.amazon.com/s?k=inline+blade+fuse+holder+12v+3A,Fire safety on the 12V behind the MOSFET
-Fittings & fixes (from audit),"Manual needle valve 1/4"" (upstream restrictor)",1,12.00,12.00,Amazon,https://www.amazon.com/Brass-Needle-Valve-Female-NPT/dp/B00D9DAVAE,Gives the bleed authority + attenuates compressor swings
 Fittings & fixes (from audit),M3 screws/standoffs + baseplate,1,10.00,10.00,Amazon,https://www.amazon.com/s?k=M3+standoff+screw+assortment+kit,Mount Pi/ADS/servo bracket
 Fittings & fixes (from audit),22AWG stranded hookup wire (spool),1,8.00,8.00,Amazon,https://www.amazon.com/s?k=22AWG+stranded+hookup+wire+kit,Reach solenoid/servo/12V
 Fittings & fixes (from audit),Electrolytic caps 1000µF + 470µF,1,3.00,3.00,Amazon,https://www.amazon.com/s?k=1000uf+470uf+25v+electrolytic+capacitor,Rail stability (UBEC out + 12V in)
@@ -31,5 +30,5 @@ Order separately (not Amazon),3-way 12V solenoid valve for WATER (diverter),1,53
 OPTIONAL — feed-forward upgrade,2nd pressure transducer 0–15 PSI (supply side),1,15.00,15.00,Amazon,https://www.amazon.com/0-5-4-5V-Stainless-Pressure-Transducer-0-15PSI/dp/B07G5DQZJ2,Only if compressor swings beat the PID: ADS1115 ch A1 + feed-forward
 OPTIONAL — feed-forward upgrade,"G1/4-F × 1/4""-NPT-M adapter (for 2nd sensor)",1,8.00,8.00,Amazon,https://www.amazon.com/s?k=G1%2F4+female+to+1%2F4+NPT+male+adapter+sealing+washer,Mount for the supply-side sensor
 
-,TOTAL required (USD),,,322.80,,,Optional feed-forward lines NOT included
-,TOTAL with optional (USD),,,345.80,,,"Already owned: Pi 4, microSD, graduated cylinder, dial gauge. -$10 if USB-C PSU on hand."
+,TOTAL required (USD),,,304.80,,,Optional feed-forward lines NOT included
+,TOTAL with optional (USD),,,327.80,,,"Already owned: Pi 4, microSD, graduated cylinder, dial gauge. -$10 if USB-C PSU on hand."

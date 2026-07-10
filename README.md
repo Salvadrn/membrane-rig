@@ -151,18 +151,28 @@ override the config for that run.
 **Pressure-control valve — two driver options (`valve.type`):**
 
 *`servo` (default, recommended for low pressure 10–60 kPa):* a hobby servo turns a
-needle/metering valve as a bleed. True water proportional solenoids are expensive
-and most won't actuate below ~0.5 bar, so a servo-turned valve is cheaper and
-works at any pressure.
+quarter-turn valve. True water proportional solenoids are expensive and most
+won't actuate below ~0.5 bar, so a servo-turned valve is cheaper and works at
+any pressure.
+
+**Topology (this rig): a SINGLE inline throttle in the feed line** between the
+reservoir and the cell — the same place the manual rig's needle valve regulates
+today. This works because the high-permeability mesh membrane passes enough flow
+(tens of mL/s) that the valve and the membrane form a natural pressure divider:
+opening the valve raises cell pressure, closing lowers it (it drains through the
+membrane). Command sense: **0% = valve closed = lowest pressure (SAFE)**,
+100% = open = highest. A bleed-to-waste layout is also supported — just calibrate
+the servo endpoints (or `invert`) the other way; only needed for very-low-flow
+(tight) membranes where an inline valve loses authority.
 ```
 GPIO18 (servo_pin) ── servo signal
 servo V+  ← separate 5–6 V supply (NOT the Pi rail — servos brown-out the Pi)
 common GND between Pi and servo supply
-servo horn ──[coupler/bracket]── needle-valve stem
+servo horn ──[coupler/bracket]── valve stem
 ```
 pigpio sends clean servo pulses; `servo_min_us`/`servo_max_us` calibrate the
-open/closed endpoints. command 0% → valve open (vent), 100% → closed (max
-pressure). **A servo holds position on power loss** (no spring-return), so the
+endpoints. command 0% → lowest pressure (inline throttle: valve CLOSED), 100% →
+highest (open). **A servo holds position on power loss** (no spring-return), so the
 mechanical relief valve is the hardware failsafe. Mechanical note: a hobby servo
 only turns ~180°, so pair it with a **quarter-turn (90°) metering/ball valve** so
 the servo's travel spans the valve's full range (a multi-turn needle valve gives
@@ -318,8 +328,8 @@ over a usable range *before* tuning the PID.
 ## Tuning the PID
 
 Do this in **sim mode first** (`run.py web` or `run.py cli`), then refine on the
-real rig. The valve command is 0–100% "pressure authority" (0 = vent, 100 = max
-pressure).
+real rig. The valve command is 0–100% "pressure authority" (0 = lowest pressure /
+safe, 100 = max pressure).
 
 1. **Start with P only.** Set `ki: 0`, `kd: 0`. Raise `kp` until the pressure
    responds briskly and slightly overshoots the setpoint, then oscillates a

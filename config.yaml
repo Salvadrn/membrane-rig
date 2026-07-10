@@ -41,9 +41,17 @@ sensor:
 
 # ----------------------------------------------------------- prop. valve ---
 # Pressure-control valve. command 0..100 == "pressure authority":
-#   0   -> valve fully OPEN  -> maximum bleed -> lowest pressure (== SAFE/vent)
-#   100 -> valve fully CLOSED -> minimum bleed -> highest pressure
-# type: servo  -> a hobby servo turning a needle/metering valve (LOW pressure, cheap)
+#   0   -> LOWEST pressure  (== SAFE state)
+#   100 -> HIGHEST pressure
+# The plumbing topology decides what 0% physically means — calibrate the servo
+# endpoints (or `invert`) to match:
+#   INLINE feed throttle (THIS rig): the valve sits in the feed line between
+#     reservoir and cell. 0% = valve CLOSED (no feed; the cell drains through
+#     the membrane) ... 100% = fully open (pressure -> supply). Works here
+#     because the high-permeability mesh flows enough that valve + membrane
+#     form a natural pressure divider (the manual rig regulates the same way).
+#   BLEED-to-waste (alternative): 0% = valve fully OPEN (vent) ... 100% = closed.
+# type: servo  -> a hobby servo turning a quarter-turn valve
 # type: pwm    -> a MOSFET-driven proportional solenoid (see src/hal/pwm_valve.py)
 valve:
   type: servo
@@ -56,8 +64,8 @@ valve:
   # its OWN 5-6V supply (not the Pi rail). It holds position on power loss, so
   # the mechanical relief valve is the hardware failsafe, not the servo.
   servo_pin: 18        # BCM hardware-PWM pin: 12, 13, 18 or 19
-  servo_min_us: 700    # pulse width (us) at 0%   -> valve OPEN  (vent)
-  servo_max_us: 2300   # pulse width (us) at 100% -> valve CLOSED (max pressure)
+  servo_min_us: 700    # pulse (us) at 0%   -> LOWEST pressure (inline: closed / bleed: open)
+  servo_max_us: 2300   # pulse (us) at 100% -> HIGHEST pressure (inline: open / bleed: closed)
 
   # --- proportional solenoid (type: pwm) ---
   pwm_pin: 18
