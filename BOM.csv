@@ -1,34 +1,33 @@
 Group,Part,Qty,Unit (USD),Subtotal (USD),Supplier,Link,Notes
-Válvula de control (inline),"Metal-gear servo DS3218 (20 kg·cm, 270°)",1,18.00,18.00,Amazon,https://www.amazon.com/ANNIMOS-Digital-Waterproof-DS3218MG-Control/dp/B076CNKQX4,Turns the INLINE feed valve; 0%=closed=no pressure
-Válvula de control (inline),"1/4"" brass quarter-turn ball valve, lever",1,9.00,9.00,Amazon,https://www.amazon.com/Brass-Ball-Valve-Threaded-Irrigation/dp/B01MCVULBP,Single valve in the feed line (like the manual rig)
-Válvula de control (inline),Servo↔valve coupling + servo mount,1,0.00,0.00,In-house 3D print,,Printed by user; must fix the servo BODY to react torque
-Válvula de control (inline),UBEC 12V→6V 3A (servo power),1,12.00,12.00,Amazon,https://www.amazon.com/Hobbywing-UBEC-3A-Input-Switch-Mode-Regulator/dp/B07T2CKC8G,"Powers servo off 12V, NOT the Pi"
+"Control (air line, on existing valve)","Metal-gear servo DS3218 (20 kg·cm, 270°)",1,18.00,18.00,Amazon,https://www.amazon.com/ANNIMOS-Digital-Waterproof-DS3218MG-Control/dp/B076CNKQX4,Turns the EXISTING SS air needle valve
+"Control (air line, on existing valve)",Servo↔needle-valve coupling + servo mount,1,0.00,0.00,In-house 3D print,,"Printed by you, onto the existing green needle-valve knob"
+"Control (air line, on existing valve)",UBEC 12V→6V 3A (servo power),1,12.00,12.00,Amazon,https://www.amazon.com/Hobbywing-UBEC-3A-Input-Switch-Mode-Regulator/dp/B07T2CKC8G,"Powers servo off 12V, NOT the Pi"
 Sensing & electronics,Official Raspberry Pi 15W USB-C PSU (SC0218),1,10.00,10.00,Amazon,https://www.amazon.com/Raspberry-Model-Official-SC0218-Accessory/dp/B07W8XHMJZ,SKIP if you already have it
-Sensing & electronics,"Pressure transducer 0–15 PSI, 0.5–4.5V, G1/4",1,15.00,15.00,Amazon,https://www.amazon.com/0-5-4-5V-Stainless-Pressure-Transducer-0-15PSI/dp/B07G5DQZJ2,VERIFY 0-15 PSI / 100 kPa on the body
+Sensing & electronics,"Pressure transducer 0–15 PSI, 0.5–4.5V, G1/4",1,15.00,15.00,Amazon,https://www.amazon.com/0-5-4-5V-Stainless-Pressure-Transducer-0-15PSI/dp/B07G5DQZJ2,0-15 PSI = 0-103 kPa; tests top ~60 kPa
 Sensing & electronics,ADS1115 16-bit I2C ADC,1,9.00,9.00,Amazon,https://www.amazon.com/HiLetgo-Converter-Programmable-Amplifier-Development/dp/B01DLHKMO2,Power at 3.3V; sensor via 10k/20k divider
 Sensing & electronics,Resistor assortment kit (1% metal film),1,14.00,14.00,Amazon,https://www.amazon.com/Resistor-Assorted-Resistors-Assortment-Experiments/dp/B07L851T3V,Divider + MOSFET gate + pulldown come from here
 Sensing & electronics,IRLZ44N logic-level MOSFET (10-pack),1,9.00,9.00,Amazon,https://www.amazon.com/YINETTECH-Transistors-29x10x4-5mm-Electronic-Controllable/dp/B0D3Q24JH6,Drives the 3-way diverter; add 10k gate pulldown
 Sensing & electronics,1N5819 Schottky diode (100-pack),1,8.00,8.00,Amazon,https://www.amazon.com/100-Pieces-1N5819-Schottky-Rectifier/dp/B079KG1TN2,Flyback across the solenoid
 Sensing & electronics,12V 3A DC power supply (5.5×2.1mm),1,11.00,11.00,Amazon,https://www.amazon.com/ANVISION-Supply-Barrel-5-5x2-1mm-Efficiency/dp/B01C010YJI,Feeds solenoid + UBEC
-Sensing & electronics,Adjustable relief valve CR25-100 (SAFETY),1,18.00,18.00,Amazon,https://www.amazon.com/Control-Devices-Pressure-Relief-Adjustable/dp/B007GDY3CU,MANDATORY mechanical failsafe
+Sensing & electronics,Adjustable relief valve CR25-100 (SAFETY),1,18.00,18.00,Amazon,https://www.amazon.com/Control-Devices-Pressure-Relief-Adjustable/dp/B007GDY3CU,On the air side; SKIP if the gas panel already relieves
 Fluidics & proto,Solderless breadboard 830 + jumper kit,1,12.00,12.00,Amazon,https://www.amazon.com/BOJACK-Values-Solderless-Breadboard-Flexible/dp/B08Y59P6D1,
-Fluidics & proto,"Silicone tubing 1/4"" ID",1,15.00,15.00,Amazon,https://www.amazon.com/Silicone-Tubing-JoyTube-Black-Transfer/dp/B0BLZ3PB9Q,
-Fluidics & proto,Hose barb fitting kit (barb-to-barb),1,12.00,12.00,Amazon,https://www.amazon.com/Fittings-Assortment-Connector-Catheter-Adapters/dp/B0CSKH6JXR,For tubing joins (NOT for threaded valves)
-Fittings & fixes (from audit),"G1/4-F × 1/4""-NPT-M adapter w/ sealing washer",1,8.00,8.00,Amazon,https://www.amazon.com/s?k=G1%2F4+female+to+1%2F4+NPT+male+adapter+sealing+washer,ONLY way to mount the G1/4 sensor onto NPT
-Fittings & fixes (from audit),"Brass 1/4"" NPT tee (barb×barb×FNPT)",2,6.00,12.00,Amazon,https://www.amazon.com/s?k=1%2F4+NPT+female+branch+tee+hose+barb+brass,Relief valve + spare (sensor fallback)
-Fittings & fixes (from audit),"1/4"" NPT-M × 1/4"" barb adapter",7,1.40,9.80,Amazon,https://www.amazon.com/s?k=1%2F4+NPT+male+to+1%2F4+hose+barb+brass,Reach the silicone at every valve/sensor port
-Fittings & fixes (from audit),PTFE thread-seal tape (roll),1,2.00,2.00,Amazon,https://www.amazon.com/s?k=PTFE+thread+seal+tape,NPT tapered joints only (NOT the G1/4 flat seal)
-Fittings & fixes (from audit),"Hose clamps (worm/Oetiker, ~10)",1,7.00,7.00,Amazon,https://www.amazon.com/s?k=1%2F4+inch+hose+clamp+small+assortment,Every barb-to-silicone joint
-Fittings & fixes (from audit),Barrel jack 5.5×2.1mm → screw terminal,1,6.00,6.00,Amazon,https://www.amazon.com/s?k=5.5x2.1mm+female+barrel+jack+to+screw+terminal+adapter,ONLY way to land the 12V into the breadboard
-Fittings & fixes (from audit),Inline blade-fuse holder + 3A fuse,1,6.00,6.00,Amazon,https://www.amazon.com/s?k=inline+blade+fuse+holder+12v+3A,Fire safety on the 12V behind the MOSFET
-Fittings & fixes (from audit),M3 screws/standoffs + baseplate,1,10.00,10.00,Amazon,https://www.amazon.com/s?k=M3+standoff+screw+assortment+kit,Mount Pi/ADS/servo bracket
-Fittings & fixes (from audit),22AWG stranded hookup wire (spool),1,8.00,8.00,Amazon,https://www.amazon.com/s?k=22AWG+stranded+hookup+wire+kit,Reach solenoid/servo/12V
-Fittings & fixes (from audit),Electrolytic caps 1000µF + 470µF,1,3.00,3.00,Amazon,https://www.amazon.com/s?k=1000uf+470uf+25v+electrolytic+capacitor,Rail stability (UBEC out + 12V in)
-Fittings & fixes (from audit),Pi/electronics enclosure (splash protection),1,0.00,0.00,In-house 3D print,,Designed & printed by user
-Fittings & fixes (from audit),Zip ties + heat-shrink assortment,1,8.00,8.00,Amazon,https://www.amazon.com/s?k=heat+shrink+tubing+zip+ties+assortment+kit,Strain relief + insulate solenoid/servo splices
-Order separately (not Amazon),3-way 12V solenoid valve for WATER (diverter),1,53.00,53.00,ESValves,https://www.electricsolenoidvalves.com/1-4-3-way-12v-dc-electric-solenoid-valve/,Amazon 3-way valves are air/gas only
-OPTIONAL — feed-forward upgrade,2nd pressure transducer 0–15 PSI (supply side),1,15.00,15.00,Amazon,https://www.amazon.com/0-5-4-5V-Stainless-Pressure-Transducer-0-15PSI/dp/B07G5DQZJ2,Only if compressor swings beat the PID: ADS1115 ch A1 + feed-forward
-OPTIONAL — feed-forward upgrade,"G1/4-F × 1/4""-NPT-M adapter (for 2nd sensor)",1,8.00,8.00,Amazon,https://www.amazon.com/s?k=G1%2F4+female+to+1%2F4+NPT+male+adapter+sealing+washer,Mount for the supply-side sensor
+Fluidics & proto,"Silicone tubing 1/4"" ID (permeate side)",1,15.00,15.00,Amazon,https://www.amazon.com/Silicone-Tubing-JoyTube-Black-Transfer/dp/B0BLZ3PB9Q,Low-pressure permeate line only
+Fluidics & proto,Hose barb fitting kit (barb-to-barb),1,12.00,12.00,Amazon,https://www.amazon.com/Fittings-Assortment-Connector-Catheter-Adapters/dp/B0CSKH6JXR,Permeate tubing joins
+Fittings — MEASURE tube OD first (Swagelok rig),Transducer adapter: G1/4-M → Swagelok (size = tube OD),1,10.00,10.00,McMaster/Swagelok,https://www.mcmaster.com/products/tube-fittings/,"Rig is compression/Swagelok, NOT NPT. Or mount at the existing manometer port"
+Fittings — MEASURE tube OD first (Swagelok rig),Swagelok tee for sensor/relief tap (size = tube OD),1,12.00,12.00,McMaster/Swagelok,https://www.mcmaster.com/products/tube-fittings/,CHECK LAB STOCK first — labs with these rigs usually have bins of these
+Fittings — MEASURE tube OD first (Swagelok rig),"1/4"" NPT-M × 1/4"" barb adapter",3,1.40,4.20,Amazon,https://www.amazon.com/s?k=1%2F4+NPT+male+to+1%2F4+hose+barb+brass,For the 3-way diverter ports -> silicone (permeate side)
+Fittings — MEASURE tube OD first (Swagelok rig),PTFE thread-seal tape (roll),1,2.00,2.00,Amazon,https://www.amazon.com/s?k=PTFE+thread+seal+tape,NPT (diverter) joints only
+Fittings — MEASURE tube OD first (Swagelok rig),"Hose clamps (worm/Oetiker, ~10)",1,7.00,7.00,Amazon,https://www.amazon.com/s?k=1%2F4+inch+hose+clamp+small+assortment,Every barb-to-silicone joint
+Fittings — MEASURE tube OD first (Swagelok rig),Barrel jack 5.5×2.1mm → screw terminal,1,6.00,6.00,Amazon,https://www.amazon.com/s?k=5.5x2.1mm+female+barrel+jack+to+screw+terminal+adapter,Land the 12V into the breadboard
+Fittings — MEASURE tube OD first (Swagelok rig),Inline blade-fuse holder + 3A fuse,1,6.00,6.00,Amazon,https://www.amazon.com/s?k=inline+blade+fuse+holder+12v+3A,Fire safety on the 12V
+Fittings — MEASURE tube OD first (Swagelok rig),M3 screws/standoffs + baseplate,1,10.00,10.00,Amazon,https://www.amazon.com/s?k=M3+standoff+screw+assortment+kit,Mount Pi/ADS/servo bracket
+Fittings — MEASURE tube OD first (Swagelok rig),22AWG stranded hookup wire (spool),1,8.00,8.00,Amazon,https://www.amazon.com/s?k=22AWG+stranded+hookup+wire+kit,Reach solenoid/servo/12V
+Fittings — MEASURE tube OD first (Swagelok rig),Electrolytic caps 1000µF + 470µF,1,3.00,3.00,Amazon,https://www.amazon.com/s?k=1000uf+470uf+25v+electrolytic+capacitor,Rail stability
+Fittings — MEASURE tube OD first (Swagelok rig),Pi/electronics enclosure (splash protection),1,0.00,0.00,In-house 3D print,,Designed & printed by you
+Fittings — MEASURE tube OD first (Swagelok rig),Zip ties + heat-shrink assortment,1,8.00,8.00,Amazon,https://www.amazon.com/s?k=heat+shrink+tubing+zip+ties+assortment+kit,Strain relief + insulate splices
+Order separately (not Amazon),3-way 12V solenoid valve for WATER (diverter),1,53.00,53.00,ESValves,https://www.electricsolenoidvalves.com/1-4-3-way-12v-dc-electric-solenoid-valve/,On the permeate outlet; Amazon 3-way are air/gas only
+OPTIONAL — feed-forward upgrade,2nd pressure transducer 0–15 PSI (supply side),1,15.00,15.00,Amazon,https://www.amazon.com/0-5-4-5V-Stainless-Pressure-Transducer-0-15PSI/dp/B07G5DQZJ2,Only if compressor swings beat the PID
+OPTIONAL — feed-forward upgrade,G1/4-M → Swagelok adapter (2nd sensor),1,10.00,10.00,McMaster/Swagelok,https://www.mcmaster.com/products/tube-fittings/,Mount for the supply-side sensor
 
-,TOTAL required (USD),,,304.80,,,Optional feed-forward lines NOT included
-,TOTAL with optional (USD),,,327.80,,,"Already owned: Pi 4, microSD, graduated cylinder, dial gauge. -$10 if USB-C PSU on hand."
+,TOTAL required (USD),,,292.20,,,Swagelok items may be ~$0 from lab stock -> could be lower
+,TOTAL with optional (USD),,,317.20,,,"Already owned: Pi 4, microSD, graduated cylinder, dial gauge, air needle valve."

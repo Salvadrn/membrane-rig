@@ -16,9 +16,9 @@ sensor:
   # The chosen transducer is a 0.5-4.5 V unit -> voltage_divider. Power the
   # ADS1115 at 3.3 V and use a 10k/20k divider (4.5 V -> ~3.0 V) so the signal
   # never exceeds the ADC input. Do NOT feed 0.5-4.5 V straight in.
-  type: voltage_divider
-  range_min: 0.0       # pressure at the sensor's minimum signal
-  range_max: 100.0     # pressure at the sensor's full-scale signal (VERIFY 0-15 PSI part)
+  type: voltage_divider   # sensor is 0.5-4.5 V ratiometric -> MUST divide, not raw
+  range_min: 0.0       # kPa at 0.5 V
+  range_max: 103.4     # kPa at 4.5 V  (0-15 PSI sensor = 0-103.4 kPa; tests top out ~60 kPa)
 
   # ADS1115
   ads_channel: 0       # single-ended channel A0..A3
@@ -43,26 +43,29 @@ sensor:
 # Pressure-control valve. command 0..100 == "pressure authority":
 #   0   -> LOWEST pressure  (== SAFE state)
 #   100 -> HIGHEST pressure
-# The plumbing topology decides what 0% physically means — calibrate the servo
-# endpoints (or `invert`) to match:
-#   INLINE feed throttle (THIS rig): the valve sits in the feed line between
-#     reservoir and cell. 0% = valve CLOSED (no feed; the cell drains through
-#     the membrane) ... 100% = fully open (pressure -> supply). Works here
-#     because the high-permeability mesh flows enough that valve + membrane
-#     form a natural pressure divider (the manual rig regulates the same way).
-#   BLEED-to-waste (alternative): 0% = valve fully OPEN (vent) ... 100% = closed.
-# type: servo  -> a hobby servo turning a quarter-turn valve
+# THIS RIG: air-over-water. Compressed AIR pressurises the vessel; a servo turns
+# the EXISTING stainless NEEDLE VALVE on the air inlet (the one the operator
+# turns by hand today). Opening it admits air -> pressure UP; closing holds/lets
+# it drift down as water permeates. So:
+#   0%  -> needle CLOSED -> lowest pressure (SAFE)
+#   100% -> needle OPEN   -> highest pressure
+# The needle valve is multi-turn, but a servo only spans <1 turn — that's fine:
+# calibrate servo_min_us/max_us to the useful sub-range AROUND your setpoints
+# (find it with the static valve-authority sweep). If closing is too slow to
+# reject an overshoot, add a tiny fixed bleed orifice on the air line.
+# type: servo  -> a servo turning the existing needle valve
 # type: pwm    -> a MOSFET-driven proportional solenoid (see src/hal/pwm_valve.py)
 valve:
   type: servo
-  invert: false        # set true if your linkage/valve turns the other way
+  invert: false        # set true if the servo turns the needle the other way
   min_command: 0.0
   max_command: 100.0
 
-  # --- servo-driven needle valve (type: servo) ---
-  # Calibrate the two endpoints to the valve's open/closed stops. A servo needs
-  # its OWN 5-6V supply (not the Pi rail). It holds position on power loss, so
-  # the mechanical relief valve is the hardware failsafe, not the servo.
+  # --- servo on the air-inlet needle valve (type: servo) ---
+  # Calibrate the endpoints to the needle's useful sub-range (NOT hard stops -
+  # over-driving stalls/cooks the servo). Servo needs its OWN 5-6V supply (UBEC),
+  # not the Pi rail; it holds position on power loss, so the mechanical relief
+  # valve is the hardware failsafe.
   servo_pin: 18        # BCM hardware-PWM pin: 12, 13, 18 or 19
   servo_min_us: 700    # pulse (us) at 0%   -> LOWEST pressure (inline: closed / bleed: open)
   servo_max_us: 2300   # pulse (us) at 100% -> HIGHEST pressure (inline: open / bleed: closed)
