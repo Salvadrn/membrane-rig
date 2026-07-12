@@ -17,6 +17,8 @@ from __future__ import annotations
 import math
 import random
 
+from ..config import water_viscosity_pa_s
+
 
 class MockPlant:
     def __init__(self, cfg) -> None:
@@ -37,13 +39,24 @@ class MockPlant:
         self._flow_slope = cfg.sim.flow_per_kpa_m3s
         self._flow_intercept = cfg.sim.flow_intercept_m3s
         self._flow_noise = cfg.sim.flow_noise_frac
+        # Darcy flow scales as 1/mu: warmer (thinner) water permeates faster. The
+        # flow constants above were tuned near 20 C, so scale by mu_ref/mu. This
+        # makes the derived k come out ~constant across temperature, as it should.
+        self._mu_ref = water_viscosity_pa_s(20.0)
+        self._mu = self._mu_ref
+
+    def set_viscosity(self, mu_pa_s: float) -> None:
+        if mu_pa_s and mu_pa_s > 0:
+            self._mu = mu_pa_s
 
     def set_command(self, command: float) -> None:
         self._command = max(0.0, min(100.0, command))
 
     def flow_m3s(self) -> float:
-        """Simulated instantaneous permeate flow at the current pressure."""
+        """Simulated instantaneous permeate flow at the current pressure.
+        Scales as 1/mu (Darcy): warmer, thinner water flows faster."""
         q = self._flow_slope * self.pressure + self._flow_intercept
+        q *= self._mu_ref / self._mu
         if self._flow_noise:
             q *= 1.0 + random.gauss(0.0, self._flow_noise)
         return max(0.0, q)

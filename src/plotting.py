@@ -59,7 +59,8 @@ def plot_permeability(result, out_path, *, title: str = "Q vs ΔP",
             bbox=dict(boxstyle="round,pad=0.4", fc="#f4f6f8", ec="#cfd6dd"))
 
     verdict = "follows Darcy's law" if result.follows_darcy else "low R² — check linearity"
-    cap = (f"k = {result.k_darcy_m2:.3e} m²   ·   "
+    tpart = f"{result.water_temp_c:.1f} °C, µ={result.viscosity_pa_s:.2e} · " if result.water_temp_c else ""
+    cap = (f"{tpart}k = {result.k_darcy_m2:.3e} m²   ·   "
            f"pore d = {result.pore_size_m*1e6:.3f} µm   ·   {verdict}")
     fig.subplots_adjust(bottom=0.2)
     fig.text(0.5, 0.035, cap, ha="center", fontsize=10.5, color="#222")

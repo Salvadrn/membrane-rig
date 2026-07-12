@@ -39,13 +39,13 @@ class RunLogger:
             "iso_time", "elapsed_s", "phase",
             f"setpoint_{self.cfg.units}", "setpoint_kpa",
             f"pressure_{self.cfg.units}", "pressure_kpa",
-            "valve_command", "diverter_measured", "in_band",
+            "valve_command", "diverter_measured", "in_band", "water_temp_c",
         ])
         self._fh.flush()
         return self.name
 
     def log(self, *, elapsed_s, phase, setpoint_kpa, pressure_kpa,
-            valve_command, diverter_measured, in_band) -> None:
+            valve_command, diverter_measured, in_band, water_temp_c=None) -> None:
         if self._writer is None:
             return
         sp_disp = "" if setpoint_kpa is None else round(self.cfg.disp(setpoint_kpa), 4)
@@ -55,6 +55,7 @@ class RunLogger:
             round(elapsed_s, 3), phase, sp_disp, sp_kpa,
             round(self.cfg.disp(pressure_kpa), 4), round(pressure_kpa, 4),
             round(valve_command, 3), int(bool(diverter_measured)), int(bool(in_band)),
+            "" if water_temp_c is None else round(water_temp_c, 3),
         ])
         self._fh.flush()
 

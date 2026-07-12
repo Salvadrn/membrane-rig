@@ -119,9 +119,21 @@ class MembraneConfig:
     k = slope * mu * L / A, with slope = dQ/dP in (m^3/s)/Pa. All SI internally."""
     area_m2: float = 6.4e-5        # 0.64 cm^2
     thickness_m: float = 1.17e-4   # 0.117 mm
-    viscosity_pa_s: float = 1.0e-3  # effective mu (auto-computed if water_temp_c set)
-    water_temp_c: Optional[float] = None  # if set, mu is computed from this (ambient rig, no bath)
+    viscosity_pa_s: float = 1.0e-3  # effective mu, derived from the water temperature
+    water_temp_c: float = 21.0     # temperature that viscosity_pa_s corresponds to
     label: str = ""
+
+
+@dataclass
+class TemperatureConfig:
+    """Water temperature = a test variable (you vary the bath). mu depends on it.
+    source 'probe' reads a DS18B20; 'manual' uses manual_c (or the last-known temp
+    if a probe read fails). read_period_s is the (slow) polling rate off the fast
+    control loop."""
+    source: str = "manual"     # "probe" (DS18B20 on 1-Wire) or "manual"
+    manual_c: float = 21.0     # used when source=manual, or as probe fallback
+    w1_id: str = ""            # DS18B20 device id, e.g. "28-01234"; empty = auto-detect
+    read_period_s: float = 3.0
 
 
 @dataclass
@@ -147,6 +159,7 @@ class Config:
     test: TestConfig = field(default_factory=TestConfig)
     sim: SimConfig = field(default_factory=SimConfig)
     membrane: MembraneConfig = field(default_factory=MembraneConfig)
+    temperature: TemperatureConfig = field(default_factory=TemperatureConfig)
     analysis: AnalysisConfig = field(default_factory=AnalysisConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
 
@@ -243,17 +256,24 @@ class Config:
         )
 
         mb = raw.get("membrane", {})
-        water_temp_c = mb.get("water_temp_c", None)
-        if water_temp_c is not None:
-            # ambient rig (no controlled bath): compute mu from the measured temp
-            viscosity = water_viscosity_pa_s(float(water_temp_c))
-        else:
-            viscosity = float(mb.get("viscosity_pa_s", 1.0e-3))
+        tc = raw.get("temperature", {})
+        # temperature is the source of truth for mu. back-compat: old configs put
+        # the temp under membrane.water_temp_c.
+        manual_c = float(tc.get("manual_c", mb.get("water_temp_c", 21.0)))
+        temperature = TemperatureConfig(
+            source=str(tc.get("source", "manual")),
+            manual_c=manual_c,
+            w1_id=str(tc.get("w1_id", "")),
+            read_period_s=float(tc.get("read_period_s", 3.0)),
+        )
+        # mu at the (manual/bath) temperature; the controller overrides this with
+        # the live probe reading during a run (for distilled/pure water).
+        viscosity = water_viscosity_pa_s(manual_c)
         membrane = MembraneConfig(
             area_m2=float(mb["area_cm2"]) * 1e-4 if "area_cm2" in mb else float(mb.get("area_m2", 6.4e-5)),
             thickness_m=float(mb["thickness_mm"]) * 1e-3 if "thickness_mm" in mb else float(mb.get("thickness_m", 1.17e-4)),
             viscosity_pa_s=viscosity,
-            water_temp_c=None if water_temp_c is None else float(water_temp_c),
+            water_temp_c=manual_c,
             label=str(mb.get("label", "")),
         )
 
@@ -277,6 +297,7 @@ class Config:
             test=test,
             sim=sim,
             membrane=membrane,
+            temperature=temperature,
             analysis=analysis,
             logging=logging_cfg,
         )
@@ -293,6 +314,8 @@ class Config:
             errs.append(f"sensor.type must be current_loop or voltage_divider")
         if self.valve.type not in ("servo", "pwm"):
             errs.append(f"valve.type must be servo or pwm, got {self.valve.type!r}")
+        if self.temperature.source not in ("manual", "probe"):
+            errs.append(f"temperature.source must be manual or probe, got {self.temperature.source!r}")
         if self.sensor.range_max_kpa <= self.sensor.range_min_kpa:
             errs.append("sensor range_max must be > range_min")
         if self.safety.max_pressure_kpa > self.sensor.range_max_kpa:

@@ -9,7 +9,13 @@ from __future__ import annotations
 
 import random
 
-from .interfaces import DiverterValve, PressureSensor, ProportionalValve, Reading
+from .interfaces import (
+    DiverterValve,
+    PressureSensor,
+    ProportionalValve,
+    Reading,
+    TemperatureSensor,
+)
 from ..control.plant_sim import MockPlant
 
 
@@ -45,3 +51,14 @@ class MockDiverter(DiverterValve):
 
     def to_safe(self) -> None:
         self.measured = False
+
+
+class MockTemperature(TemperatureSensor):
+    """Simulated bath: reports the configured manual temperature + tiny drift."""
+
+    def __init__(self, cfg) -> None:
+        self._t = cfg.temperature.manual_c
+        self._noise = 0.02
+
+    def read_c(self) -> float:
+        return self._t + (random.gauss(0.0, self._noise) if self._noise else 0.0)

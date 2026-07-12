@@ -44,6 +44,7 @@ def export_permeability_xlsx(result, out_path, *, title: str = "Q vs ΔP",
         ("membrane", result.label or "—"),
         ("area (cm²)", result.area_m2 * 1e4),
         ("thickness (mm)", result.thickness_m * 1e3),
+        ("water temp (°C)", result.water_temp_c),
         ("viscosity (Pa·s)", result.viscosity_pa_s),
     ]
     for i, (k, v) in enumerate(meta, start=1):

@@ -34,6 +34,7 @@ class PermeabilityResult:
     area_m2: float = 0.0
     thickness_m: float = 0.0
     viscosity_pa_s: float = 0.0
+    water_temp_c: float = 0.0
     label: str = ""
     note: str = ""
 
@@ -64,7 +65,9 @@ def fit_permeability(points_kpa_m3s, membrane, *, r2_darcy: float = 0.98) -> Per
     res = PermeabilityResult(
         points_kpa_m3s=pts, n=len(pts),
         area_m2=membrane.area_m2, thickness_m=membrane.thickness_m,
-        viscosity_pa_s=membrane.viscosity_pa_s, label=membrane.label,
+        viscosity_pa_s=membrane.viscosity_pa_s,
+        water_temp_c=getattr(membrane, "water_temp_c", 0.0),
+        label=membrane.label,
     )
     if len(pts) < 2:
         res.note = "need >= 2 flow points to fit a slope"

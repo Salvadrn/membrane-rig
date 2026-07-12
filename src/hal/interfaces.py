@@ -59,3 +59,16 @@ class DiverterValve(ABC):
 
     def close(self) -> None:
         pass
+
+
+class TemperatureSensor(ABC):
+    """Water temperature probe. Read is allowed to be slow/blocking (e.g. a
+    DS18B20 takes ~750 ms), so the controller polls it in its own slow thread,
+    never in the fast PID loop."""
+
+    @abstractmethod
+    def read_c(self) -> float:
+        """Water temperature in °C, or NaN if the read failed."""
+
+    def close(self) -> None:
+        pass

@@ -20,8 +20,10 @@ from typing import List, Optional
 
 from pathlib import Path
 
+import dataclasses
+
 from .analysis import fit_permeability
-from .config import Config
+from .config import Config, water_viscosity_pa_s
 from .control.pid import PID
 from .export_excel import export_permeability_xlsx, xlsx_available
 from .hal import build_hal
@@ -34,7 +36,7 @@ from .sequencer import Phase, Sequencer
 class RigController:
     def __init__(self, cfg: Config) -> None:
         self.cfg = cfg
-        self.sensor, self.valve, self.diverter, self.plant = build_hal(cfg)
+        self.sensor, self.valve, self.diverter, self.temp, self.plant = build_hal(cfg)
         self.pid = PID(cfg.pid.kp, cfg.pid.ki, cfg.pid.kd,
                        cfg.pid.output_min, cfg.pid.output_max)
         self.safety = SafetyMonitor(cfg)
@@ -59,6 +61,15 @@ class RigController:
         self._collect_vol_m3 = 0.0
         self.analysis_result = None
 
+        # water temperature (a test variable): polled slowly off the fast loop.
+        # mu is derived from it; the run-mean temp feeds the permeability calc.
+        self._water_temp_c = cfg.temperature.manual_c
+        self._temp_sum = 0.0
+        self._temp_n = 0
+        # in sim, tell the plant the viscosity so its flow scales as 1/mu
+        if self.plant is not None and hasattr(self.plant, "set_viscosity"):
+            self.plant.set_viscosity(water_viscosity_pa_s(cfg.temperature.manual_c))
+
         # shared status snapshot (read by the UI)
         self.status = {
             "running": False,
@@ -78,6 +89,8 @@ class RigController:
             "run_name": None,
             "results": [],
             "analysis": None,
+            "water_temp_c": round(cfg.temperature.manual_c, 2),
+            "viscosity_pa_s": cfg.membrane.viscosity_pa_s,
             "units": cfg.units,
         }
         # rolling history for the live chart: (elapsed_s, pressure_disp, setpoint_disp)
@@ -86,6 +99,10 @@ class RigController:
         self._stop_evt = threading.Event()
         self._thread = threading.Thread(target=self._loop, name="rig-control", daemon=True)
         self._thread.start()
+        # slow temperature poller (a DS18B20 read blocks ~750 ms, so keep it off
+        # the fast control loop)
+        self._temp_thread = threading.Thread(target=self._temp_loop, name="rig-temp", daemon=True)
+        self._temp_thread.start()
 
     # --- public API ----------------------------------------------------------
     def start_sequence(self, setpoints_display: List[float], *, tolerance_pct=None,
@@ -116,6 +133,8 @@ class RigController:
             self._finished = False
             self._collect_idx = None
             self._collect_vol_m3 = 0.0
+            self._temp_sum = 0.0
+            self._temp_n = 0
             self.analysis_result = None
             self.status["finished"] = False
             self.status["fault"] = ""
@@ -165,8 +184,12 @@ class RigController:
         with self._lock:
             results = list(self.sequencer.results)
             title = self.cfg.analysis.title
+            run_temp_c = (self._temp_sum / self._temp_n) if self._temp_n else self._water_temp_c
+        # mu from the run-mean water temperature (distilled/pure water)
+        mu = water_viscosity_pa_s(run_temp_c)
+        membrane = dataclasses.replace(self.cfg.membrane, viscosity_pa_s=mu, water_temp_c=run_temp_c)
         points = [(r.mean_kpa, r.flow_m3s) for r in results if r.success and r.flow_m3s > 0]
-        result = fit_permeability(points, self.cfg.membrane)
+        result = fit_permeability(points, membrane)
         self.analysis_result = result
         json_path = self.logger.save_analysis(result.as_dict())
         plot_path = None
@@ -195,6 +218,8 @@ class RigController:
             "follows_darcy": result.follows_darcy,
             "label": result.label,
             "note": result.note,
+            "water_temp_c": round(run_temp_c, 2),
+            "viscosity_pa_s": mu,
             "json_file": Path(json_path).name if json_path else None,
             "plot_file": Path(plot_path).name if plot_path else None,
             "xlsx_file": Path(xlsx_path).name if xlsx_path else None,
@@ -206,8 +231,9 @@ class RigController:
     def shutdown(self) -> None:
         self._stop_evt.set()
         self._thread.join(timeout=2.0)
+        self._temp_thread.join(timeout=2.0)
         self._safe_all()
-        for dev in (self.valve, self.diverter, self.sensor):
+        for dev in (self.valve, self.diverter, self.sensor, self.temp):
             try:
                 dev.close()
             except Exception:
@@ -238,6 +264,24 @@ class RigController:
                 r.flow_m3s = self._collect_vol_m3 / r.collection_s
             self._collect_idx = None
             self._collect_vol_m3 = 0.0
+
+    def _temp_loop(self) -> None:
+        """Poll the water-temperature probe slowly (blocking reads are fine here,
+        off the fast control loop). Cache the latest good reading + its viscosity."""
+        while not self._stop_evt.is_set():
+            try:
+                t = self.temp.read_c()
+                if t == t:  # not NaN
+                    mu = water_viscosity_pa_s(t)
+                    with self._lock:
+                        self._water_temp_c = t
+                        self.status["water_temp_c"] = round(t, 2)
+                        self.status["viscosity_pa_s"] = mu
+                    if self.plant is not None and hasattr(self.plant, "set_viscosity"):
+                        self.plant.set_viscosity(mu)
+            except Exception:
+                pass
+            self._stop_evt.wait(self.cfg.temperature.read_period_s)
 
     def _safe_all(self) -> None:
         try:
@@ -324,11 +368,13 @@ class RigController:
                     self.valve.set_command(command)
                     self.diverter.set_measured(seq.diverter_measured)
                     elapsed = now - self._run_start
+                    self._temp_sum += self._water_temp_c
+                    self._temp_n += 1
                     self.logger.log(
                         elapsed_s=elapsed, phase=seq.phase.value,
                         setpoint_kpa=seq.setpoint_kpa, pressure_kpa=pressure,
                         valve_command=command, diverter_measured=seq.diverter_measured,
-                        in_band=seq.in_band,
+                        in_band=seq.in_band, water_temp_c=self._water_temp_c,
                     )
                     self.history.append((round(elapsed, 2),
                                          round(self.cfg.disp(pressure), 3),

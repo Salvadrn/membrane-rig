@@ -129,20 +129,28 @@ sim:
   flow_noise_frac: 0.02
 
 # ------------------------------------------------------------- membrane ---
-# Geometry + fluid props for the Darcy permeability calc (slope method):
+# Geometry for the Darcy permeability calc (slope method):
 #   k = slope * mu * L / A   (slope = dQ/dP in (m^3/s)/Pa)
 #   mean hydraulic pore size  d = sqrt(32 * k)
-# Change these per membrane / mesh you test.
+# Change these per membrane / mesh you test. mu (viscosity) is NOT set here — it
+# comes from the water temperature (see the `temperature` block below), because
+# temperature is a test variable and mu depends on it.
 membrane:
   area_cm2: 0.64           # membrane active area
   thickness_mm: 0.117      # membrane thickness L (avg of >=3 measured points)
-  # This rig runs at AMBIENT temperature (no controlled water bath), and mu
-  # depends on temperature. Measure the WATER temperature (any thermometer) and
-  # set it here -> mu is computed automatically (more accurate than a fixed guess
-  # as the room drifts). Comment water_temp_c out to use viscosity_pa_s directly.
-  water_temp_c: 21         # measured water temp (C); overrides viscosity_pa_s
-  viscosity_pa_s: 0.001    # fallback only, if water_temp_c is not set (20 C=0.001, 25 C=0.00089)
   label: "60 mesh"
+
+# ---------------------------------------------------------- temperature ---
+# Water temperature = a test variable (distilled water; you vary the bath). mu is
+# computed from it automatically: mu(T) = 2.414e-5 * 10^(247.8/(T_K-140)) Pa·s
+# (20 C=1.00e-3, 25 C=8.9e-4). k should come out ~constant across temperature —
+# a nice sanity check, since k is geometric and only Q and mu change with T.
+temperature:
+  source: manual           # "probe" (DS18B20 on GPIO4, auto-logs the real temp)
+                           # or "manual" (use manual_c below)
+  manual_c: 21.0           # water temperature (C) when source=manual / probe fallback
+  w1_id: ""                # DS18B20 id e.g. "28-01abc"; empty = auto-detect
+  read_period_s: 3.0       # how often to poll the probe (slow, off the control loop)
 
 # ------------------------------------------------------------- analysis ---
 analysis:
