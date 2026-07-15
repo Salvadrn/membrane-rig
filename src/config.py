@@ -71,9 +71,9 @@ class DiverterConfig:
 
 @dataclass
 class PidConfig:
-    kp: float = 3.0
-    ki: float = 1.2
-    kd: float = 0.15
+    kp: float = 4.0
+    ki: float = 0.4
+    kd: float = 1.0
     output_min: float = 0.0
     output_max: float = 100.0
     sample_hz: float = 20.0
@@ -94,6 +94,11 @@ class TestConfig:
     collection_s: float = 60.0
     stabilize_timeout_s: float = 120.0
     setpoints_kpa: List[float] = field(default_factory=list)
+    # The plant is ASYMMETRIC: pressure rises fast (open the air valve) but falls
+    # slowly (only by permeation once the valve is closed). Two mitigations:
+    sort_ascending: bool = True   # run setpoints low->high so we never wait on a slow fall
+    ramp_kpa_s: float = 3.0       # ramp the PID target toward each setpoint (0 = off)
+                                  # so the loop approaches from below without overshoot
 
 
 @dataclass
@@ -102,8 +107,12 @@ class SimConfig:
     # compressor cycling: sinusoidal supply-pressure disturbance the PID must reject
     supply_wobble_kpa: float = 0.0
     supply_wobble_period_s: float = 30.0
-    k_fill: float = 0.4
-    k_bleed: float = 6.0
+    # Asymmetric inline-throttle plant (matches the real rig): opening the valve
+    # fills FAST (k_in), closing it only lets pressure decay SLOWLY through the
+    # membrane (k_drain << k_in effect). Real observation: rise ~seconds, fall
+    # ~tens of seconds and never immediate.
+    k_in: float = 0.3      # inflow gain at full open (fast rise)
+    k_drain: float = 0.05  # permeation decay rate (slow fall; tau ~ 1/k_drain)
     process_noise_kpa: float = 0.05
     sensor_noise_kpa: float = 0.15
     # Simulated permeate flow so sim mode reproduces a Darcy Q-vs-dP line:
@@ -216,9 +225,9 @@ class Config:
 
         p = raw.get("pid", {})
         pid = PidConfig(
-            kp=float(p.get("kp", 3.0)),
-            ki=float(p.get("ki", 1.2)),
-            kd=float(p.get("kd", 0.15)),
+            kp=float(p.get("kp", 4.0)),
+            ki=float(p.get("ki", 0.4)),
+            kd=float(p.get("kd", 1.0)),
             output_min=float(p.get("output_min", 0.0)),
             output_max=float(p.get("output_max", 100.0)),
             sample_hz=float(p.get("sample_hz", 20.0)),
@@ -239,6 +248,8 @@ class Config:
             collection_s=float(t.get("collection_s", 60.0)),
             stabilize_timeout_s=float(t.get("stabilize_timeout_s", 120.0)),
             setpoints_kpa=[k(x) for x in t.get("setpoints", [])],
+            sort_ascending=bool(t.get("sort_ascending", True)),
+            ramp_kpa_s=k(t.get("ramp_kpa_s", 3.0)),
         )
 
         sm = raw.get("sim", {})
@@ -246,8 +257,8 @@ class Config:
             supply_pressure_kpa=k(sm.get("supply_pressure", 100.0)),
             supply_wobble_kpa=k(sm.get("supply_wobble", 0.0)),
             supply_wobble_period_s=float(sm.get("supply_wobble_period_s", 30.0)),
-            k_fill=float(sm.get("k_fill", 0.4)),
-            k_bleed=float(sm.get("k_bleed", 6.0)),
+            k_in=float(sm.get("k_in", 0.3)),
+            k_drain=float(sm.get("k_drain", 0.05)),
             process_noise_kpa=k(sm.get("process_noise", 0.05)),
             sensor_noise_kpa=k(sm.get("sensor_noise", 0.15)),
             flow_per_kpa_m3s=float(sm.get("flow_per_kpa_m3s", 7.86e-7)),

@@ -90,6 +90,7 @@ class Sequencer:
         self.dwell_s = cfg.test.dwell_s
         self.collection_s = cfg.test.collection_s
         self.stabilize_timeout_s = cfg.test.stabilize_timeout_s
+        self.sort_ascending = cfg.test.sort_ascending
         self._setpoints: List[float] = []
         self._idx = 0
         self.phase = Phase.IDLE
@@ -111,7 +112,9 @@ class Sequencer:
             self.collection_s = collection_s
         if stabilize_timeout_s is not None:
             self.stabilize_timeout_s = stabilize_timeout_s
-        self._setpoints = list(setpoints_kpa)
+        # The plant rises fast but falls SLOWLY (permeation-only once the valve
+        # closes), so run points low->high: we never sit waiting for a slow fall.
+        self._setpoints = sorted(setpoints_kpa) if self.sort_ascending else list(setpoints_kpa)
         self._idx = 0
         self.results = []
         self._enter_stabilizing(now)

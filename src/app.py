@@ -61,6 +61,12 @@ class RigController:
         self._collect_vol_m3 = 0.0
         self.analysis_result = None
 
+        # Setpoint ramp: the plant is asymmetric (rises fast, falls slowly —
+        # overshoot is expensive to undo), so the PID chases a target that ramps
+        # from the current pressure toward each setpoint instead of a step.
+        self._ramp_sp: Optional[float] = None
+        self._ramp_for: Optional[float] = None  # which true setpoint the ramp tracks
+
         # water temperature (a test variable): polled slowly off the fast loop.
         # mu is derived from it; the run-mean temp feeds the permeability calc.
         self._water_temp_c = cfg.temperature.manual_c
@@ -133,6 +139,8 @@ class RigController:
             self._finished = False
             self._collect_idx = None
             self._collect_vol_m3 = 0.0
+            self._ramp_sp = None
+            self._ramp_for = None
             self._temp_sum = 0.0
             self._temp_n = 0
             self.analysis_result = None
@@ -265,6 +273,24 @@ class RigController:
             self._collect_idx = None
             self._collect_vol_m3 = 0.0
 
+    def _pid_target(self, setpoint_kpa: float, pressure_kpa: float) -> float:
+        """Ramped PID target. Approaching each setpoint from the current pressure
+        at test.ramp_kpa_s keeps the integrator calm and avoids overshoot — which
+        matters because the plant can't shed pressure quickly (permeation-only
+        fall). The sequencer's in-band/dwell logic still uses the TRUE setpoint."""
+        rate = self.cfg.test.ramp_kpa_s
+        if rate <= 0:
+            return setpoint_kpa
+        if self._ramp_for != setpoint_kpa:
+            self._ramp_for = setpoint_kpa
+            self._ramp_sp = pressure_kpa  # start the ramp where the plant is now
+        step = rate * self._dt
+        if self._ramp_sp < setpoint_kpa:
+            self._ramp_sp = min(setpoint_kpa, self._ramp_sp + step)
+        else:
+            self._ramp_sp = max(setpoint_kpa, self._ramp_sp - step)
+        return self._ramp_sp
+
     def _temp_loop(self) -> None:
         """Poll the water-temperature probe slowly (blocking reads are fine here,
         off the fast control loop). Cache the latest good reading + its viscosity."""
@@ -364,7 +390,8 @@ class RigController:
                                         seq.index, seq.total, self._final_elapsed,
                                         0.0, in_band=False)
                 else:
-                    command = self.pid.update(seq.setpoint_kpa, pressure, self._dt)
+                    command = self.pid.update(self._pid_target(seq.setpoint_kpa, pressure),
+                                              pressure, self._dt)
                     self.valve.set_command(command)
                     self.diverter.set_measured(seq.diverter_measured)
                     elapsed = now - self._run_start

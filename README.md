@@ -331,6 +331,20 @@ Do this in **sim mode first** (`run.py web` or `run.py cli`), then refine on the
 real rig. The valve command is 0–100% "pressure authority" (0 = lowest pressure /
 safe, 100 = max pressure).
 
+**The plant is asymmetric — tune for NO overshoot.** Opening the air valve
+raises pressure in seconds, but closing it does *not* bring it down quickly:
+pressure only decays as water permeates (tens of seconds, and never instantly).
+Overshoot is therefore expensive to undo. Three defences are built in:
+1. `test.sort_ascending` — setpoints always run low→high (never wait on a fall),
+2. `test.ramp_kpa_s` — the PID chases a ramped target, approaching from below,
+3. a low-pass filtered derivative (inside the PID) lets a strong `kd` brake the
+   approach without sensor noise shaking the servo.
+The shipped gains (kp 4, ki 0.4, kd 1.0, ramp 3 kPa/s) hold overshoot under
+~1 kPa in sim with the compressor wobbling ±8 kPa. On the real rig, if you see
+overshoot: lower `ramp_kpa_s` first, then lower `ki`. If pressure still falls
+too slowly for your workflow, the hardware fix is a tiny fixed bleed orifice on
+the air line (adds down-authority at the cost of some air).
+
 1. **Start with P only.** Set `ki: 0`, `kd: 0`. Raise `kp` until the pressure
    responds briskly and slightly overshoots the setpoint, then oscillates a
    little. Halve that `kp`.

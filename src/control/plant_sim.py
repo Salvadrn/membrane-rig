@@ -1,16 +1,20 @@
-"""First-order hydraulic plant model for simulation mode.
+"""Asymmetric air-over-water plant model for simulation mode.
 
-Pressure is driven up toward the supply (compressor) pressure and bled down
-through the proportional valve:
+Mirrors the real rig (operator-confirmed behaviour): opening the air valve
+raises pressure FAST, but closing it does NOT drop pressure quickly — with the
+valve shut, pressure only decays as water slowly permeates out of the vessel.
 
-    dP/dt = k_fill * (P_supply - P)  -  k_bleed * bleed_opening * P
+    dP/dt = k_in * opening * (P_supply - P)  -  k_drain * P
 
-where bleed_opening = 1 - command/100  (command 100 == valve closed).
+where opening = command/100 (0 = closed = SAFE, 100 = fully open).
 
-Equilibrium for a given command:  P_eq = k_fill*P_supply / (k_fill + k_bleed*opening)
-With the default gains: command 0 -> ~6 kPa (vented), command 100 -> P_supply.
-This is intentionally simple — enough to exercise the PID, the stabilisation
-band logic and the state machine, not a CFD model.
+  * rise:  at full open, dP ~ k_in*(supply-P)  -> tens of kPa per second
+  * fall:  valve closed, dP = -k_drain*P       -> tau = 1/k_drain (~20 s default)
+
+That ~10:1 asymmetry is why the controller must approach setpoints from BELOW
+(ascending order + setpoint ramp): overshoot is expensive to undo. This is
+intentionally simple — enough to exercise the PID, the stabilisation band logic
+and the state machine, not a CFD model.
 """
 from __future__ import annotations
 
@@ -23,8 +27,8 @@ from ..config import water_viscosity_pa_s
 class MockPlant:
     def __init__(self, cfg) -> None:
         self.supply = cfg.sim.supply_pressure_kpa
-        self.k_fill = cfg.sim.k_fill
-        self.k_bleed = cfg.sim.k_bleed
+        self.k_in = cfg.sim.k_in
+        self.k_drain = cfg.sim.k_drain
         self.noise = cfg.sim.process_noise_kpa
         self.pressure = 0.0
         self._command = 0.0  # 0..100, 100 == fully closed
@@ -68,8 +72,8 @@ class MockPlant:
         supply = self.supply
         if self._wobble:
             supply += self._wobble * math.sin(2.0 * math.pi * self._t / self._wobble_period)
-        opening = 1.0 - self._command / 100.0
-        dP = self.k_fill * (supply - self.pressure) - self.k_bleed * opening * self.pressure
+        opening = self._command / 100.0  # inline: 100% = valve open = filling
+        dP = self.k_in * opening * (supply - self.pressure) - self.k_drain * self.pressure
         self.pressure += dP * dt
         if self.noise:
             self.pressure += random.gauss(0.0, self.noise) * math.sqrt(dt)

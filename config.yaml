@@ -81,10 +81,14 @@ diverter:
   active_high: true    # true: GPIO HIGH energises the coil (via driver)
 
 # -------------------------------------------------------------------- pid ---
+# Tuned (in sim) for the ASYMMETRIC plant: strong D + soft I + setpoint ramp =
+# approach from below without overshoot (overshoot is expensive: pressure only
+# falls by slow permeation). The derivative is low-pass filtered inside the PID
+# so sensor noise doesn't shake the servo. Re-verify on the real rig.
 pid:
-  kp: 3.0
-  ki: 1.2
-  kd: 0.15
+  kp: 4.0
+  ki: 0.4
+  kd: 1.0
   output_min: 0.0
   output_max: 100.0
   sample_hz: 20
@@ -108,6 +112,11 @@ test:
   collection_s: 60.0         # permeate collection duration
   stabilize_timeout_s: 180.0 # give up stabilising a setpoint after this long
   setpoints: [20, 40, 60]    # sequence of setpoints, in `units`
+  # The rig rises fast but falls SLOWLY (closing the valve doesn't drop pressure
+  # quickly — it only decays by permeation). So: run points low->high, and ramp
+  # the PID target so it approaches each setpoint from below without overshoot.
+  sort_ascending: true       # always run setpoints in ascending order
+  ramp_kpa_s: 3.0            # PID-target ramp rate (0 = jump straight to setpoint)
 
 # -------------------------------------------------------------------- sim ---
 # First-order plant model used only in mode: sim. Lets you tune logic + PID
@@ -118,8 +127,11 @@ sim:
   # wobbles the simulated supply so you can SEE the PID rejecting it.
   supply_wobble: 8.0       # +/- amplitude of the supply oscillation
   supply_wobble_period_s: 25
-  k_fill: 0.4              # how fast pressure builds toward supply
-  k_bleed: 6.0             # bleed-valve authority (k_bleed >> k_fill)
+  # ASYMMETRIC plant (matches the real rig): opening the valve fills FAST, but
+  # closing it only lets pressure decay SLOWLY through the membrane (no vent).
+  # Rise ~seconds; fall tau ~ 1/k_drain (~20 s). Overshoot is expensive to undo.
+  k_in: 0.3                # inflow gain at full open (fast rise)
+  k_drain: 0.05            # permeation-only decay (slow fall)
   process_noise: 0.05      # plant noise (std)
   sensor_noise: 0.15       # measurement noise (std)
   # Simulated permeate flow so sim mode auto-produces a Darcy Q-vs-dP line.
