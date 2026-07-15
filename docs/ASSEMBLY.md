@@ -1,28 +1,45 @@
 # Assembly guide
 
 Air-over-water rig: compressed air (lab panel, yellow line) pressurises the
-stainless vessel through the **existing needle valve**, which a servo turns.
-Water permeates the membrane; the 3-way solenoid routes permeate to waste or
-the graduated cylinder. See the BOM (`BOM.xlsx`) for parts.
+stainless vessel through a **90° quarter-turn ball valve** (lever handle removed;
+a servo turns the stem). Water permeates the membrane; the 3-way solenoid routes
+permeate to waste or the graduated cylinder. See the BOM (`BOM.xlsx`) for parts.
+
+> **Verdict on servo-driving the ball valve** (researched): precision is *not*
+> the limit — the DS3218 holds ~0.5–1° (≈0.2° with a 2:1 reduction), far finer
+> than needed, and a ball valve is *least* twitchy near-closed where this rig
+> operates. **Torque is the question.** With the handle off the servo has zero
+> leverage, so it must match the stem breakaway torque 1:1. **Measure it first**
+> (§ "Measure before designing").
 
 ## Parts YOU design (3D-printed)
 
-### 1. Servo↔needle-valve coupling (the critical part)
-A cup that grips the needle valve's knob, driven by the servo.
-- Measure the knob with a caliper: outer Ø, height, shape (knurled/round/winged).
-  Model the **negative** of the knob inside the cup; add an M3 set-screw boss on
-  the side to lock it (don't rely on friction alone).
-- Top face: screw one of the servo's included **25T horns** into the print
-  (2–4 self-tappers). Do NOT print the 25T spline — FDM can't hold that detail.
-- Minimise backlash: snug fit, walls ≥3 mm. Print in PETG/ABS (PLA creeps).
+### 1. Servo↔ball-valve coupling (the critical part)
+Handle off → the exposed stem is a square or double-D flat. Couple the servo to
+it; **add a ~2:1 reduction** (servo swings ~180° → valve turns 90°) — this buys
+both **torque margin** and **finer resolution near the seat**, and costs only a
+slightly slower quarter-turn.
+- **Broach the stem's flat** into a 100%-infill coupler + an M3 **set screw on
+  the flat** (never rely on friction).
+- Use a **metal horn / metal coupler** on the servo output — the plastic servo
+  horn twists and strips under valve torque.
+- Reduction: a **preloaded spur-gear pair or a single tight crank**, NOT a loose
+  4-bar linkage (its ratio varies with angle and its slop eats the resolution
+  gain). Anti-backlash (split gear or light return spring) keeps the fine step.
+- **Do NOT use a self-locking worm**: the digital servo already holds while
+  powered, and a self-locking ratio (≥~20:1) would let a 270° servo reach only
+  ~13° at the valve — it can't make the full 90°.
+- Print in PETG/ABS (PLA creeps under sustained torque).
 
-### 2. Servo mount
-Holds the servo **body** coaxial with the valve stem so torque reacts into
-structure, not into the tubing.
-- Clamp to the valve body hex (measure across-flats) or bolt to the baseplate.
-- DS3218 is standard size (~40×20×40.5 mm, 4 ear holes). Slot the mount's holes
-  so you can align servo axis ↔ valve stem axis (misalignment = binding).
-- Leave finger access to the coupling set screw.
+### 2. Servo mount (reacts the torque)
+The #1 failure mode of DIY servo-valve actuators is the printed part twisting.
+- **React torque into a rigid metal frame** (aluminium plate / bracket bolted to
+  the vessel or baseplate), never into the printed housing.
+- Keep the servo axis coaxial with the valve stem (misalignment = binding); slot
+  the DS3218 ear holes (~40×20×40.5 mm, 4 holes) for alignment.
+- **Servo supply:** run at 6.8 V off a supply that can source ~2 A peaks — a
+  brownout at stall is the classic failure. If breakaway is high, use a
+  higher-torque servo (e.g. DS3240MG ~40 kg·cm ≈ 3.9 N·m) instead of the DS3218.
 
 ### 3. Pi / electronics enclosure
 - Fits: Pi 4 + half breadboard + UBEC + fuse holder. Mount on M3 standoffs.
@@ -39,9 +56,17 @@ One board (printed or plywood) carrying enclosure + strain reliefs, so the
 assembly moves as a unit.
 
 ## Measure before designing/buying (caliper on the bench)
-1. Needle-valve knob: Ø, height, shape → coupling (№1)
-2. Valve body hex across-flats + free space around it → mount (№2)
-3. **Swagelok tube OD** on the rig (likely 1/4") → the green BOM fittings
+1. **Valve stem breakaway torque** — the make-or-break number. Handle off, ~0.5–1
+   bar in the vessel, turn the stem with a torque wrench (or a luggage scale on a
+   known lever arm: torque = force × arm). Read the peak to *start* moving:
+   - **≤ ~1.0 N·m** → a bare DS3218 at 6.8 V is fine.
+   - **1.0–1.5 N·m** → add the 2:1 reduction (№1).
+   - **> ~1.5 N·m** → reduction *and* a bigger servo (DS3240MG) or a
+     smaller-bore / lower-friction valve; work the valve in first.
+2. Valve **stem** flat: square vs double-D, across-flats size, height → coupling (№1)
+3. Valve body / mounting surface + free space around it → mount (№2)
+4. **Swagelok tube OD** on the rig (likely 1/4") → the green BOM fittings
+5. Existing manometer port thread → transducer adapter
 4. Existing manometer port thread → transducer adapter
 
 ## Wiring (all grounds common)
