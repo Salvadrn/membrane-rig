@@ -85,6 +85,11 @@ class SafetyConfig:
     min_plausible_kpa: float = -5.0
     max_plausible_kpa: float = 105.0
     fault_grace_reads: int = 3
+    # Per-run ceiling. While a test is running the effective cutoff drops to
+    # max(setpoints) + this margin. Without it, a 20 kPa test could drift all the
+    # way to the 80 kPa global cutoff before aborting — enough to destroy a
+    # delicate mesh. 0 disables it (global cutoff governs).
+    overshoot_margin_kpa: float = 10.0
 
 
 @dataclass
@@ -131,6 +136,10 @@ class MembraneConfig:
     viscosity_pa_s: float = 1.0e-3  # effective mu, derived from the water temperature
     water_temp_c: float = 21.0     # temperature that viscosity_pa_s corresponds to
     label: str = ""
+    # Specimen pressure limit — meshes are delicate, and this is usually well
+    # below what the vessel and the safety cutoff would allow. No setpoint above
+    # it can be queued or started. 0 = unset (the safety cutoff governs).
+    max_pressure_kpa: float = 0.0
 
 
 @dataclass
@@ -180,6 +189,14 @@ class Config:
     def to_internal(self, value_display: float) -> float:
         """display units -> kPa."""
         return to_kpa(value_display, self.units)
+
+    def specimen_limit_kpa(self) -> float:
+        """Highest pressure any setpoint may request: the specimen's own limit
+        when one is set, otherwise the safety cutoff. Never above the cutoff."""
+        m = self.membrane.max_pressure_kpa
+        if m and m > 0:
+            return min(m, self.safety.max_pressure_kpa)
+        return self.safety.max_pressure_kpa
 
     # --- loading -------------------------------------------------------------
     @classmethod
@@ -239,6 +256,7 @@ class Config:
             min_plausible_kpa=k(sf.get("min_plausible", -5.0)),
             max_plausible_kpa=k(sf.get("max_plausible", 105.0)),
             fault_grace_reads=int(sf.get("fault_grace_reads", 3)),
+            overshoot_margin_kpa=k(sf.get("overshoot_margin", 10.0)),
         )
 
         t = raw.get("test", {})
@@ -286,6 +304,7 @@ class Config:
             viscosity_pa_s=viscosity,
             water_temp_c=manual_c,
             label=str(mb.get("label", "")),
+            max_pressure_kpa=k(mb["max_pressure"]) if mb.get("max_pressure") else 0.0,
         )
 
         an = raw.get("analysis", {})
@@ -331,9 +350,12 @@ class Config:
             errs.append("sensor range_max must be > range_min")
         if self.safety.max_pressure_kpa > self.sensor.range_max_kpa:
             errs.append("safety.max_pressure exceeds the sensor's full-scale range")
+        if self.membrane.max_pressure_kpa > self.safety.max_pressure_kpa:
+            errs.append("membrane.max_pressure exceeds safety.max_pressure")
+        limit = self.specimen_limit_kpa()
         for sp in self.test.setpoints_kpa:
-            if sp > self.safety.max_pressure_kpa:
-                errs.append(f"setpoint {sp:.1f} kPa exceeds safety.max_pressure")
+            if sp > limit:
+                errs.append(f"setpoint {sp:.1f} kPa exceeds the pressure limit ({limit:.1f} kPa)")
         if self.pid.output_max <= self.pid.output_min:
             errs.append("pid.output_max must be > output_min")
         if errs:

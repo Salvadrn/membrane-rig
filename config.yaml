@@ -99,6 +99,11 @@ safety:
   min_plausible: -5.0      # below this the sensor is considered faulted
   max_plausible: 105.0     # above sensor full-scale -> faulted
   fault_grace_reads: 3     # consecutive bad reads before declaring a fault
+  # While a test runs, the cutoff tightens to max(setpoint) + this margin. A
+  # 20 kPa test then aborts near 30 kPa instead of coasting to 80 — the whole
+  # point being that a delicate mesh must never see pressure it wasn't asked
+  # to see. 0 disables (the global cutoff governs).
+  overshoot_margin: 10.0
 
 # ------------------------------------------------------------------- test ---
 test:
@@ -151,6 +156,10 @@ membrane:
   area_cm2: 0.64           # membrane active area
   thickness_mm: 0.117      # membrane thickness L (avg of >=3 measured points)
   label: "60 mesh"
+  # Pressure this SPECIMEN tolerates. Meshes are delicate and this sits well
+  # below the vessel/safety limit. Nothing above it can be queued or started.
+  # Editable per specimen from the web UI (it can only tighten, never loosen).
+  max_pressure: 65.0
 
 # ---------------------------------------------------------- temperature ---
 # Water temperature = a test variable (distilled water; you vary the bath). mu is

@@ -1,7 +1,12 @@
 """Safety monitor — runs on every control-loop tick, independent of test state.
 
 Failure modes handled:
-  * OVERPRESSURE   pressure above the hard cutoff -> immediate abort (no grace).
+  * OVERPRESSURE   pressure above the effective cutoff -> immediate abort (no
+                   grace). The cutoff is not fixed: `arm_for_run` tightens it to
+                   max(setpoint) + margin for the duration of a run, so a 20 kPa
+                   test aborts near 30 kPa instead of coasting to the 80 kPa
+                   global limit. Meshes are delicate; the ceiling should track
+                   what the test actually asked for.
   * SENSOR_FAULT   driver reported unhealthy, or the reading is outside the
                    physically plausible range (e.g. a disconnected 4-20mA loop
                    reads ~0 -> below min_plausible). Requires N consecutive bad
@@ -25,11 +30,36 @@ class SafetyState(Enum):
 
 class SafetyMonitor:
     def __init__(self, cfg) -> None:
-        self.max_pressure = cfg.safety.max_pressure_kpa
+        self.hard_max = cfg.safety.max_pressure_kpa
+        self.overshoot_margin = cfg.safety.overshoot_margin_kpa
+        # effective cutoff: equals hard_max when idle, tightens per run
+        self.max_pressure = self.hard_max
+        self.limit_name = "safety cutoff"
         self.min_plausible = cfg.safety.min_plausible_kpa
         self.max_plausible = cfg.safety.max_plausible_kpa
         self.grace = cfg.safety.fault_grace_reads
         self._bad_reads = 0
+
+    def arm_for_run(self, setpoints_kpa) -> float:
+        """Tighten the cutoff to what THIS run actually needs.
+
+        A test at 20 kPa has no business ever reaching the 80 kPa global cutoff;
+        letting it get there before aborting would destroy a delicate specimen.
+        The run ceiling is max(setpoint) + overshoot margin, never above the
+        global cutoff. Returns the effective ceiling."""
+        self.max_pressure = self.hard_max
+        self.limit_name = "safety cutoff"
+        if self.overshoot_margin > 0 and setpoints_kpa:
+            ceiling = max(setpoints_kpa) + self.overshoot_margin
+            if ceiling < self.hard_max:
+                self.max_pressure = ceiling
+                self.limit_name = "run ceiling"
+        return self.max_pressure
+
+    def disarm(self) -> None:
+        """Back to the global cutoff (idle: no run ceiling applies)."""
+        self.max_pressure = self.hard_max
+        self.limit_name = "safety cutoff"
 
     def check(self, reading) -> tuple[SafetyState, str]:
         p = reading.pressure_kpa
@@ -37,7 +67,8 @@ class SafetyMonitor:
         # Overpressure is immediate and takes priority.
         if not (reading.healthy is False) and not math.isnan(p) and p > self.max_pressure:
             return SafetyState.OVERPRESSURE, (
-                f"pressure {p:.1f} kPa exceeded cutoff {self.max_pressure:.1f} kPa"
+                f"pressure {p:.1f} kPa exceeded {self.limit_name} "
+                f"{self.max_pressure:.1f} kPa"
             )
 
         bad = (

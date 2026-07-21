@@ -14,3 +14,7 @@ env/
 
 # Scratch / logs
 *.log
+
+# runtime state
+/playlist.json
+/runs/server.log

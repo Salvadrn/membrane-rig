@@ -13,6 +13,7 @@ reads the shared, lock-protected `status` snapshot.
 """
 from __future__ import annotations
 
+import json
 import threading
 import time
 from collections import deque
@@ -28,13 +29,14 @@ from .control.pid import PID
 from .export_excel import export_permeability_xlsx, xlsx_available
 from .hal import build_hal
 from .logging_csv import RunLogger
+from .playlist import DONE, FAILED, PENDING, RUNNING, Experiment, Playlist
 from .plotting import plot_available, plot_permeability
 from .safety import SafetyMonitor, SafetyState
 from .sequencer import Phase, Sequencer
 
 
 class RigController:
-    def __init__(self, cfg: Config) -> None:
+    def __init__(self, cfg: Config, playlist_path: str = "playlist.json") -> None:
         self.cfg = cfg
         self.sensor, self.valve, self.diverter, self.temp, self.plant = build_hal(cfg)
         self.pid = PID(cfg.pid.kp, cfg.pid.ki, cfg.pid.kd,
@@ -42,6 +44,9 @@ class RigController:
         self.safety = SafetyMonitor(cfg)
         self.sequencer = Sequencer(cfg)
         self.logger = RunLogger(cfg)
+        # queue of experiments; runs one item then waits for the operator
+        self.playlist = Playlist(Path(playlist_path), cfg.membrane.max_pressure_kpa)
+        self._current_item_id: Optional[str] = None
 
         self._dt = 1.0 / cfg.pid.sample_hz
         self._lock = threading.Lock()
@@ -98,6 +103,11 @@ class RigController:
             "water_temp_c": round(cfg.temperature.manual_c, 2),
             "viscosity_pa_s": cfg.membrane.viscosity_pa_s,
             "units": cfg.units,
+            "playlist_analysis": None,
+            "item_id": None,
+            "item_label": "",
+            "run_ceiling_kpa": cfg.safety.max_pressure_kpa,
+            "run_ceiling_disp": round(cfg.disp(cfg.safety.max_pressure_kpa), 2),
         }
         # rolling history for the live chart: (elapsed_s, pressure_disp, setpoint_disp)
         self.history = deque(maxlen=4000)
@@ -110,22 +120,68 @@ class RigController:
         self._temp_thread = threading.Thread(target=self._temp_loop, name="rig-temp", daemon=True)
         self._temp_thread.start()
 
+    # --- pressure limits -----------------------------------------------------
+    def pressure_limit_kpa(self) -> float:
+        """Highest setpoint anything may request right now: the tightest of the
+        safety cutoff, the configured specimen limit, and the limit the operator
+        set for the mesh currently in the vessel."""
+        limit = self.cfg.specimen_limit_kpa()
+        pl = self.playlist.membrane_limit_kpa
+        if pl and pl > 0:
+            limit = min(limit, pl)
+        return limit
+
+    def check_setpoints(self, setpoints_kpa: List[float]) -> Optional[str]:
+        """None if every setpoint is safe to run, else the reason it is not."""
+        if not setpoints_kpa:
+            return "no setpoints provided"
+        limit = self.pressure_limit_kpa()
+        u = self.cfg.units
+        for sp in setpoints_kpa:
+            if sp <= 0:
+                return f"setpoint {self.cfg.disp(sp):.1f} {u} must be above zero"
+            if sp > limit:
+                return (f"setpoint {self.cfg.disp(sp):.1f} {u} exceeds the pressure "
+                        f"limit of {self.cfg.disp(limit):.1f} {u}")
+        return None
+
+    def set_membrane_limit(self, limit_display: Optional[float]) -> dict:
+        """Operator-set pressure limit for the specimen now in the vessel.
+        Clamped by the safety cutoff — the UI can only ever tighten, never
+        loosen, what the hardware layer allows."""
+        with self._lock:
+            if self._active:
+                return {"ok": False, "error": "cannot change the limit mid-run"}
+        if limit_display is None or float(limit_display) <= 0:
+            self.playlist.membrane_limit_kpa = 0.0
+        else:
+            kpa = self.cfg.to_internal(float(limit_display))
+            self.playlist.membrane_limit_kpa = min(kpa, self.cfg.safety.max_pressure_kpa)
+        self.playlist.save()
+        return {"ok": True, "limit": round(self.cfg.disp(self.pressure_limit_kpa()), 2)}
+
     # --- public API ----------------------------------------------------------
     def start_sequence(self, setpoints_display: List[float], *, tolerance_pct=None,
                        dwell_s=None, collection_s=None, stabilize_timeout_s=None,
                        kp=None, ki=None, kd=None) -> dict:
+        setpoints_kpa = [self.cfg.to_internal(v) for v in setpoints_display]
+        return self._begin(setpoints_kpa, tolerance_pct=tolerance_pct, dwell_s=dwell_s,
+                           collection_s=collection_s,
+                           stabilize_timeout_s=stabilize_timeout_s,
+                           kp=kp, ki=ki, kd=kd)
+
+    def _begin(self, setpoints_kpa: List[float], *, tolerance_pct=None,
+               dwell_s=None, collection_s=None, stabilize_timeout_s=None,
+               kp=None, ki=None, kd=None, item_id: Optional[str] = None) -> dict:
         with self._lock:
             if self._active:
                 return {"ok": False, "error": "a test is already running"}
-            setpoints_kpa = [self.cfg.to_internal(v) for v in setpoints_display]
-            if not setpoints_kpa:
-                return {"ok": False, "error": "no setpoints provided"}
-            for sp in setpoints_kpa:
-                if sp > self.cfg.safety.max_pressure_kpa:
-                    return {"ok": False, "error": (
-                        f"setpoint {self.cfg.disp(sp):.1f} {self.cfg.units} exceeds "
-                        f"safety cutoff {self.cfg.disp(self.cfg.safety.max_pressure_kpa):.1f}"
-                    )}
+            problem = self.check_setpoints(setpoints_kpa)
+            if problem:
+                return {"ok": False, "error": problem}
+            # Tighten the overpressure cutoff to what THIS run needs, so a low
+            # test can never coast up to the global limit on a delicate mesh.
+            ceiling = self.safety.arm_for_run(setpoints_kpa)
             if any(x is not None for x in (kp, ki, kd)):
                 self.pid.set_gains(
                     kp if kp is not None else self.pid.kp,
@@ -135,6 +191,7 @@ class RigController:
             self.pid.reset()
             self.safety.reset()
             self.history.clear()
+            self._current_item_id = item_id
             self._fault_reason = ""
             self._finished = False
             self._collect_idx = None
@@ -156,7 +213,125 @@ class RigController:
             self._run_start = now
             self._active = True
             self.status["run_name"] = run_name
-            return {"ok": True, "run_name": run_name}
+            self.status["run_ceiling_kpa"] = round(ceiling, 2)
+            self.status["run_ceiling_disp"] = round(self.cfg.disp(ceiling), 2)
+            if item_id:
+                self.playlist.update(item_id, status=RUNNING, run_name=run_name)
+            return {"ok": True, "run_name": run_name,
+                    "ceiling": round(self.cfg.disp(ceiling), 2)}
+
+    # --- playlist ------------------------------------------------------------
+    def play_next(self) -> dict:
+        """Start the next pending experiment. Never called automatically — the
+        queue only advances when the operator presses play, because between
+        experiments they have to read and empty the graduated cylinder."""
+        with self._lock:
+            if self._active:
+                return {"ok": False, "error": "a test is already running"}
+        item = self.playlist.next_pending()
+        if item is None:
+            return {"ok": False, "error": "nothing pending in the playlist"}
+        res = self._begin(list(item.setpoints_kpa),
+                          tolerance_pct=item.tolerance_pct, dwell_s=item.dwell_s,
+                          collection_s=item.collection_s,
+                          stabilize_timeout_s=item.stabilize_timeout_s,
+                          item_id=item.id)
+        if res.get("ok"):
+            res["item"] = item.id
+            res["label"] = item.label
+        return res
+
+    def add_experiment(self, *, label: str, setpoints_display: List[float],
+                       collection_s=None, dwell_s=None, tolerance_pct=None,
+                       stabilize_timeout_s=None) -> dict:
+        setpoints_kpa = [self.cfg.to_internal(float(v)) for v in setpoints_display]
+        problem = self.check_setpoints(setpoints_kpa)
+        if problem:
+            return {"ok": False, "error": problem}
+        t = self.cfg.test
+        item = Experiment(
+            label=label or "",
+            setpoints_kpa=setpoints_kpa,
+            collection_s=float(collection_s if collection_s is not None else t.collection_s),
+            dwell_s=float(dwell_s if dwell_s is not None else t.dwell_s),
+            tolerance_pct=float(tolerance_pct if tolerance_pct is not None else t.tolerance_pct),
+            stabilize_timeout_s=float(stabilize_timeout_s if stabilize_timeout_s is not None
+                                      else t.stabilize_timeout_s),
+        )
+        self.playlist.add(item)
+        return {"ok": True, "id": item.id}
+
+    def update_experiment(self, item_id: str, *, setpoints_display=None, **fields) -> dict:
+        item = self.playlist.get(item_id)
+        if item is None:
+            return {"ok": False, "error": "no such experiment"}
+        if item.status == RUNNING:
+            return {"ok": False, "error": "that experiment is running"}
+        if setpoints_display is not None:
+            setpoints_kpa = [self.cfg.to_internal(float(v)) for v in setpoints_display]
+            problem = self.check_setpoints(setpoints_kpa)
+            if problem:
+                return {"ok": False, "error": problem}
+            fields["setpoints_kpa"] = setpoints_kpa
+        self.playlist.update(item_id, **fields)
+        return {"ok": True}
+
+    def playlist_state(self) -> dict:
+        limit_kpa = self.pressure_limit_kpa()
+        items = []
+        for i in self.playlist.items:
+            items.append({
+                "id": i.id, "label": i.label, "status": i.status,
+                "setpoints": [round(self.cfg.disp(x), 2) for x in i.setpoints_kpa],
+                "collection_s": i.collection_s, "dwell_s": i.dwell_s,
+                "tolerance_pct": i.tolerance_pct,
+                "stabilize_timeout_s": i.stabilize_timeout_s,
+                "run_name": i.run_name, "note": i.note,
+                "needs_volume": i.needs_volume(),
+                "results": i.results,
+            })
+        nxt = self.playlist.next_pending()
+        return {
+            "items": items,
+            "counts": self.playlist.counts(),
+            "next_id": nxt.id if nxt else None,
+            "units": self.cfg.units,
+            "limit": round(self.cfg.disp(limit_kpa), 2),
+            "membrane_limit": (round(self.cfg.disp(self.playlist.membrane_limit_kpa), 2)
+                               if self.playlist.membrane_limit_kpa else None),
+            "safety_cutoff": round(self.cfg.disp(self.cfg.safety.max_pressure_kpa), 2),
+            "overshoot_margin": round(self.cfg.disp(self.cfg.safety.overshoot_margin_kpa), 2),
+            "points": len(self.playlist.collected_points()),
+        }
+
+    def set_item_volumes(self, item_id: str, volumes_ml) -> dict:
+        """Attach measured volumes to a finished playlist item and recompute its
+        flow rates. Works after the run has ended, which is the whole point of
+        the pause between experiments."""
+        item = self.playlist.get(item_id)
+        if item is None:
+            return {"ok": False, "error": "no such experiment"}
+        entries = volumes_ml.items() if isinstance(volumes_ml, dict) else enumerate(volumes_ml)
+        for i, v in entries:
+            i = int(i)
+            if not (0 <= i < len(item.results)):
+                continue
+            v = float(v)
+            r = item.results[i]
+            r["volume_ml"] = v
+            cs = r.get("collection_s") or 0.0
+            r["flow_m3s"] = (v * 1e-6 / cs) if cs > 0 else 0.0
+        self.playlist.save()
+        # keep the live sequencer results in step when it's the current item
+        with self._lock:
+            if self._current_item_id == item_id:
+                live = self.sequencer.results
+                for i, r in enumerate(item.results):
+                    if i < len(live):
+                        live[i].volume_ml = r.get("volume_ml", 0.0)
+                        live[i].flow_m3s = r.get("flow_m3s", 0.0)
+                self.status["results"] = [x.__dict__ for x in live]
+        return {"ok": True}
 
     def stop(self, reason: str = "stopped by operator") -> dict:
         with self._lock:
@@ -169,7 +344,19 @@ class RigController:
         with self._lock:
             snap = dict(self.status)
             snap["history"] = list(self.history)
-            return snap
+            item_id = self._current_item_id
+        item = self.playlist.get(item_id) if item_id else None
+        snap["item_id"] = item_id
+        snap["item_label"] = item.label if item else ""
+        snap["item_status"] = item.status if item else None
+        snap["item_needs_volume"] = bool(item and item.needs_volume())
+        snap["playlist"] = self.playlist.counts()
+        nxt = self.playlist.next_pending()
+        snap["next_label"] = nxt.label if nxt else None
+        snap["next_setpoints"] = ([round(self.cfg.disp(x), 2) for x in nxt.setpoints_kpa]
+                                  if nxt else None)
+        snap["pressure_limit"] = round(self.cfg.disp(self.pressure_limit_kpa()), 2)
+        return snap
 
     def set_volumes(self, volumes_ml) -> None:
         """Attach measured permeate volumes (mL) to completed points, keyed by
@@ -234,6 +421,64 @@ class RigController:
         }
         with self._lock:
             self.status["analysis"] = summary
+        return summary
+
+    def analyze_playlist(self) -> dict:
+        """Fit Q vs ΔP across every completed experiment in the queue.
+
+        The queue is normally one specimen measured at several pressures, split
+        into separately-gated runs, so the combined fit — not the per-run one —
+        is the deliverable. Points come from items marked done that have a
+        measured volume."""
+        points = self.playlist.collected_points()
+        with self._lock:
+            run_temp_c = (self._temp_sum / self._temp_n) if self._temp_n else self._water_temp_c
+        mu = water_viscosity_pa_s(run_temp_c)
+        membrane = dataclasses.replace(self.cfg.membrane, viscosity_pa_s=mu,
+                                       water_temp_c=run_temp_c)
+        result = fit_permeability(points, membrane)
+        base = Path(self.cfg.logging.dir) / "playlist_latest"
+        base.parent.mkdir(parents=True, exist_ok=True)
+        files = {}
+        try:
+            p = base.with_name("playlist_latest_analysis.json")
+            p.write_text(json.dumps(result.as_dict(), indent=2))
+            files["json_file"] = p.name
+        except Exception:
+            pass
+        if self.cfg.analysis.auto_plot and plot_available() and result.n >= 2:
+            try:
+                files["plot_file"] = Path(plot_permeability(
+                    result, base.with_name("playlist_latest_plot.png"),
+                    title=self.cfg.analysis.title, units="kPa")).name
+            except Exception:
+                pass
+        if xlsx_available() and result.n >= 1:
+            try:
+                detail = [r for i in self.playlist.items if i.status == DONE
+                          for r in i.results]
+                files["xlsx_file"] = Path(export_permeability_xlsx(
+                    result, base.with_name("playlist_latest_results.xlsx"),
+                    title=self.cfg.analysis.title, units="kPa",
+                    points_detail=detail)).name
+            except Exception:
+                pass
+        summary = {
+            "n": result.n,
+            "slope_per_kpa": result.slope_per_kpa,
+            "intercept_m3s": result.intercept_m3s,
+            "r2": result.r2,
+            "k_darcy_m2": result.k_darcy_m2,
+            "pore_size_um": result.pore_size_m * 1e6,
+            "follows_darcy": result.follows_darcy,
+            "label": result.label,
+            "note": result.note,
+            "water_temp_c": round(run_temp_c, 2),
+            "viscosity_pa_s": mu,
+            **files,
+        }
+        with self._lock:
+            self.status["playlist_analysis"] = summary
         return summary
 
     def shutdown(self) -> None:
@@ -322,6 +567,7 @@ class RigController:
     def _end_run(self, reason: str) -> None:
         """Must be called with the lock held."""
         self._safe_all()
+        self.safety.disarm()          # idle again: back to the global cutoff
         try:
             self.logger.finish_run(self.sequencer.results, status_note=reason)
         except Exception:
@@ -329,12 +575,25 @@ class RigController:
         self.logger.close()
         self._active = False
         self._finished = True
+        results = [r.__dict__ for r in self.sequencer.results]
+        # Record the outcome on the playlist item and STOP. The queue never
+        # advances by itself — the operator has a cylinder to read and empty.
+        if self._current_item_id:
+            try:
+                self.playlist.update(
+                    self._current_item_id,
+                    status=DONE if reason == "completed" else FAILED,
+                    note="" if reason == "completed" else reason,
+                    results=[dict(r) for r in results],
+                )
+            except Exception:
+                pass
         self.status["running"] = False
         self.status["finished"] = True
         self.status["phase"] = self.sequencer.phase.value
         self.status["valve_command"] = 0.0
         self.status["diverter_measured"] = False
-        self.status["results"] = [r.__dict__ for r in self.sequencer.results]
+        self.status["results"] = results
 
     def _loop(self) -> None:
         next_t = time.monotonic()

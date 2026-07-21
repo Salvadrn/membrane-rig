@@ -81,6 +81,7 @@ membrane-rig/
     │   ├── pid.py          # anti-windup, derivative-on-measurement
     │   └── plant_sim.py    # first-order plant for sim mode
     ├── safety.py           # overpressure + sensor-sanity watchdog
+    ├── playlist.py         # queue of experiments, gated one-at-a-time
     ├── sequencer.py        # the per-setpoint state machine
     ├── logging_csv.py      # per-run timeseries CSV + metadata JSON
     ├── app.py              # RigController: the background control loop
@@ -104,6 +105,47 @@ python run.py analyze mydata.csv --area-cm2 0.64 --thickness-mm 0.117
 ```
 
 `config.yaml` ships with `mode: sim`. Everything works with no hardware.
+
+### As a Mac app (no Terminal)
+
+```bash
+bash make_mac_app.sh          # -> ~/Desktop/Membrane Rig.app  +  Stop Membrane Rig.app
+```
+
+Double-click **Membrane Rig** — it starts the server if it isn't already up and
+opens the browser at `http://localhost:8000`. **Stop Membrane Rig** shuts it
+down. Re-run `make_mac_app.sh` if you move the repo (the app stores its path).
+
+---
+
+## The playlist: several experiments, one play button
+
+Queue experiments (name, pressure, collection time) and run them **one at a
+time**. When an item finishes the rig returns to its safe state and **waits** —
+it never advances on its own, because between experiments you have to read the
+graduated cylinder, empty it, and often swap the specimen. Press play for the
+next one.
+
+The panel above the queue tells you what just finished, how much it collected,
+and what's next. In hardware mode it's also where you type the measured volume.
+`Fit Q vs ΔP across the whole playlist` regresses every collected point at once
+— the queue is normally one specimen at several pressures, so that combined fit
+is the deliverable.
+
+The queue lives in `playlist.json`, so it survives a restart.
+
+### Pressure protection (meshes are delicate)
+
+Three limits, tightest wins:
+
+| Limit | Where | What it does |
+|---|---|---|
+| **Specimen limit** | `membrane.max_pressure`, editable in the UI | No setpoint above it can be queued or started. Checked in the browser *and* server-side. |
+| **Run ceiling** | `safety.overshoot_margin` | While a run is active the overpressure cutoff drops to `max(setpoint) + margin`. A 20 kPa test aborts near **30** kPa instead of coasting to 80. |
+| **Safety cutoff** | `safety.max_pressure` | The global hard limit. The UI can only ever tighten below it, never above. |
+
+A fault stops the queue: the failed item is marked and nothing else starts until
+you press play again, so a problem never cascades into the next specimen.
 
 ---
 
