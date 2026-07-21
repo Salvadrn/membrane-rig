@@ -69,6 +69,15 @@ valve:
   servo_pin: 18        # BCM hardware-PWM pin: 12, 13, 18 or 19
   servo_min_us: 700    # pulse (us) at 0%   -> LOWEST pressure (inline: closed / bleed: open)
   servo_max_us: 2300   # pulse (us) at 100% -> HIGHEST pressure (inline: open / bleed: closed)
+  # SEATS the valve when a test ends. 0% above is the bottom of the CONTROL
+  # range — where regulation stops, not necessarily where the valve seals; with
+  # backlash in the printed coupling it can sit slightly cracked. Calibrate:
+  # with the supply on, step the pulse down until flow fully stops, then add a
+  # small margin. Do NOT jam it into the mechanical stop — this position is held
+  # for as long as the rig sits idle and a stalled servo overheats.
+  # 0 = unset -> use the 0% endpoint (previous behaviour).
+  servo_close_us: 0
+  close_hold_s: 1.5    # keep driving shut this long before releasing the servo
 
   # --- proportional solenoid (type: pwm) ---
   pwm_pin: 18
@@ -104,6 +113,12 @@ safety:
   # point being that a delicate mesh must never see pressure it wasn't asked
   # to see. 0 disables (the global cutoff governs).
   overshoot_margin: 10.0
+  # After a run the feed is shut, so pressure MUST start bleeding down through
+  # the membrane. If it hasn't dropped by close_check_min within close_check_s,
+  # the valve did not actually seat -> warn in the UI rather than leave a
+  # pressurised specimen sitting there. 0 disables.
+  close_check_s: 20.0
+  close_check_min: 1.0
 
 # ------------------------------------------------------------------- test ---
 test:

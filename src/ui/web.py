@@ -383,6 +383,8 @@ PAGE = r"""<!doctype html>
   .xbtn:hover{color:var(--ink)}
   .fault{background:#3a0d0d;border:1px solid var(--bad);color:#ffb3ad;padding:8px 12px;
          border-radius:8px;margin-bottom:12px;display:none}
+  .warnbox{background:#3a2d00;border:1px solid var(--warn);color:#f0d48a;padding:8px 12px;
+           border-radius:8px;margin-bottom:12px;display:none}
   .bandnote{font-size:12px;color:var(--muted);margin-top:4px}
   .limitbox{background:#12191f;border:1px solid var(--line);border-left:3px solid var(--warn);
             border-radius:7px;padding:10px 12px;font-size:12px;color:var(--muted);margin-bottom:6px}
@@ -435,6 +437,7 @@ PAGE = r"""<!doctype html>
 
   <div class="card">
     <div class="fault" id="faultBox"></div>
+    <div class="warnbox" id="closeWarn"></div>
     <div class="big">
       <div><div class="v"><span id="pv">–</span><span style="font-size:18px" class="u"></span></div></div>
       <div class="sp">setpoint <b id="spv">–</b> · valve <b id="valve">–</b>% · <span id="phasePill" class="pill st-idle">idle</span></div>
@@ -656,7 +659,9 @@ function renderGate(d){
     body+=`${body?"<br>":""}<b style="color:var(--ink)">Next up:</b> “${nxt.label||"experiment"}” at `+
           `${nxt.setpoints.join(", ")} ${U} for ${nxt.collection_s}s. Press play when you are ready.`;
   } else {
-    body+=`${body?"<br>":""}Playlist finished — nothing pending.`;
+    body+=`${body?"<br>":""}<b style="color:var(--ink)">Playlist finished</b> — nothing pending. `+
+          `The rig has shut its feed valve; <b style="color:var(--ink)">close the supply valve by `+
+          `hand</b> before you leave, since the servo only holds position and does not seal on power loss.`;
   }
   $("gateTitle").textContent=title||"Ready";
   $("gateBody").innerHTML=body;
@@ -807,6 +812,9 @@ async function poll(){
     $("playBtn").textContent=s.running?"running…":"▶ Play next experiment";
     $("addBtn").disabled=s.running;
     const fb=$("faultBox"); if(s.fault){fb.style.display="block";fb.textContent="⚠ "+s.fault;}else{fb.style.display="none";}
+    const cw=$("closeWarn");
+    if(s.close_warning){cw.style.display="block";cw.textContent="⚠ "+s.close_warning;}
+    else{cw.style.display="none";}
     const tol=s.setpoint_disp? s.setpoint_disp*(parseFloat($("expTol").value)||10)/100 : 1;
     draw(s.history, tol);
     const tb=$("results").querySelector("tbody"); tb.innerHTML="";

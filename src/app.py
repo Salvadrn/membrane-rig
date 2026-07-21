@@ -66,6 +66,11 @@ class RigController:
         self._collect_vol_m3 = 0.0
         self.analysis_result = None
 
+        # post-run verification that the feed valve actually seated
+        self._close_check_until = 0.0
+        self._close_check_p0 = 0.0
+        self._close_warning = ""
+
         # Setpoint ramp: the plant is asymmetric (rises fast, falls slowly —
         # overshoot is expensive to undo), so the PID chases a target that ramps
         # from the current pressure toward each setpoint instead of a step.
@@ -108,6 +113,7 @@ class RigController:
             "item_label": "",
             "run_ceiling_kpa": cfg.safety.max_pressure_kpa,
             "run_ceiling_disp": round(cfg.disp(cfg.safety.max_pressure_kpa), 2),
+            "close_warning": "",
         }
         # rolling history for the live chart: (elapsed_s, pressure_disp, setpoint_disp)
         self.history = deque(maxlen=4000)
@@ -200,6 +206,9 @@ class RigController:
             self._ramp_for = None
             self._temp_sum = 0.0
             self._temp_n = 0
+            self._close_check_until = 0.0
+            self._close_warning = ""
+            self.status["close_warning"] = ""
             self.analysis_result = None
             self.status["finished"] = False
             self.status["fault"] = ""
@@ -212,6 +221,10 @@ class RigController:
             run_name = self.logger.start_run(setpoints_kpa)
             self._run_start = now
             self._active = True
+            # Publish immediately instead of waiting for the next tick, so a UI
+            # that polls right after pressing play never sees a stale "idle".
+            self.status["running"] = True
+            self.status["phase"] = Phase.STABILIZING.value
             self.status["run_name"] = run_name
             self.status["run_ceiling_kpa"] = round(ceiling, 2)
             self.status["run_ceiling_disp"] = round(self.cfg.disp(ceiling), 2)
@@ -555,19 +568,57 @@ class RigController:
             self._stop_evt.wait(self.cfg.temperature.read_period_s)
 
     def _safe_all(self) -> None:
+        """Shut the feed and route permeate to waste.
+
+        Uses full_close(), not to_safe(): 0% command is the bottom of the
+        regulating range, which is not necessarily a sealed valve. When a test
+        ends — or faults — the feed has to be properly shut, otherwise the
+        specimen sits pressurised with nobody watching."""
         try:
-            self.valve.to_safe()
+            self.valve.full_close()
         except Exception:
-            pass
+            try:
+                self.valve.to_safe()
+            except Exception:
+                pass
         try:
             self.diverter.to_safe()
         except Exception:
             pass
 
+    def _start_close_check(self, pressure_kpa: float) -> None:
+        """Arm the post-run check that the valve actually seated. Lock held."""
+        self._close_warning = ""
+        self.status["close_warning"] = ""
+        if self.cfg.safety.close_check_s <= 0 or pressure_kpa < 5.0:
+            self._close_check_until = 0.0     # nothing meaningful to verify
+            return
+        self._close_check_p0 = pressure_kpa
+        self._close_check_until = time.monotonic() + self.cfg.safety.close_check_s
+
+    def _run_close_check(self, now: float, pressure_kpa: float) -> None:
+        """With the feed shut, pressure must fall (it bleeds through the
+        membrane). If it hasn't, the valve did not seat. Lock held."""
+        if not self._close_check_until or now < self._close_check_until:
+            return
+        self._close_check_until = 0.0
+        drop = self._close_check_p0 - pressure_kpa
+        if drop < self.cfg.safety.close_check_min_drop_kpa:
+            u = self.cfg.units
+            self._close_warning = (
+                f"valve may not have closed: pressure only fell "
+                f"{self.cfg.disp(drop):.2f} {u} in "
+                f"{self.cfg.safety.close_check_s:.0f} s "
+                f"(now {self.cfg.disp(pressure_kpa):.1f} {u}). "
+                f"Check the valve and shut the supply by hand."
+            )
+            self.status["close_warning"] = self._close_warning
+
     def _end_run(self, reason: str) -> None:
         """Must be called with the lock held."""
-        self._safe_all()
+        self._safe_all()              # feed fully shut, diverter to waste
         self.safety.disarm()          # idle again: back to the global cutoff
+        self._start_close_check(self.status.get("pressure_kpa", 0.0))
         try:
             self.logger.finish_run(self.sequencer.results, status_note=reason)
         except Exception:
@@ -670,17 +721,18 @@ class RigController:
                                         seq.total, elapsed, seq.collect_remaining_s,
                                         in_band=seq.in_band)
             elif self._finished:
-                # a run ended (completed/aborted); hold safe but keep reporting
-                # the terminal state so a slow UI poll always sees it.
-                self.valve.to_safe()
-                self.diverter.to_safe()
+                # a run ended (completed/aborted); the feed stays FULLY SHUT and
+                # we keep reporting the terminal state so a slow UI poll always
+                # sees it.
+                self._safe_all()
+                self._run_close_check(now, pressure)
                 self._update_status(pressure, None, 0.0, False, Phase.DONE,
                                     self._final_index, self._final_total,
                                     self._final_elapsed, 0.0, in_band=False)
             else:
-                # idle: hold safe/vented
-                self.valve.to_safe()
-                self.diverter.to_safe()
+                # idle: feed shut, permeate to waste
+                self._safe_all()
+                self._run_close_check(now, pressure)
                 self._update_status(pressure, None, 0.0, False, Phase.IDLE, 0, 0,
                                     0.0, 0.0, in_band=False)
 

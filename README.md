@@ -147,6 +147,26 @@ Three limits, tightest wins:
 A fault stops the queue: the failed item is marked and nothing else starts until
 you press play again, so a problem never cascades into the next specimen.
 
+### Closing the feed at the end of a run
+
+When a run ends — normally or on a fault — the controller calls `full_close()`,
+not just "0% command". The distinction matters: **0% is the bottom of the
+*control* range**, calibrated for smooth regulation, and with backlash in a
+printed coupling that can leave the valve slightly cracked. `valve.servo_close_us`
+is a separate pulse that seats it. Calibrate it once: with the supply on, step
+the pulse down until flow fully stops, then add a small margin — but do **not**
+jam it into the mechanical stop, because this position is held for as long as the
+rig sits idle and a stalled servo overheats.
+
+The rig then **checks that it worked**. With the feed shut, pressure must bleed
+down through the membrane; if it hasn't dropped by `safety.close_check_min`
+within `safety.close_check_s`, the UI raises *"valve may not have closed"*
+instead of leaving a pressurised specimen sitting there unnoticed.
+
+> **Still close the supply valve by hand when you're done for the day.** A servo
+> holds position but does not seal on power loss, so once the Pi is off nothing
+> is actively holding the feed shut. The UI reminds you when a playlist finishes.
+
 ---
 
 ## Configuration

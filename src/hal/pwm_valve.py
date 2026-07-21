@@ -52,9 +52,14 @@ class PwmValve(ProportionalValve):
         # command 0 == vented. With invert this still maps to the vent duty.
         self._apply(0.0)
 
+    def full_close(self) -> None:
+        # A solenoid has no travel to over-drive: 0% already de-energises it to
+        # its shut position, so seating it is the same action as going safe.
+        self._apply(0.0)
+
     def close(self) -> None:
         try:
-            self.to_safe()
+            self.full_close()
             self._pi.stop()
         except Exception:
             pass

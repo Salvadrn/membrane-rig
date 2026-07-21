@@ -42,6 +42,16 @@ class ProportionalValve(ABC):
     def to_safe(self) -> None:
         """Drive the valve to its fail-safe (vent) state."""
 
+    def full_close(self) -> None:
+        """Seat the valve SHUT, past the regulating range.
+
+        0% command is the bottom of the *control* range, calibrated for smooth
+        regulation — it is not necessarily a sealed valve, and backlash in the
+        coupling can leave it cracked. When a test ends the feed must be properly
+        shut, not merely turned down, so drivers that can over-travel do it here.
+        Falls back to to_safe() for drivers that cannot."""
+        self.to_safe()
+
     def close(self) -> None:
         pass
 

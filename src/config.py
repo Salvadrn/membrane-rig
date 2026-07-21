@@ -61,6 +61,11 @@ class ValveConfig:
     servo_pin: int = 18          # hardware-PWM pin (12/13/18/19); pigpio servo pulses
     servo_min_us: int = 700      # pulse width (µs) at 0% command = valve fully OPEN (vent)
     servo_max_us: int = 2300     # pulse width (µs) at 100% command = valve fully CLOSED (max pressure)
+    # Pulse that SEATS the valve when a test ends — a little past the 0% end of
+    # the control range, because 0% is where regulation stops, not necessarily
+    # where the valve seals. 0 = unset (use the 0% endpoint, i.e. old behaviour).
+    servo_close_us: int = 0
+    close_hold_s: float = 1.5    # keep driving shut this long before releasing
 
 
 @dataclass
@@ -90,6 +95,12 @@ class SafetyConfig:
     # way to the 80 kPa global cutoff before aborting — enough to destroy a
     # delicate mesh. 0 disables it (global cutoff governs).
     overshoot_margin_kpa: float = 10.0
+    # After a run ends the feed is shut, so pressure MUST start falling. If it
+    # hasn't dropped by close_check_min_drop_kpa within close_check_s, the valve
+    # did not actually seat — raise it as a warning instead of leaving a
+    # pressurised specimen sitting there unnoticed. 0 disables the check.
+    close_check_s: float = 20.0
+    close_check_min_drop_kpa: float = 1.0
 
 
 @dataclass
@@ -232,6 +243,8 @@ class Config:
             servo_pin=int(v.get("servo_pin", 18)),
             servo_min_us=int(v.get("servo_min_us", 700)),
             servo_max_us=int(v.get("servo_max_us", 2300)),
+            servo_close_us=int(v.get("servo_close_us", 0) or 0),
+            close_hold_s=float(v.get("close_hold_s", 1.5)),
         )
 
         d = raw.get("diverter", {})
@@ -257,6 +270,8 @@ class Config:
             max_plausible_kpa=k(sf.get("max_plausible", 105.0)),
             fault_grace_reads=int(sf.get("fault_grace_reads", 3)),
             overshoot_margin_kpa=k(sf.get("overshoot_margin", 10.0)),
+            close_check_s=float(sf.get("close_check_s", 20.0)),
+            close_check_min_drop_kpa=k(sf.get("close_check_min_drop", 1.0)),
         )
 
         t = raw.get("test", {})

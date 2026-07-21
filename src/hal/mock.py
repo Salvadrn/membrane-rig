@@ -33,13 +33,19 @@ class MockValve(ProportionalValve):
     def __init__(self, plant: MockPlant, cfg) -> None:
         self.plant = plant
         self.command = 0.0
+        self.fully_closed = False
 
     def set_command(self, command: float) -> None:
         self.command = max(0.0, min(100.0, command))
+        self.fully_closed = False
         self.plant.set_command(self.command)
 
     def to_safe(self) -> None:
         self.set_command(0.0)
+
+    def full_close(self) -> None:
+        self.set_command(0.0)
+        self.fully_closed = True
 
 
 class MockDiverter(DiverterValve):
