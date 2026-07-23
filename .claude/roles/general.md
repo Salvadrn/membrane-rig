@@ -71,8 +71,29 @@ requirements.txt          run.py                  .gitignore
 
 ## Pendientes vivos (actualízalos)
 
-- [ ] Instalar el software en la Pi (`membrane-rig-setup.sh` ya está en `bootfs`).
-- [ ] Confirmar si la Pi es **4 o 5** — define la fuente (15 W vs 27 W).
-- [ ] Confirmar llegada de las piezas del pedido con Roxanne.
-- [ ] Calibrar `servo_close_us` con el rig armado (ver rol Hardware).
-- [ ] Actualizar el paper: no cubre playlist, techo por corrida ni cierre completo.
+**Bloquea todo lo demás — software:**
+- [ ] **Instalar el software en la Pi.** `membrane-rig-setup.sh` y el repo ya están
+  en `bootfs`. Falta que la Pi vuelva a aparecer en red y entrar por llave.
+  Última IP conocida `100.117.23.112` (CGNAT, cambia); `membrane-rig.local` es
+  poco fiable en el campus. Red actual: `UCSD-Conferences`.
+
+**Bloquea por piezas — Hardware:**
+- [ ] Medir el **`divider_ratio` real** sobre el divisor ya soldado y pasárselo a
+  Paper. Sin esto, `k` queda sesgado en silencio (ver `hardware.md`: 0.667 sobre
+  un divisor de 0.6875 sesga k −2.98 % con R² intacto en 1.000000). **Es gating
+  para publicar un k.**
+- [ ] Medir el **par de arranque del vástago** antes de diseñar el acoplamiento.
+- [ ] Calibrar `servo_close_us` (hoy `0` = sin calibrar), con el servo
+  **desacoplado** del vástago.
+- [ ] Piezas faltantes: transductor de presión, fuente 12 V + fusible, MOSFET
+  IRLZ44N, diodo 1N5819, protoboard + jumpers, sonda DS18B20, solenoide 3 vías
+  (~$53, ESValves — no es de Amazon).
+
+**Resueltos (no los revivas):**
+- [x] Pi es **Raspberry Pi 4** (confirmado en el inventario del diagrama).
+- [x] Paper actualizado a 15 páginas con playlist, techo por corrida y cierre
+  verificado de válvula.
+- [x] Divisor migrado a **10k/22k → 0.6875** y propagado a código, paper y roles.
+- [x] Válvula unificada a **bola de cuarto de vuelta (90°)** en todo el repo.
+- [x] Piezas ya en mano: Pi 4 + microSD, servo DS3218, UBEC 12V→6V, ADS1115
+  (HiLetgo), kit de resistencias, válvula de bola / probeta / manómetro.
