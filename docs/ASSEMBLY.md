@@ -72,8 +72,10 @@ assembly moves as a unit.
 
 > **Visual build guide** (colour-coded by what's on hand vs still missing, with
 > the do-NOT-do rules and the staged build order): [`wiring_diagram.png`](wiring_diagram.png).
-> Regenerate it with `./.venv/bin/python tools/gen_wiring.py` — keep it in sync
-> with the table below.
+> Close-up of the divider — it is not a purchasable part, it is two resistors
+> from the kit: [`wiring_divider.png`](wiring_divider.png).
+> Regenerate both with `./.venv/bin/python tools/gen_wiring.py` — keep them in
+> sync with the table below.
 
 | From (Pi) | To | Notes |
 |---|---|---|

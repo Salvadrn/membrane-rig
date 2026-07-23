@@ -252,3 +252,104 @@ os.makedirs(OUT, exist_ok=True)
 path = os.path.join(OUT, "wiring_diagram.png")
 fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white")
 print("wrote", path)
+
+
+# =====================================================================
+# Figure 2 — voltage-divider detail sheet
+# The divider is the one spot where a wiring mistake destroys a part, and
+# it is NOT a purchasable component: it is two resistors from the kit.
+# =====================================================================
+fig2, ax = plt.subplots(figsize=(13.6, 8.4))
+ax.set_xlim(0, 136)
+ax.set_ylim(0, 84)
+ax.axis("off")
+fig2.patch.set_facecolor("white")
+
+
+def res_h(ax, x, y, w, h, text):
+    """Horizontal resistor."""
+    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.15",
+                                fc="#fff8e1", ec="#b8860b", lw=2.0, zorder=3))
+    label(ax, x + w / 2, y + h / 2, text, INK, 10.5, weight="bold")
+
+
+label(ax, 3, 79.5, "El divisor de voltaje  —  qué es y cómo se arma", INK, 19, ha="left", weight="bold")
+
+ax.add_patch(FancyBboxPatch((3, 68.5), 130, 8.0, boxstyle="round,pad=0.3",
+                            fc="#fff4e5", ec="#e07b00", lw=2.0, zorder=2))
+label(ax, 6, 74.4, "NO es una pieza que se compra.  Son DOS resistencias de tu kit, conectadas así.",
+      "#8a4b00", 12.5, ha="left", weight="bold")
+label(ax, 6, 70.8,
+      "Sirve para una sola cosa: bajar la señal del transductor de 4.5 V a 3.0 V, porque el ADS1115 vive a 3.3 V y 4.5 V lo quema.",
+      "#8a4b00", 9.6, ha="left")
+
+# ---- circuit
+box(ax, 5, 53, 23, 10, "Transductor\nseñal  0.5 – 4.5 V", MISS_FC, MISS_EC, 9.4)
+ax.plot([28, 37], [58, 58], color=SIG, lw=2.2, zorder=2)
+res_h(ax, 37, 54.8, 17, 6.4, "R1 = 10 kΩ")
+ax.plot([54, 70], [58, 58], color=SIG, lw=2.2, zorder=2)
+
+# node
+ax.plot([70], [58], marker="o", ms=9, color=INK, zorder=5)
+label(ax, 70, 65.2, "punto de unión", MUTED, 8.4)
+
+# to ADC
+ax.plot([70, 84], [58, 58], color=SIG, lw=2.2, zorder=2)
+arrow(ax, (84, 58), (88, 58), SIG, lw=2.0)
+box(ax, 88, 53, 25, 10, "ADS1115\nentrada A0", HAVE_FC, HAVE_EC, 9.4)
+label(ax, 84, 60.6, "0 – 3.0 V   ✓ seguro", GOOD, 9.6, weight="bold")
+
+# R2 branch down to ground
+ax.plot([70, 70], [58, 48], color=SIG, lw=2.2, zorder=2)
+ax.add_patch(FancyBboxPatch((65.8, 37), 8.4, 11, boxstyle="round,pad=0.15",
+                            fc="#fff8e1", ec="#b8860b", lw=2.0, zorder=3))
+label(ax, 70, 42.5, "R2\n20 kΩ", INK, 10.5, weight="bold")
+ax.plot([70, 70], [37, 31], color=SIG, lw=2.2, zorder=2)
+for i, hw in enumerate([6.5, 4.2, 2.0]):
+    ax.plot([70 - hw, 70 + hw], [31 - i * 1.9, 31 - i * 1.9], color=INK, lw=2.4, zorder=3)
+label(ax, 70, 24.0, "GND  (tierra común)", INK, 9.4, weight="bold")
+
+# the maths
+ax.add_patch(FancyBboxPatch((88, 34), 45, 15, boxstyle="round,pad=0.3",
+                            fc="#f4f8fb", ec=PWR, lw=1.6, zorder=2))
+label(ax, 90.5, 46.0, "La cuenta", PWR, 10.5, ha="left", weight="bold")
+label(ax, 90.5, 41.6, "4.5 V  ×   20 kΩ / (10 kΩ + 20 kΩ)", INK, 10.5, ha="left")
+label(ax, 90.5, 38.0, "=  4.5 V  ×  0.667  =  3.0 V", INK, 10.5, ha="left", weight="bold")
+label(ax, 90.5, 35.4, "cabe en el ADC y no pasa su límite", MUTED, 8.4, ha="left")
+
+# ---- bottom info cards
+cards = [
+    ("Cómo las identificas",
+     "Con 5 bandas (kit de 1 %):\n"
+     "10 kΩ  →  café · negro · negro · rojo · café\n"
+     "20 kΩ  →  rojo · negro · negro · rojo · café\n\n"
+     "Con 4 bandas:\n"
+     "10 kΩ  →  café · negro · naranja\n"
+     "20 kΩ  →  rojo · negro · naranja",
+     "#f7f7f7", MUTED),
+    ("Si no traes una de 20 kΩ",
+     "Pon DOS de 10 kΩ en serie, una tras otra:\n"
+     "10 kΩ + 10 kΩ = 20 kΩ.\n\n"
+     "Funciona igual. Lo que importa no es la\n"
+     "pieza exacta, es la PROPORCIÓN entre\n"
+     "R1 y R2 (que R2 sea el doble de R1).",
+     "#e6f4ea", GOOD),
+    ("IMPORTANTE:  no asumas 0.667",
+     "Las resistencias reales traen tolerancia.\n"
+     "Ya soldado, mide con el multímetro el\n"
+     "voltaje que entra y el que sale, divide\n"
+     "salida ÷ entrada, y ESE número lo escribes\n"
+     "en divider_ratio de config.yaml.\n"
+     "Si no, la presión te saldrá corrida.",
+     "#fdecec", BAD),
+]
+for i, (title, body, fc, ec) in enumerate(cards):
+    xx = 3 + i * 44.0
+    ax.add_patch(FancyBboxPatch((xx, 1.5), 41.5, 19.0, boxstyle="round,pad=0.3",
+                                fc=fc, ec=ec, lw=1.6, zorder=2))
+    label(ax, xx + 2, 17.6, title, ec if ec != MUTED else INK, 10.2, ha="left", weight="bold")
+    label(ax, xx + 2, 9.0, body, INK, 8.0, ha="left", va="center")
+
+path2 = os.path.join(OUT, "wiring_divider.png")
+fig2.savefig(path2, dpi=150, bbox_inches="tight", facecolor="white")
+print("wrote", path2)
