@@ -1,8 +1,9 @@
-"""Real proportional-valve driver: a hobby servo turning a needle/metering valve.
+"""Real proportional-valve driver: a hobby servo turning a quarter-turn ball valve.
 
 Chosen for LOW-pressure work (10-60 kPa): true water proportional solenoids are
-expensive and most won't actuate below ~0.5 bar. A servo turning a brass needle
-valve gives smooth, cheap, position-based restriction at any pressure.
+expensive and most won't actuate below ~0.5 bar. A servo turning the existing
+quarter-turn ball valve gives cheap, position-based restriction — coarse, but
+usable near-closed where this rig runs (see docs/ASSEMBLY.md).
 
 DRIVER / MECHANICAL ASSUMPTIONS
 -------------------------------
@@ -10,7 +11,7 @@ DRIVER / MECHANICAL ASSUMPTIONS
     servo V+  <-- separate 5-6V supply (NOT the Pi 3.3V/5V rail; servos draw
                   stall currents that brown-out the Pi)
     common ground between the Pi and the servo supply
-    servo horn --[coupler/bracket]--> needle-valve stem
+    servo horn --[coupler/bracket]--> ball-valve stem
 
 pigpio drives the servo with clean DMA-timed pulses via set_servo_pulsewidth().
 

@@ -13,8 +13,8 @@ DESKTOP_COPY = "/Users/salvador/Desktop/BOM_MembraneRig.xlsx"
 
 # (group, part, qty, unit_usd, supplier, url, notes)
 ROWS = [
- ("Control (air line, on existing valve)", "Metal-gear servo DS3218 (20 kg·cm, 270°)", 1, 18.00, "Amazon", "https://www.amazon.com/ANNIMOS-Digital-Waterproof-DS3218MG-Control/dp/B076CNKQX4", "Turns the EXISTING SS air needle valve"),
- ("Control (air line, on existing valve)", "Servo↔needle-valve coupling + servo mount", 1, 0.00, "In-house 3D print", "", "Printed by you, onto the existing green needle-valve knob"),
+ ("Control (air line, on existing valve)", "Metal-gear servo DS3218 (20 kg·cm, 270°)", 1, 18.00, "Amazon", "https://www.amazon.com/ANNIMOS-Digital-Waterproof-DS3218MG-Control/dp/B076CNKQX4", "Turns the EXISTING SS air ball valve (quarter-turn)"),
+ ("Control (air line, on existing valve)", "Servo↔ball-valve coupling + servo mount", 1, 0.00, "In-house 3D print", "", "Printed by you, onto the existing green ball valve's stem (handle removed)"),
  ("Control (air line, on existing valve)", "UBEC 12V→6V 3A (servo power)", 1, 12.00, "Amazon", "https://www.amazon.com/Hobbywing-UBEC-3A-Input-Switch-Mode-Regulator/dp/B07T2CKC8G", "Powers servo off 12V, NOT the Pi"),
  ("Sensing & electronics", "Official Raspberry Pi 15W USB-C PSU (SC0218)", 1, 10.00, "Amazon", "https://www.amazon.com/Raspberry-Model-Official-SC0218-Accessory/dp/B07W8XHMJZ", "SKIP if you already have it"),
  ("Sensing & electronics", "Pressure transducer 0–15 PSI, 0.5–4.5V, G1/4", 1, 15.00, "Amazon", "https://www.amazon.com/0-5-4-5V-Stainless-Pressure-Transducer-0-15PSI/dp/B07G5DQZJ2", "0-15 PSI = 0-103 kPa; tests top ~60 kPa"),
@@ -46,13 +46,13 @@ ROWS = [
 ]
 
 NOTES = [
- "RIG = air-over-water: compressed AIR pressurises the vessel. The servo turns the EXISTING stainless air NEEDLE VALVE (no new control valve).",
+ "RIG = air-over-water: compressed AIR pressurises the vessel. The servo turns the EXISTING stainless air BALL VALVE (quarter-turn; no new control valve).",
  "TEMPERATURE is a test variable (distilled water). The DS18B20 probe measures the water temp -> the software computes mu(T) and logs it. k comes out ~constant across temperature (validation).",
  "Plumbing is Swagelok/COMPRESSION, not NPT. MEASURE the tube OD (caliper) before buying green-shaded fittings; many are likely in lab stock. Mount the transducer at the existing manometer port if possible.",
  "Sensor 0-15 PSI (0-103 kPa) for <=60 kPa tests. ADS1115 at 3.3V + 10k/20k divider. DS18B20 on GPIO4 + 4.7k pullup.",
- "Control is COARSE (servo trims the needle valve). k is still valid: Q is regressed vs the MEASURED mean pressure per point.",
+ "Control is COARSE (servo trims a quarter-turn ball valve). k is still valid: Q is regressed vs the MEASURED mean pressure per point.",
  "OPTIONAL (yellow): supply-side sensor for feed-forward, only if needed.",
- "FIRST TEST once assembled: sweep the servo across the needle's travel and log pressure BEFORE tuning PID; use the dial gauge for a 2-point sensor cal.",
+ "FIRST TEST once assembled: sweep the servo across the ball valve's travel and log pressure BEFORE tuning PID; use the dial gauge for a 2-point sensor cal.",
 ]
 
 
@@ -71,7 +71,7 @@ def write_csv(path):
             w.writerow([g, p, q, f"{u:.2f}", f"{q*u:.2f}", s, url, n])
         w.writerow([])
         w.writerow(["", "TOTAL required (USD)", "", "", f"{req:.2f}", "", "", "Swagelok items may be ~$0 from lab stock"])
-        w.writerow(["", "TOTAL with optional (USD)", "", "", f"{req+opt:.2f}", "", "", "Already owned: Pi 4, microSD, graduated cylinder, dial gauge, air needle valve."])
+        w.writerow(["", "TOTAL with optional (USD)", "", "", f"{req+opt:.2f}", "", "", "Already owned: Pi 4, microSD, graduated cylinder, dial gauge, air ball valve."])
 
 
 def write_xlsx(path):

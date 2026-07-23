@@ -44,25 +44,27 @@ sensor:
 #   0   -> LOWEST pressure  (== SAFE state)
 #   100 -> HIGHEST pressure
 # THIS RIG: air-over-water. Compressed AIR pressurises the vessel; a servo turns
-# the EXISTING stainless NEEDLE VALVE on the air inlet (the one the operator
-# turns by hand today). Opening it admits air -> pressure UP; closing holds/lets
-# it drift down as water permeates. So:
-#   0%  -> needle CLOSED -> lowest pressure (SAFE)
-#   100% -> needle OPEN   -> highest pressure
-# The needle valve is multi-turn, but a servo only spans <1 turn — that's fine:
-# calibrate servo_min_us/max_us to the useful sub-range AROUND your setpoints
-# (find it with the static valve-authority sweep). If closing is too slow to
-# reject an overshoot, add a tiny fixed bleed orifice on the air line.
-# type: servo  -> a servo turning the existing needle valve
+# the EXISTING stainless 90° quarter-turn BALL VALVE on the air inlet (handle
+# removed; the one the operator turns by hand today). Opening it admits air ->
+# pressure UP; closing holds/lets it drift down as water permeates. So:
+#   0%  -> ball CLOSED -> lowest pressure (SAFE)
+#   100% -> ball OPEN   -> highest pressure
+# It's quarter-turn: a ~2:1 reduction maps the servo's ~180° onto the 90° travel
+# (see docs/ASSEMBLY.md). A ball valve has the most authority near-closed, so
+# only part of that travel is useful — calibrate servo_min_us/max_us to the
+# sub-range AROUND your setpoints (find it with the static valve-authority
+# sweep). If closing is too slow to reject an overshoot, add a tiny fixed bleed
+# orifice on the air line.
+# type: servo  -> a servo turning the existing ball valve
 # type: pwm    -> a MOSFET-driven proportional solenoid (see src/hal/pwm_valve.py)
 valve:
   type: servo
-  invert: false        # set true if the servo turns the needle the other way
+  invert: false        # set true if the servo turns the valve the other way
   min_command: 0.0
   max_command: 100.0
 
-  # --- servo on the air-inlet needle valve (type: servo) ---
-  # Calibrate the endpoints to the needle's useful sub-range (NOT hard stops -
+  # --- servo on the air-inlet ball valve (type: servo) ---
+  # Calibrate the endpoints to the ball valve's useful sub-range (NOT hard stops -
   # over-driving stalls/cooks the servo). Servo needs its OWN 5-6V supply (UBEC),
   # not the Pi rail; it holds position on power loss, so the mechanical relief
   # valve is the hardware failsafe.

@@ -67,7 +67,6 @@ assembly moves as a unit.
 3. Valve body / mounting surface + free space around it → mount (№2)
 4. **Swagelok tube OD** on the rig (likely 1/4") → the green BOM fittings
 5. Existing manometer port thread → transducer adapter
-4. Existing manometer port thread → transducer adapter
 
 ## Wiring (all grounds common)
 
@@ -88,7 +87,7 @@ assembly moves as a unit.
    reads ~0 kPa at atmosphere and the probe reads a glass of water.
 2. **Transducer** onto the manometer port (adapter). Two-point calibration
    against the dial gauge (atmosphere + one pressurised point).
-3. **Print & fit coupling + mount**; servo onto the needle valve. Run the
+3. **Print & fit coupling + mount**; servo onto the ball valve. Run the
    **static valve-authority sweep** (servo 0→100 %, log pressure) — this maps
    the useful travel; set `servo_min_us`/`servo_max_us` to that sub-range.
 4. **3-way solenoid** into the permeate line (barbs + clamps); probe clipped in
