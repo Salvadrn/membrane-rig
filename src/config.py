@@ -59,8 +59,8 @@ class ValveConfig:
     pwm_freq_hz: int = 1000
     # --- servo-driven quarter-turn ball valve ---
     servo_pin: int = 18          # hardware-PWM pin (12/13/18/19); pigpio servo pulses
-    servo_min_us: int = 700      # pulse width (µs) at 0% command = valve fully OPEN (vent)
-    servo_max_us: int = 2300     # pulse width (µs) at 100% command = valve fully CLOSED (max pressure)
+    servo_min_us: int = 700      # pulse width (µs) at 0% command = valve CLOSED (inline: lowest pressure = SAFE)
+    servo_max_us: int = 2300     # pulse width (µs) at 100% command = valve OPEN (inline: highest pressure)
     # Pulse that SEATS the valve when a test ends — a little past the 0% end of
     # the control range, because 0% is where regulation stops, not necessarily
     # where the valve seals. 0 = unset (use the 0% endpoint, i.e. old behaviour).
