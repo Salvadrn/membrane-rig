@@ -63,6 +63,13 @@ Para pasar trabajo entre sesiones, usa la herramienta de mensajes entre sesiones
   Nadie afloja estos límites sin decírselo a Adrián. La UI solo puede apretar.
 - **Verificar antes de decir "listo".** Corre el sim, corre el test, mira la
   salida. Nada de "debería funcionar".
+- **Al cambiar una constante, barre también los valores DERIVADOS.** Un
+  find/replace del número literal no basta: hay cifras calculadas a partir de él
+  que no contienen ni el número ni el nombre de la pieza. Caso real (ronda del
+  divisor 10k/20k → 10k/22k): el paper traía un `1.366 V` que era `2.047 × 0.667`
+  y no contenía "0.667" ni "20k" — habría quedado contradiciendo su propia
+  ecuación. Antes de cerrar, pregúntate qué números *se calcularon* con el viejo
+  y recalcula esos también.
 - **Simulación ≠ hardware.** Cualquier afirmación sobre el comportamiento físico
   va marcada como pendiente de validar en el rig.
 - **Un sensor caído nunca se interpreta como "presión baja"** — se trata como
