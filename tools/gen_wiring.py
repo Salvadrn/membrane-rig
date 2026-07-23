@@ -234,7 +234,7 @@ label(ax, 3, 10.0, "ORDEN DE ARMADO   —   de lo más seguro a lo más riesgoso
 stages = [
     ("1", "Solo electrónica", "En el protoboard: SIN agua,\nsin presión y sin servo.\nMide voltajes con multímetro.", HAVE_FC, HAVE_EC),
     ("2", "Verifica los buses", "i2cdetect -y 1  →  debe salir 0x48\nls /sys/bus/w1/devices/  →  28-…\n(1-Wire pide reiniciar)", HAVE_FC, HAVE_EC),
-    ("3", "Mide el divisor", "Vout/Vin con el multímetro, ya\nsoldado, y escribe ESE número\nen divider_ratio. No asumas 0.6875.", HAVE_FC, HAVE_EC),
+    ("3", "Mide el divisor", "Vout/Vin con el multímetro, ya\nsoldado, va en divider_ratio.\n3 % aquí = 3 % de error en tu k.", HAVE_FC, HAVE_EC),
     ("4", "Transductor", "Al puerto del manómetro.\nCalibración de 2 puntos contra\nla carátula. Ya hay presión: cuidado.", "#fff8e1", "#b8860b"),
     ("5", "Solenoide + sonda", "Barbs y abrazaderas en la línea\nde permeado. La sonda va en el\nchorro de desecho.", "#fff8e1", "#b8860b"),
     ("6", "Fugas + kill test", "Presuriza y verifica que sostiene.\nLuego desconecta el sensor a media\ncorrida: DEBE ventear y abortar.", "#fff8e1", "#b8860b"),
@@ -336,12 +336,12 @@ cards = [
      "pon DOS de 10 kΩ en serie (= 20 kΩ).",
      "#e6f4ea", GOOD),
     ("IMPORTANTE:  no asumas 0.6875",
-     "Las resistencias reales traen tolerancia.\n"
-     "Ya soldado, mide con el multímetro el\n"
-     "voltaje que entra y el que sale, divide\n"
-     "salida ÷ entrada, y ESE número lo escribes\n"
-     "en divider_ratio de config.yaml.\n"
-     "Si no, la presión te saldrá corrida.",
+     "Ya soldado, mide con el multímetro lo\n"
+     "que entra y lo que sale: salida ÷ entrada\n"
+     "es tu divider_ratio real.\n\n"
+     "Un 3 % de error aquí = 3 % de error en tu k,\n"
+     "y el R² sale IGUAL de bueno (0.999): la\n"
+     "gráfica nunca te avisa. Medido, no supuesto.",
      "#fdecec", BAD),
 ]
 for i, (title, body, fc, ec) in enumerate(cards):

@@ -38,8 +38,12 @@ sensor:
   # (22k because the resistor kit has no 20k; only the RATIO matters, and 0.6875
   # is just as safe: still under the ADC's 3.3V rail). NOMINAL VALUE ONLY —
   # replace it with the ratio you MEASURE on the soldered divider (step 3 of the
-  # build order): real resistors carry tolerance, and an error here biases every
-  # pressure reading by the same percentage without looking wrong on screen.
+  # build order). This is NOT cosmetic: a wrong ratio is a pure scale error on
+  # P, so it propagates straight into the Darcy slope. Checked against
+  # fit_permeability: using 0.667 on a 0.6875 divider reports 60 kPa as 62.24
+  # and biases k by -2.98% — with R2 UNCHANGED at 1.000000 and follows_darcy
+  # still true. Nothing in the plot reveals it. Safe for the mesh (it
+  # over-reports, so it aborts early), silently wrong for the result.
   divider_ratio: 0.6875
   v_signal_min: 0.5    # V at range_min
   v_signal_max: 4.5    # V at range_max
