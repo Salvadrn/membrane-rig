@@ -50,14 +50,14 @@ class SensorConfig:
 
 @dataclass
 class ValveConfig:
-    type: str = "servo"          # "servo" (servo-driven needle valve) or "pwm" (MOSFET proportional solenoid)
+    type: str = "servo"          # "servo" (servo-driven quarter-turn ball valve) or "pwm" (MOSFET proportional solenoid)
     invert: bool = False
     min_command: float = 0.0
     max_command: float = 100.0
     # --- pwm proportional-solenoid driver ---
     pwm_pin: int = 18
     pwm_freq_hz: int = 1000
-    # --- servo-driven needle/metering valve ---
+    # --- servo-driven quarter-turn ball valve ---
     servo_pin: int = 18          # hardware-PWM pin (12/13/18/19); pigpio servo pulses
     servo_min_us: int = 700      # pulse width (µs) at 0% command = valve fully OPEN (vent)
     servo_max_us: int = 2300     # pulse width (µs) at 100% command = valve fully CLOSED (max pressure)
