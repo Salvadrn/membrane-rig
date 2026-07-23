@@ -14,7 +14,7 @@ sensor:
   #   current_loop    -> 4-20 mA sensor read as voltage across a shunt resistor
   #   voltage_divider -> 0.5-4.5 V (or 0-5V) sensor scaled into the ADS1115 range
   # The chosen transducer is a 0.5-4.5 V unit -> voltage_divider. Power the
-  # ADS1115 at 3.3 V and use a 10k/20k divider (4.5 V -> ~3.0 V) so the signal
+  # ADS1115 at 3.3 V and use a 10k/22k divider (4.5 V -> ~3.1 V) so the signal
   # never exceeds the ADC input. Do NOT feed 0.5-4.5 V straight in.
   type: voltage_divider   # sensor is 0.5-4.5 V ratiometric -> MUST divide, not raw
   range_min: 0.0       # kPa at 0.5 V
@@ -34,8 +34,13 @@ sensor:
 
   # --- voltage_divider front-end ---
   # A 0.5-4.5V sensor exceeds the ADS1115 input at a 3.3V supply, so divide it.
-  # divider_ratio = R2/(R1+R2). With R1=10k, R2=20k -> 0.667: 4.5V -> ~3.0V.
-  divider_ratio: 0.667
+  # divider_ratio = R2/(R1+R2). Built with R1=10k, R2=22k -> 0.6875: 4.5V -> ~3.1V
+  # (22k because the resistor kit has no 20k; only the RATIO matters, and 0.6875
+  # is just as safe: still under the ADC's 3.3V rail). NOMINAL VALUE ONLY —
+  # replace it with the ratio you MEASURE on the soldered divider (step 3 of the
+  # build order): real resistors carry tolerance, and an error here biases every
+  # pressure reading by the same percentage without looking wrong on screen.
+  divider_ratio: 0.6875
   v_signal_min: 0.5    # V at range_min
   v_signal_max: 4.5    # V at range_max
 

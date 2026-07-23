@@ -81,7 +81,7 @@ assembly moves as a unit.
 |---|---|---|
 | 5V (pin 2) | transducer V+ | ratiometric 0.5–4.5 V sensor |
 | GPIO2/GPIO3 (SDA/SCL) | ADS1115 | ADS powered at **3.3 V** |
-| — sensor signal | 10k/20k divider → ADS A0 | never feed 4.5 V straight in |
+| — sensor signal | 10k/22k divider → ADS A0 | never feed 4.5 V straight in |
 | GPIO4 | DS18B20 data | + 4.7k pull-up to 3.3 V; enable 1-Wire |
 | GPIO18 | servo signal | servo power from **UBEC 6 V**, not the Pi |
 | GPIO23 | IRLZ44N gate via 150–330 Ω | + 10k gate pull-down; drain → solenoid−; flyback across coil |

@@ -110,7 +110,7 @@ for name, yy in pins:
 # ---------------------------------------------------------- ROW 1: sensing
 section(ax, 29, 101.5, "CADENA DE PRESIÓN", SIG)
 box(ax, 38, 85.5, 21, 9, "Transductor\n0–15 PSI · 0.5–4.5 V", MISS_FC, MISS_EC, 8.6)
-box(ax, 65, 85.5, 21, 9, "Divisor\nR1 10k  +  R2 20k", HAVE_FC, HAVE_EC, 8.6)
+box(ax, 65, 85.5, 21, 9, "Divisor\nR1 10k  +  R2 22k", HAVE_FC, HAVE_EC, 8.6)
 box(ax, 92, 85.5, 24, 9, "ADS1115  (HiLetgo)\nA0 · ADDR→GND · 0x48", HAVE_FC, HAVE_EC, 8.6)
 
 arrow(ax, (28.5, 90.0), (38, 90.0), PWR)
@@ -118,8 +118,8 @@ label(ax, 33.2, 91.6, "5 V", PWR, 7.8)
 arrow(ax, (59, 90.0), (65, 90.0), SIG)
 label(ax, 62, 92.0, "0.5–4.5 V", SIG, 7.4)
 arrow(ax, (86, 90.0), (92, 90.0), SIG)
-label(ax, 89, 92.0, "0–3.0 V", SIG, 7.4)
-label(ax, 75.5, 83.0, "4.5 V × 0.667 = 3.0 V  →  así ya cabe en el ADC sin quemarlo", SIG, 7.7)
+label(ax, 89, 92.0, "0–3.1 V", SIG, 7.4)
+label(ax, 75.5, 83.0, "4.5 V × 0.6875 = 3.1 V  →  así ya cabe en el ADC sin quemarlo", SIG, 7.7)
 
 # I2C + 3.3V
 arrow(ax, (28.5, 82.0), (104, 82.0), SIG, ls=DASH)
@@ -213,7 +213,7 @@ rules = [
     ("Servo al riel de 5 V del Pi",
      "jala picos de ~2 A y el Pi se reinicia solo  →  aliméntalo del UBEC"),
     ("Transductor directo al ADS1115",
-     "el ADC vive a 3.3 V y la señal llega a 4.5 V: lo quemas  →  divisor 10k/20k primero"),
+     "el ADC vive a 3.3 V y la señal llega a 4.5 V: lo quemas  →  divisor 10k/22k primero"),
     ("Tierras separadas",
      "sin GND común las lecturas flotan y el MOSFET no conmuta bien  →  une TODOS los GND"),
     ("Solenoide sin diodo flyback",
@@ -234,7 +234,7 @@ label(ax, 3, 10.0, "ORDEN DE ARMADO   —   de lo más seguro a lo más riesgoso
 stages = [
     ("1", "Solo electrónica", "En el protoboard: SIN agua,\nsin presión y sin servo.\nMide voltajes con multímetro.", HAVE_FC, HAVE_EC),
     ("2", "Verifica los buses", "i2cdetect -y 1  →  debe salir 0x48\nls /sys/bus/w1/devices/  →  28-…\n(1-Wire pide reiniciar)", HAVE_FC, HAVE_EC),
-    ("3", "Mide el divisor", "Vout/Vin con el multímetro, ya\nsoldado, y escribe ESE número\nen divider_ratio. No asumas 0.667.", HAVE_FC, HAVE_EC),
+    ("3", "Mide el divisor", "Vout/Vin con el multímetro, ya\nsoldado, y escribe ESE número\nen divider_ratio. No asumas 0.6875.", HAVE_FC, HAVE_EC),
     ("4", "Transductor", "Al puerto del manómetro.\nCalibración de 2 puntos contra\nla carátula. Ya hay presión: cuidado.", "#fff8e1", "#b8860b"),
     ("5", "Solenoide + sonda", "Barbs y abrazaderas en la línea\nde permeado. La sonda va en el\nchorro de desecho.", "#fff8e1", "#b8860b"),
     ("6", "Fugas + kill test", "Presuriza y verifica que sostiene.\nLuego desconecta el sensor a media\ncorrida: DEBE ventear y abortar.", "#fff8e1", "#b8860b"),
@@ -280,7 +280,7 @@ ax.add_patch(FancyBboxPatch((3, 68.5), 130, 8.0, boxstyle="round,pad=0.3",
 label(ax, 6, 74.4, "NO es una pieza que se compra.  Son DOS resistencias de tu kit, conectadas así.",
       "#8a4b00", 12.5, ha="left", weight="bold")
 label(ax, 6, 70.8,
-      "Sirve para una sola cosa: bajar la señal del transductor de 4.5 V a 3.0 V, porque el ADS1115 vive a 3.3 V y 4.5 V lo quema.",
+      "Sirve para una sola cosa: bajar la señal del transductor de 4.5 V a 3.1 V, porque el ADS1115 vive a 3.3 V y 4.5 V lo quema.",
       "#8a4b00", 9.6, ha="left")
 
 # ---- circuit
@@ -297,13 +297,13 @@ label(ax, 70, 65.2, "punto de unión", MUTED, 8.4)
 ax.plot([70, 84], [58, 58], color=SIG, lw=2.2, zorder=2)
 arrow(ax, (84, 58), (88, 58), SIG, lw=2.0)
 box(ax, 88, 53, 25, 10, "ADS1115\nentrada A0", HAVE_FC, HAVE_EC, 9.4)
-label(ax, 84, 60.6, "0 – 3.0 V   ✓ seguro", GOOD, 9.6, weight="bold")
+label(ax, 84, 60.6, "0 – 3.1 V   ✓ seguro", GOOD, 9.6, weight="bold")
 
 # R2 branch down to ground
 ax.plot([70, 70], [58, 48], color=SIG, lw=2.2, zorder=2)
 ax.add_patch(FancyBboxPatch((65.8, 37), 8.4, 11, boxstyle="round,pad=0.15",
                             fc="#fff8e1", ec="#b8860b", lw=2.0, zorder=3))
-label(ax, 70, 42.5, "R2\n20 kΩ", INK, 10.5, weight="bold")
+label(ax, 70, 42.5, "R2\n22 kΩ", INK, 10.5, weight="bold")
 ax.plot([70, 70], [37, 31], color=SIG, lw=2.2, zorder=2)
 for i, hw in enumerate([6.5, 4.2, 2.0]):
     ax.plot([70 - hw, 70 + hw], [31 - i * 1.9, 31 - i * 1.9], color=INK, lw=2.4, zorder=3)
@@ -313,8 +313,8 @@ label(ax, 70, 24.0, "GND  (tierra común)", INK, 9.4, weight="bold")
 ax.add_patch(FancyBboxPatch((88, 34), 45, 15, boxstyle="round,pad=0.3",
                             fc="#f4f8fb", ec=PWR, lw=1.6, zorder=2))
 label(ax, 90.5, 46.0, "La cuenta", PWR, 10.5, ha="left", weight="bold")
-label(ax, 90.5, 41.6, "4.5 V  ×   20 kΩ / (10 kΩ + 20 kΩ)", INK, 10.5, ha="left")
-label(ax, 90.5, 38.0, "=  4.5 V  ×  0.667  =  3.0 V", INK, 10.5, ha="left", weight="bold")
+label(ax, 90.5, 41.6, "4.5 V  ×   22 kΩ / (10 kΩ + 22 kΩ)", INK, 10.5, ha="left")
+label(ax, 90.5, 38.0, "=  4.5 V  ×  0.6875  =  3.09 V", INK, 10.5, ha="left", weight="bold")
 label(ax, 90.5, 35.4, "cabe en el ADC y no pasa su límite", MUTED, 8.4, ha="left")
 
 # ---- bottom info cards
@@ -322,19 +322,20 @@ cards = [
     ("Cómo las identificas",
      "Con 5 bandas (kit de 1 %):\n"
      "10 kΩ  →  café · negro · negro · rojo · café\n"
-     "20 kΩ  →  rojo · negro · negro · rojo · café\n\n"
+     "22 kΩ  →  rojo · rojo · negro · rojo · café\n\n"
      "Con 4 bandas:\n"
      "10 kΩ  →  café · negro · naranja\n"
-     "20 kΩ  →  rojo · negro · naranja",
+     "22 kΩ  →  rojo · rojo · naranja",
      "#f7f7f7", MUTED),
-    ("Si no traes una de 20 kΩ",
-     "Pon DOS de 10 kΩ en serie, una tras otra:\n"
-     "10 kΩ + 10 kΩ = 20 kΩ.\n\n"
-     "Funciona igual. Lo que importa no es la\n"
-     "pieza exacta, es la PROPORCIÓN entre\n"
-     "R1 y R2 (que R2 sea el doble de R1).",
+    ("Por qué 22 kΩ y no 20 kΩ",
+     "Muchos kits no traen 20 kΩ. Da igual:\n"
+     "lo que importa no es la pieza exacta,\n"
+     "es la PROPORCIÓN entre R1 y R2.\n\n"
+     "Con 10k/22k el ADC ve 3.09 V — igual de\n"
+     "seguro. Si algún día quieres 0.667 justo,\n"
+     "pon DOS de 10 kΩ en serie (= 20 kΩ).",
      "#e6f4ea", GOOD),
-    ("IMPORTANTE:  no asumas 0.667",
+    ("IMPORTANTE:  no asumas 0.6875",
      "Las resistencias reales traen tolerancia.\n"
      "Ya soldado, mide con el multímetro el\n"
      "voltaje que entra y el que sale, divide\n"
