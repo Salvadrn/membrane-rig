@@ -3,10 +3,11 @@
 `Automated_Membrane_Permeability_System_Martinez.pdf` — the paper, ready to read or share.
 `Automated_Membrane_Permeability_System_Martinez.docx` — the editable source, scientific-paper-style write-up
 of how the rig and its software work (author: Salvador Adrián Martínez García).
-14 pages: theory (Darcy slope method, pore size, viscosity/temperature), signal
+15 pages: theory (Darcy slope method, pore size, viscosity/temperature), signal
 chains with worked numbers, the discrete PID law term by term, the test-sequencing
-state machine, analysis pipeline, simulation validation, safety design, and remote
-operation.
+state machine and experiment playlists with a manual gate, analysis pipeline,
+simulation validation, safety design (pressure ladder, per-run ceiling, verified
+valve closure), and remote operation.
 
 Everything here is regenerable, so edit the sources rather than the `.docx` if the
 system changes:

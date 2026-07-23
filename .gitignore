@@ -21,3 +21,8 @@ env/
 
 # archivos de bloqueo de Word
 ~$*
+
+# Node deps for the paper generator (installed on demand: npm install docx)
+docs/paper/node_modules/
+docs/paper/package.json
+docs/paper/package-lock.json
