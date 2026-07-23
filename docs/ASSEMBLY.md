@@ -70,6 +70,11 @@ assembly moves as a unit.
 
 ## Wiring (all grounds common)
 
+> **Visual build guide** (colour-coded by what's on hand vs still missing, with
+> the do-NOT-do rules and the staged build order): [`wiring_diagram.png`](wiring_diagram.png).
+> Regenerate it with `./.venv/bin/python tools/gen_wiring.py` — keep it in sync
+> with the table below.
+
 | From (Pi) | To | Notes |
 |---|---|---|
 | 5V (pin 2) | transducer V+ | ratiometric 0.5–4.5 V sensor |
