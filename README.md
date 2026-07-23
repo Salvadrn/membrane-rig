@@ -218,8 +218,8 @@ won't actuate below ~0.5 bar, so a servo-turned valve is cheaper and works at
 any pressure.
 
 **Topology (this rig): a SINGLE inline throttle in the feed line** between the
-reservoir and the cell — the same place the manual rig's needle valve regulates
-today. This works because the high-permeability mesh membrane passes enough flow
+reservoir and the cell — the same place the manual rig's quarter-turn ball valve
+regulates today. This works because the high-permeability mesh membrane passes enough flow
 (tens of mL/s) that the valve and the membrane form a natural pressure divider:
 opening the valve raises cell pressure, closing lowers it (it drains through the
 membrane). Command sense: **0% = valve closed = lowest pressure (SAFE)**,
@@ -377,8 +377,8 @@ reflect them; don't skip them or the rig won't assemble or won't control.
   hold, not ±2 % (`tolerance_pct` is set to 10). The permeability `k` is **still
   valid** because `Q` is regressed vs the *measured* mean ΔP per point.
 - A bleed valve only has authority with a **fixed restriction upstream** —
-  install the manual needle valve (in the BOM) between the source and the bleed
-  tee, or the loop can't regulate.
+  add a fixed orifice between the source and the bleed tee (not in the BOM; the
+  default inline layout doesn't need one), or the loop can't regulate.
 
 **First test once assembled — static valve-authority sweep:** with the source
 pressurised and the diverter to waste, step the valve across its full stroke and
