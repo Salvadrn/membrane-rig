@@ -207,8 +207,8 @@ override the config for that run.
   voltage across it. 150 Ω → 4 mA = 0.60 V, 20 mA = 3.00 V (safe at gain 1,
   ±4.096 V). Set `shunt_ohms` to your actual resistor.
 - **0.5–4.5 V sensor** (`sensor.type: voltage_divider`): the signal exceeds the
-  ADS1115's input at 3.3 V, so scale it with a divider. R1 = 10 k, R2 = 20 k →
-  ratio 0.667 → 4.5 V maps to ~3.0 V. Set `divider_ratio = R2/(R1+R2)`.
+  ADS1115's input at 3.3 V, so scale it with a divider. R1 = 10 k, R2 = 22 k →
+  ratio 0.6875 → 4.5 V maps to ~3.09 V. Set `divider_ratio = R2/(R1+R2)`.
 
 **Pressure-control valve — two driver options (`valve.type`):**
 
@@ -338,7 +338,7 @@ your accumulated dataset, all in one place.
 |------|-------|
 | Pressure transducer | 0–100 kPa range (covers your 10–60 kPa tests with headroom). 4–20 mA **or** 0.5–4.5 V — both supported. |
 | ADS1115 breakout | 16-bit I2C ADC (the Pi has no analog input) |
-| Precision shunt resistor | ~150 Ω, 0.1% (only for the 4–20 mA option) — **or** two divider resistors (10 k + 20 k) for the 0.5–4.5 V option |
+| Precision shunt resistor | ~150 Ω, 0.1% (only for the 4–20 mA option) — **or** two divider resistors (10 k + 22 k) for the 0.5–4.5 V option |
 | Proportional solenoid valve | 12 V, normally-open, water-compatible, sized for your flow/pressure |
 | 3-way solenoid valve | 12 V, water-compatible, normally routes to waste |
 | 2× logic-level N-MOSFET | IRLZ44N (or a 2-channel MOSFET driver module) |
@@ -365,7 +365,7 @@ reflect them; don't skip them or the rig won't assemble or won't control.
 
 **Electrical:**
 - Power the **ADS1115 at 3.3 V** and feed the 0.5–4.5 V sensor through a
-  **10k/20k divider** (→ ~3.0 V). Never feed 0.5–4.5 V straight in — it clips and
+  **10k/22k divider** (→ ~3.09 V). Never feed 0.5–4.5 V straight in — it clips and
   can over-volt the ADC. Config uses `sensor.type: voltage_divider`.
 - Add a **10k gate-to-source pulldown** + 150–330 Ω series gate resistor on the
   MOSFET, or the diverter can energise at boot before the code runs.

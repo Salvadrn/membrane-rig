@@ -63,7 +63,7 @@ arrow(ax, (25, 60), (25, 64), "#a33")
 # --- measurement chain ---
 box(ax, 37, 36, 18, 8, "pressure transducer\n0–103 kPa, 0.5–4.5 V",
     fc="#fffbe8", ec=SIG, fs=8)
-box(ax, 37, 25, 18, 8, "voltage divider 10 k / 20 k\n↓\nADS1115  16-bit ADC",
+box(ax, 37, 25, 18, 8, "voltage divider 10 k / 22 k\n↓\nADS1115  16-bit ADC",
     fc="#fffbe8", ec=SIG, fs=8)
 box(ax, 76, 34, 22, 8, "DS18B20\nwater temperature", fc="#fffbe8", ec=SIG, fs=8)
 
@@ -205,7 +205,7 @@ arrow(ax, (91.5, 34), (91.5, 15.4), CTRL)
 
 # sensor feedback
 box(ax, 14, 4, 34, 11.4,
-    "transducer 0.5–4.5 V  →  divider ×0.667  →\nADS1115 (16-bit)  →  pressure",
+    "transducer 0.5–4.5 V  →  divider ×0.6875  →\nADS1115 (16-bit)  →  pressure",
     fc="#fffbe8", ec=SIG, fs=7.6)
 arrow(ax, (56, 9.7), (48, 9.7), SIG, ls=DASH)
 line(ax, (14, 9.7), (7, 9.7), SIG, ls=DASH)
