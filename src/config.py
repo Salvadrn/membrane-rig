@@ -43,7 +43,7 @@ class SensorConfig:
     shunt_ohms: float = 150.0
     signal_min: float = 0.004
     signal_max: float = 0.020
-    divider_ratio: float = 0.667
+    divider_ratio: float = 0.6875
     v_signal_min: float = 0.5
     v_signal_max: float = 4.5
 
@@ -227,7 +227,7 @@ class Config:
             shunt_ohms=float(s.get("shunt_ohms", 150.0)),
             signal_min=float(s.get("signal_min", 0.004)),
             signal_max=float(s.get("signal_max", 0.020)),
-            divider_ratio=float(s.get("divider_ratio", 0.667)),
+            divider_ratio=float(s.get("divider_ratio", 0.6875)),
             v_signal_min=float(s.get("v_signal_min", 0.5)),
             v_signal_max=float(s.get("v_signal_max", 4.5)),
         )
