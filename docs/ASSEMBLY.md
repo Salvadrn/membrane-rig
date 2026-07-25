@@ -74,8 +74,10 @@ assembly moves as a unit.
 > the do-NOT-do rules and the staged build order): [`wiring_diagram.png`](wiring_diagram.png).
 > Close-up of the divider — it is not a purchasable part, it is two resistors
 > from the kit: [`wiring_divider.png`](wiring_divider.png).
-> Regenerate both with `./.venv/bin/python tools/gen_wiring.py` — keep them in
-> sync with the table below.
+> ADS1115 pin-by-pin hookup (which pin goes where, and why R2 must reach the
+> same ground the ADC measures against): [`wiring_ads1115.png`](wiring_ads1115.png).
+> Regenerate all three with `./.venv/bin/python tools/gen_wiring.py` — keep them
+> in sync with the table below.
 
 | From (Pi) | To | Notes |
 |---|---|---|

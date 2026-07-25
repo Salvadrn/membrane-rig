@@ -354,3 +354,133 @@ for i, (title, body, fc, ec) in enumerate(cards):
 path2 = os.path.join(OUT, "wiring_divider.png")
 fig2.savefig(path2, dpi=150, bbox_inches="tight", facecolor="white")
 print("wrote", path2)
+
+
+# =====================================================================
+# Figure 3 — how the divider hooks up to the ADS1115 (HiLetgo)
+# Answers two beginner questions head-on: the divider has no power feed
+# of its own, and R2 must reach the SAME ground the ADC measures against.
+# =====================================================================
+W33 = PWR
+WSIG = SIG
+WGND = INK
+WI2C = "#6a4a9c"
+GREYPIN = "#9a9a9a"
+
+fig3, ax = plt.subplots(figsize=(18, 12.2))
+ax.set_xlim(0, 180)
+ax.set_ylim(0, 122)
+ax.axis("off")
+fig3.patch.set_facecolor("white")
+
+label(ax, 3, 117, "Cómo se conecta el divisor al ADS1115 (HiLetgo)", INK, 19, ha="left", weight="bold")
+label(ax, 3, 112.2,
+      "Dos dudas que vale la pena resolver de raíz: las resistencias no se alimentan, y R2 tiene que llegar a la MISMA tierra contra la que mide el ADC.",
+      MUTED, 10.5, ha="left")
+
+# ---------------------------------------------------- module with its pin strip
+box(ax, 8, 99, 56, 8.5, "ADS1115   —   módulo HiLetgo", HAVE_FC, HAVE_EC, 11.5, weight="bold")
+ads_pins = ["VDD", "GND", "SCL", "SDA", "ADDR", "ALRT", "A0", "A1", "A2", "A3"]
+used = {"VDD": W33, "GND": WGND, "SCL": WI2C, "SDA": WI2C, "ADDR": WGND, "A0": WSIG}
+px0, pstep = 12.5, 47 / 9
+for i, pn in enumerate(ads_pins):
+    px = px0 + i * pstep
+    col = used.get(pn, GREYPIN)
+    ax.plot([px, px], [99, 96.4], color=col, lw=3.4, zorder=4)
+    ax.text(px, 95.4, pn, ha="center", va="top", rotation=90, fontsize=7.8,
+            color=col, zorder=5, weight="bold" if pn in used else "normal")
+label(ax, 67, 103, "tu módulo es esta tira\nde 10 pines", MUTED, 8.6, ha="left")
+
+# ---------------------------------------------------- pin destination table
+label(ax, 8, 84, "A DÓNDE VA CADA PIN", INK, 12.5, ha="left", weight="bold")
+rows = [
+    ("VDD",  W33,  "3.3 V del Pi",
+     "NO a 5 V: el divisor está calculado para un ADC de 3.3 V"),
+    ("GND",  WGND, "la barra de tierra común",
+     "la MISMA tierra del Pi, del transductor y de R2"),
+    ("SCL",  WI2C, "GPIO3 (SCL) del Pi", "reloj del bus I²C"),
+    ("SDA",  WI2C, "GPIO2 (SDA) del Pi", "datos del bus I²C"),
+    ("ADDR", WGND, "a GND",
+     "así el módulo responde en la dirección 0x48"),
+    ("A0",   WSIG, "al punto medio del divisor",
+     "aquí llega la señal ya bajada a ~3.1 V  ←  esta es la entrada que mide"),
+    ("ALRT · A1 · A2 · A3", GREYPIN, "sin conectar", "no se usan en este rig"),
+]
+yy = 78.5
+for pn, col, dest, note in rows:
+    ax.add_patch(FancyBboxPatch((8, yy - 0.4), 2.8, 2.8, boxstyle="round,pad=0.05",
+                                fc=col, ec=col, zorder=3))
+    label(ax, 12.5, yy + 1.0, pn, col, 9.8, ha="left", weight="bold")
+    label(ax, 42, yy + 1.8, "→   " + dest, INK, 9.6, ha="left", weight="bold")
+    label(ax, 42, yy - 1.0, note, MUTED, 8.2, ha="left")
+    yy -= 7.6
+
+# ---------------------------------------------------- circuit on the right
+CX = 108
+label(ax, CX, 92, "Y esto es lo que llega a A0", INK, 12.5, ha="left", weight="bold")
+
+# transducer with its three leads
+box(ax, CX, 79, 26, 9, "Transductor", MISS_FC, MISS_EC, 9.6)
+leads = [("V+", "→  5 V del Pi", "#cc3333", 86.2),
+         ("GND", "→  tierra común", WGND, 80.2)]
+for nm, extra, col, ly in leads:
+    label(ax, CX + 27.5, ly, nm, col, 8.8, ha="left", weight="bold")
+    label(ax, CX + 33, ly, extra, MUTED, 8.2, ha="left")
+
+# signal leaves the transducer, runs right then down into R1
+ax.plot([CX + 26, CX + 52], [83.2, 83.2], color=WSIG, lw=2.4, zorder=2)
+label(ax, CX + 33, 84.8, "señal  0.5–4.5 V", WSIG, 8.2, ha="left", weight="bold")
+ax.plot([CX + 52, CX + 52], [83.2, 74], color=WSIG, lw=2.4, zorder=2)
+
+# R1 vertical
+ax.add_patch(FancyBboxPatch((CX + 47.8, 65), 8.4, 9, boxstyle="round,pad=0.15",
+                            fc="#fff8e1", ec="#b8860b", lw=2.0, zorder=3))
+label(ax, CX + 52, 69.5, "R1\n10 kΩ", INK, 9.5, weight="bold")
+
+# node below R1
+ax.plot([CX + 52, CX + 52], [65, 57], color=WSIG, lw=2.4, zorder=2)
+ax.plot([CX + 52], [57], marker="o", ms=9, color=INK, zorder=6)
+label(ax, CX + 55, 58.6, "punto medio", MUTED, 8.4, ha="left")
+
+# branch left+down through R2 to ground
+ax.plot([CX + 52, CX + 30], [57, 57], color=WSIG, lw=2.4, zorder=2)
+ax.plot([CX + 30, CX + 30], [57, 50], color=WSIG, lw=2.4, zorder=2)
+ax.add_patch(FancyBboxPatch((CX + 25.8, 41), 8.4, 9, boxstyle="round,pad=0.15",
+                            fc="#fff8e1", ec="#b8860b", lw=2.0, zorder=3))
+label(ax, CX + 30, 45.5, "R2\n22 kΩ", INK, 9.5, weight="bold")
+ax.plot([CX + 30, CX + 30], [41, 34], color=WGND, lw=2.4, zorder=2)
+for i, hw in enumerate([6.0, 3.9, 1.9]):
+    ax.plot([CX + 30 - hw, CX + 30 + hw], [34 - i * 1.8, 34 - i * 1.8],
+            color=INK, lw=2.6, zorder=3)
+label(ax, CX + 30, 26.5, "tierra común", WGND, 8.8, weight="bold")
+
+# branch straight down to A0
+ax.plot([CX + 52, CX + 52], [57, 48], color=WSIG, lw=2.4, zorder=2)
+arrow(ax, (CX + 52, 48), (CX + 52, 44.5), WSIG, lw=2.2)
+box(ax, CX + 39, 38.5, 26, 6, "A0  del ADS1115", HAVE_FC, HAVE_EC, 9.2)
+label(ax, CX + 52, 35.5, "~3.1 V máx.  ✓", GOOD, 8.6, weight="bold")
+
+# ---------------------------------------------------- two answer cards
+ax.add_patch(FancyBboxPatch((8, 3), 80, 18, boxstyle="round,pad=0.4",
+                            fc="#e6f4ea", ec=GOOD, lw=1.8, zorder=2))
+label(ax, 11.5, 17.6, "«¿Cómo alimento las resistencias?»", GOOD, 11.8, ha="left", weight="bold")
+label(ax, 11.5, 9.8,
+      "No las alimentas: una resistencia es pasiva — dos patas, sin polaridad, sin pin de\n"
+      "corriente. El divisor no tiene alimentación propia. Su única entrada es la SEÑAL del\n"
+      "transductor y su única salida es el punto medio hacia A0. Lo que sí se alimenta es el\n"
+      "transductor: su cable V+ va a los 5 V del Pi.",
+      INK, 8.9, ha="left", va="center")
+
+ax.add_patch(FancyBboxPatch((94, 3), 80, 18, boxstyle="round,pad=0.4",
+                            fc="#f4f8fb", ec=PWR, lw=1.8, zorder=2))
+label(ax, 97.5, 17.6, "«¿Por qué R2 va a tierra?»", PWR, 11.8, ha="left", weight="bold")
+label(ax, 97.5, 9.8,
+      "Porque sin ese camino no hay división. R2 deja que circule una corriente pequeña de la\n"
+      "señal hacia tierra; al circular, R1 y R2 se reparten el voltaje y el punto medio queda en\n"
+      "la fracción R2/(R1+R2). Si R2 no llegara a tierra no circularía nada, R1 no caería nada y\n"
+      "el punto medio seguiría en 4.5 V. Y el ADC mide A0 contra ESA misma tierra.",
+      INK, 8.9, ha="left", va="center")
+
+path3 = os.path.join(OUT, "wiring_ads1115.png")
+fig3.savefig(path3, dpi=150, bbox_inches="tight", facecolor="white")
+print("wrote", path3)
