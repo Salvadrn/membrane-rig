@@ -213,7 +213,21 @@ Before soldering:
 
 ## First safety checks
 - Relief valve set below the vessel's limit and above your max test point.
-- Kill test: unplug the sensor mid-run → the rig must vent/abort (sensor fault).
+  **Check the part before ordering:** a relief that cracks below the working
+  point does not merely fail to protect — it stops you pressurising at all,
+  which is what gets it removed. Tests run at 35–40 kPa, so a fixed 5 psi
+  (34.5 kPa) unit is useless here; it must be adjustable.
+- **Kill test** (sustained fault): unplug the sensor mid-run → the rig must
+  vent/abort. With the sensor pin at 0 V the front end reads **−12.93 kPa**,
+  below `safety.min_plausible` (−5.0), so `SENSOR_FAULT` fires after
+  `fault_grace_reads: 3` reads (~150 ms at 20 Hz).
+- **Glitch test** (transient fault) — *different failure, different mechanism,
+  run both*: force a single isolated NaN reading, i.e. fewer than
+  `fault_grace_reads`, so no fault is declared. Pressure must **not** excursion
+  and the valve must **not** stick open; the loop holds its last good command
+  and resumes when good reads return. Guarded in `pid.py` (commit `867ba6d`) —
+  before that guard, one I²C hiccup poisoned the PID integrator and pinned the
+  valve at 100 % until overpressure aborted the run.
 - Servo power loss: valve holds position — confirm the relief covers that case.
 - V1738 dry-fit, rail de-energised: meter continuity from header pole 1 to the
   fused +12 V and pole 2 to the MOSFET drain, and confirm pole 3 reaches nothing.
