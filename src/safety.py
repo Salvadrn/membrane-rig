@@ -40,28 +40,36 @@ class SafetyMonitor:
         self.grace = cfg.safety.fault_grace_reads
         self._bad_reads = 0
 
-    def arm_for_run(self, setpoints_kpa) -> float:
+    def arm_for_run(self, setpoints_kpa, specimen_limit_kpa=None) -> float:
         """Tighten the cutoff to what THIS run actually needs.
 
         A test at 20 kPa has no business ever reaching the 80 kPa global cutoff;
         letting it get there before aborting would destroy a delicate specimen.
-        The run ceiling is max(setpoint) + overshoot margin, never above the
-        global cutoff. Returns the effective ceiling.
+        The run ceiling is max(setpoint) + overshoot margin, clamped to BOTH the
+        global cutoff and the specimen limit — so a fault can never push the mesh
+        past the pressure we declared it tolerates. Returns the effective ceiling.
 
-        Why the margin is absolute (not a % of setpoint), plus a documented gap
-        the ceiling is NOT clamped to the specimen limit, so a setpoint within
-        `overshoot_margin` of that limit (e.g. sp 60 with a 65 kPa specimen) can
-        fault-abort a few kPa above the mesh's declared limit — see the
-        overshoot_margin rationale in config.yaml. Neither bites at the <=35 kPa
-        range the rig runs (ceiling 45 << 65); revisiting either moves the safety
-        ladder and needs Adrián's sign-off."""
+        The margin is absolute (not a % of setpoint): mesh damage and the specimen
+        limit are both absolute, so an absolute margin bounds the worst-case
+        over-stress consistently — see the overshoot_margin rationale in
+        config.yaml. `specimen_limit_kpa` is always defined by the caller
+        (RigController.pressure_limit_kpa() falls back to the safety cutoff, it is
+        never None); the guard below only skips the clamp if it is explicitly
+        passed None/0. `limit_name` names whichever bound is binding, so an
+        OVERPRESSURE abort message tells the operator what it hit."""
         self.max_pressure = self.hard_max
         self.limit_name = "safety cutoff"
         if self.overshoot_margin > 0 and setpoints_kpa:
             ceiling = max(setpoints_kpa) + self.overshoot_margin
+            name = "run ceiling"
+            # A fault must never push the mesh past its declared limit, so the
+            # specimen limit clamps the ceiling too (not just the global cutoff).
+            if specimen_limit_kpa and specimen_limit_kpa > 0 and specimen_limit_kpa < ceiling:
+                ceiling = specimen_limit_kpa
+                name = "specimen limit"
             if ceiling < self.hard_max:
                 self.max_pressure = ceiling
-                self.limit_name = "run ceiling"
+                self.limit_name = name
         return self.max_pressure
 
     def disarm(self) -> None:

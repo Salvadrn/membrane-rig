@@ -113,6 +113,7 @@ class RigController:
             "item_label": "",
             "run_ceiling_kpa": cfg.safety.max_pressure_kpa,
             "run_ceiling_disp": round(cfg.disp(cfg.safety.max_pressure_kpa), 2),
+            "run_ceiling_source": "safety cutoff",
             "close_warning": "",
         }
         # rolling history for the live chart: (elapsed_s, pressure_disp, setpoint_disp)
@@ -187,7 +188,10 @@ class RigController:
                 return {"ok": False, "error": problem}
             # Tighten the overpressure cutoff to what THIS run needs, so a low
             # test can never coast up to the global limit on a delicate mesh.
-            ceiling = self.safety.arm_for_run(setpoints_kpa)
+            # The specimen limit clamps it too (a fault must not exceed the mesh's
+            # declared limit), so pass the live limit (config + playlist).
+            ceiling = self.safety.arm_for_run(
+                setpoints_kpa, specimen_limit_kpa=self.pressure_limit_kpa())
             if any(x is not None for x in (kp, ki, kd)):
                 self.pid.set_gains(
                     kp if kp is not None else self.pid.kp,
@@ -228,10 +232,15 @@ class RigController:
             self.status["run_name"] = run_name
             self.status["run_ceiling_kpa"] = round(ceiling, 2)
             self.status["run_ceiling_disp"] = round(self.cfg.disp(ceiling), 2)
+            # Which bound set the ceiling ("run ceiling" vs "specimen limit" vs
+            # "safety cutoff"), so the operator sees when a run's real margin was
+            # clamped below setpoint+overshoot instead of it happening silently.
+            self.status["run_ceiling_source"] = self.safety.limit_name
             if item_id:
                 self.playlist.update(item_id, status=RUNNING, run_name=run_name)
             return {"ok": True, "run_name": run_name,
-                    "ceiling": round(self.cfg.disp(ceiling), 2)}
+                    "ceiling": round(self.cfg.disp(ceiling), 2),
+                    "ceiling_source": self.safety.limit_name}
 
     # --- playlist ------------------------------------------------------------
     def play_next(self) -> dict:
