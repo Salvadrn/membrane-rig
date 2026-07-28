@@ -155,5 +155,9 @@ src/config.py         config.yaml
 4. Commit + push a `main` a nombre de `Salvadrn <adrngeng@gmail.com>`, sin preguntar y
    **sin co-autoría de Claude**. Mensajes en inglés (`feat(control):`, `fix(safety):`).
 5. Si cambias una constante que afecta la escalera de presión o la ley de control,
-   dilo explícitamente en el mensaje del commit y avísale al agente **Paper**: el
-   documento todavía no cubre playlist, techo por corrida ni cierre completo.
+   dilo explícitamente en el mensaje del commit y avísale al agente **Paper**. El
+   documento **ya cubre** la escalera y sus alrededores (commit `5b9225e`): §5.2
+   playlist con gate, §8.1 + Tabla 3 techo por corrida, §8.2 fallas de sensor,
+   §8.3 cierre verificado — así que un cambio a la escalera casi siempre aterriza
+   en una sección concreta, no en tierra sin documentar. Ej.: el clamp del techo
+   (`a3160c9`) cayó en §8.1/Tabla 3; la guardia de no-finito (`867ba6d`) en §8.2.
