@@ -14,6 +14,8 @@ Design choices that matter for a pressure loop:
 """
 from __future__ import annotations
 
+import math
+
 
 class PID:
     def __init__(self, kp: float, ki: float, kd: float,
@@ -39,6 +41,13 @@ class PID:
 
     def update(self, setpoint: float, measurement: float, dt: float) -> float:
         if dt <= 0:
+            return self.last_output
+        if not math.isfinite(measurement) or not math.isfinite(setpoint):
+            # A non-finite reading carries no information; hold the last command
+            # and DON'T touch the integrator/derivative/prev. Otherwise one NaN
+            # (min(100, nan) == 100 in Python) latches the output to 100% for the
+            # rest of the run. A single glitch is a no-op; if the fault persists
+            # past the safety grace window, SafetyMonitor vents separately.
             return self.last_output
 
         error = setpoint - measurement
