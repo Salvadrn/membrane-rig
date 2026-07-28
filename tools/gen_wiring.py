@@ -85,6 +85,10 @@ label(ax, 6, 115.9,
 label(ax, 6, 113.2,
       "Además servo_close_us sigue en 0 = sin calibrar.   Cuando toque:  (1) DESACOPLA el servo del vástago   (2) verifica el extremo de 700 µs contra el tope físico   (3) recién ahí acoplas.",
       "#8a4b00", 9.3, ha="left")
+label(ax, 6, 109.2,
+      "⚠   Falta el FUSIBLE de 3 A → no se energiza el riel de 12 V.        ⚠   Falta el DIODO 1N5819 → no se energiza el diverter.        "
+      "Todo lo de 3.3 V (ADS1115, divisor, sonda) SÍ se puede armar y probar hoy.",
+      BAD, 9.6, ha="left", weight="bold")
 
 # ============================================================ DIAGRAM (left)
 label(ax, 3, 106.5, "CÓMO SE CONECTA", INK, 13, ha="left", weight="bold")
@@ -130,7 +134,7 @@ label(ax, 121, 86.0, "3.3 V alimenta el ADS1115\ny el pull-up de la sonda", PWR,
 
 # ---------------------------------------------------------- ROW 2: temperature
 section(ax, 29, 76.5, "TEMPERATURA DEL AGUA", SIG)
-box(ax, 38, 66.5, 25, 7.5, "DS18B20 (sonda 1-Wire)", MISS_FC, MISS_EC, 8.6)
+box(ax, 38, 66.5, 25, 7.5, "DS18B20 (sonda 1-Wire)", HAVE_FC, HAVE_EC, 8.6)
 box(ax, 69, 66.5, 23, 7.5, "Pull-up 4.7k → 3.3 V", HAVE_FC, HAVE_EC, 8.6)
 arrow(ax, (28.5, 71.0), (38, 71.0), SIG)
 label(ax, 33.2, 69.2, "dato", SIG, 7.4)
@@ -150,7 +154,7 @@ label(ax, 96, 56.2, "✗  la corriente del servo NUNCA sale del Pi", BAD, 8.6, h
 # ---------------------------------------------------------- ROW 4: diverter
 section(ax, 29, 48.0, "DIVERTER   (solenoide de 3 vías)", CTRL)
 box(ax, 38, 38.0, 19, 8, "220 Ω serie\n+ 10k a GND", HAVE_FC, HAVE_EC, 8.4)
-box(ax, 62, 38.0, 18, 8, "MOSFET\nIRLZ44N", MISS_FC, MISS_EC, 8.6)
+box(ax, 62, 38.0, 18, 8, "MOSFET\nIRLZ44N", HAVE_FC, HAVE_EC, 8.6)
 box(ax, 85, 38.0, 21, 8, "Solenoide 3 vías\n12 V (agua)", MISS_FC, MISS_EC, 8.6)
 box(ax, 111, 38.0, 19, 8, "Diodo 1N5819\n(flyback)", MISS_FC, MISS_EC, 8.4)
 arrow(ax, (28.5, 43.0), (38, 43.0), CTRL)
@@ -163,14 +167,19 @@ label(ax, 120.5, 36.6, "en paralelo a la bobina", MUTED, 7.4)
 
 # ---------------------------------------------------------- ROW 5: power
 section(ax, 29, 32.0, "ALIMENTACIÓN", PWR)
-box(ax, 38, 22.0, 19, 7.5, "Fuente 12 V 3 A", MISS_FC, MISS_EC, 8.6)
+box(ax, 38, 22.0, 19, 7.5, "Fuente 12 V 3 A", HAVE_FC, HAVE_EC, 8.6)
 box(ax, 62, 22.0, 18, 7.5, "Fusible 3 A", MISS_FC, MISS_EC, 8.6)
-box(ax, 85, 22.0, 21, 7.5, "Riel 12 V\n(protoboard)", MISS_FC, MISS_EC, 8.4)
+box(ax, 85, 22.0, 21, 7.5, "Reparto 12 V\nV1738 + 22AWG", HAVE_FC, HAVE_EC, 8.4)
 arrow(ax, (57, 25.7), (62, 25.7), PWR)
 arrow(ax, (80, 25.7), (85, 25.7), PWR)
-label(ax, 110, 26.5,
-      "Del riel de 12 V salen DOS cosas:\n→ el UBEC (que alimenta el servo)\n→ el + de la solenoide",
+label(ax, 110, 27.5,
+      "Del reparto de 12 V salen DOS cosas:\n→ el UBEC (que alimenta el servo)\n→ el + de la solenoide",
       PWR, 8.0, ha="left")
+label(ax, 110, 22.4,
+      "✗ los 12 V NO van por los rieles\n"
+      "   del protoboard (~1 A máx.):\n"
+      "   pasan por el V1738.",
+      BAD, 7.6, ha="left")
 
 # ---------------------------------------------------------- GND bus
 ax.plot([6, 140], [17.0, 17.0], color=INK, lw=3.4, zorder=3)
@@ -184,29 +193,30 @@ label(ax, 6, 14.3,
 COLX = 145
 
 label(ax, COLX, 106.5, "INVENTARIO", INK, 13, ha="left", weight="bold")
-box(ax, COLX, 84.0, 52, 18.5, "", HAVE_FC, HAVE_EC, lw=1.6)
-label(ax, COLX + 2.5, 100.0, "✓   YA TIENES", GOOD, 10.4, ha="left", weight="bold")
-label(ax, COLX + 2.5, 91.6,
+box(ax, COLX, 82.0, 52, 21.5, "", HAVE_FC, HAVE_EC, lw=1.6)
+label(ax, COLX + 2.5, 101.0, "✓   YA TIENES", GOOD, 10.4, ha="left", weight="bold")
+label(ax, COLX + 2.5, 91.0,
       "Raspberry Pi 4 + microSD\n"
-      "Servo DS3218\n"
-      "UBEC 12V→6V 3 A\n"
-      "ADS1115 (HiLetgo)\n"
-      "Kit de resistencias 1 %\n"
+      "Protoboard 830 + jumpers  ·  cable 22AWG\n"
+      "ADS1115 (HiLetgo)  ·  kit de resistencias 1 %\n"
+      "Sonda DS18B20\n"
+      "IRLZ44N (×10)  ·  V1738 (3 polos)\n"
+      "Fuente 12 V 3 A\n"
+      "Servo DS3218  ·  UBEC 12V→6V 3 A\n"
       "Válvula de bola, probeta, manómetro",
       INK, 8.8, ha="left", va="center")
 
 box(ax, COLX, 59.5, 52, 21.5, "", MISS_FC, MISS_EC, lw=1.6)
 label(ax, COLX + 2.5, 78.5, "✗   FALTA", "#c0392b", 10.4, ha="left", weight="bold")
 label(ax, COLX + 2.5, 69.0,
+      "Fusible 3 A          ← bloquea energizar 12 V\n"
+      "Diodo 1N5819         ← bloquea el diverter\n"
       "Transductor de presión 0–15 PSI\n"
-      "Fuente 12 V 3 A  +  fusible 3 A\n"
-      "MOSFET IRLZ44N\n"
-      "Diodo 1N5819 (flyback)\n"
-      "Protoboard + jumpers\n"
-      "Sonda DS18B20\n"
-      "Solenoide 3 vías de agua (~$53)",
+      "Solenoide 3 vías de agua (~$53)\n"
+      "Válvula de alivio ajustable\n"
+      "Capacitores 1000 µF / 470 µF",
       INK, 8.8, ha="left", va="center")
-label(ax, COLX, 56.8, "Si ya tienes alguno de los de abajo, dime y lo actualizo.", MUTED, 7.8, ha="left")
+label(ax, COLX, 56.8, "Estado al 2026-07-27 · detalle en INVENTORY.md", MUTED, 7.8, ha="left")
 
 label(ax, COLX, 51.5, "LO QUE NO HAY QUE HACER", BAD, 13, ha="left", weight="bold")
 rules = [
