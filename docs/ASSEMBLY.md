@@ -37,9 +37,13 @@ The #1 failure mode of DIY servo-valve actuators is the printed part twisting.
   the vessel or baseplate), never into the printed housing.
 - Keep the servo axis coaxial with the valve stem (misalignment = binding); slot
   the DS3218 ear holes (~40×20×40.5 mm, 4 holes) for alignment.
-- **Servo supply:** run at 6.8 V off a supply that can source ~2 A peaks — a
-  brownout at stall is the classic failure. If breakaway is high, use a
-  higher-torque servo (e.g. DS3240MG ~40 kg·cm ≈ 3.9 N·m) instead of the DS3218.
+- **Servo supply: 6 V**, off a supply that can source ~2 A peaks — a brownout at
+  stall is the classic failure. 6 V because that is what the UBEC in the BOM
+  (Hobbywing UBEC-3A, `B07T2CKC8G`) actually delivers: its jumper selects **5 V
+  or 6 V only**, there is no 6.8 V position. The DS3218's *rated* range is
+  4.8–6.8 V, so 6 V is valid — just not the top of it, which is where the
+  datasheet quotes the headline torque. See `wiring_ubec.html`. If breakaway is
+  high, use a higher-torque servo (e.g. DS3240MG ~40 kg·cm ≈ 3.9 N·m) instead.
 
 ### 3. Pi / electronics enclosure
 - Fits: Pi 4 + half breadboard + UBEC + fuse holder. Mount on M3 standoffs.
@@ -59,10 +63,21 @@ assembly moves as a unit.
 1. **Valve stem breakaway torque** — the make-or-break number. Handle off, ~0.5–1
    bar in the vessel, turn the stem with a torque wrench (or a luggage scale on a
    known lever arm: torque = force × arm). Read the peak to *start* moving:
-   - **≤ ~1.0 N·m** → a bare DS3218 at 6.8 V is fine.
-   - **1.0–1.5 N·m** → add the 2:1 reduction (№1).
-   - **> ~1.5 N·m** → reduction *and* a bigger servo (DS3240MG) or a
+   Thresholds are stated **at 6 V**, the rig's actual servo supply (see §2).
+   The DS3218 datasheet gives stall torque 19 kg·cm at 5.0 V and 21.5 kg·cm at
+   6.8 V; stall torque tracks supply voltage (I_stall = V/R_winding), so 6 V
+   interpolates to ~20.4 kg·cm ≈ **2.00 N·m**. The bands below keep the same
+   ~47 % derate of stall that the original 6.8 V numbers used.
+   - **≤ ~0.95 N·m** → a bare DS3218 at 6 V is fine.
+   - **0.95–1.42 N·m** → add the 2:1 reduction (№1).
+   - **> ~1.42 N·m** → reduction *and* a bigger servo (DS3240MG) or a
      smaller-bore / lower-friction valve; work the valve in first.
+
+   The 5 % shift from the old 6.8 V bands is smaller than the uncertainty of
+   measuring breakaway with a luggage scale — that is not the point. The point
+   is the **0.95–1.05 N·m** band, where the old numbers said "bare servo" and
+   the physics at 6 V says "add the reduction". Land in it and fit the
+   reduction; it is the cheap side of the mistake.
 2. Valve **stem** flat: square vs double-D, across-flats size, height → coupling (№1)
 3. Valve body / mounting surface + free space around it → mount (№2)
 4. **Swagelok tube OD** on the rig (likely 1/4") → the green BOM fittings
@@ -86,10 +101,30 @@ assembly moves as a unit.
 | — sensor signal | 10k/22k divider → ADS A0 | never feed 4.5 V straight in |
 | GPIO4 | DS18B20 data | + 4.7k pull-up to 3.3 V; enable 1-Wire |
 | GPIO18 | servo signal | servo power from **UBEC 6 V**, not the Pi |
-| GPIO23 | IRLZ44N gate via 150–330 Ω | + 10k gate pull-down; drain → solenoid−; flyback across coil |
+| GPIO23 | IRLZ44N gate via **220–330 Ω** | + 10k gate pull-down; drain → solenoid−; flyback across coil |
 | 12 V PSU | fuse 3 A → solenoid+ and UBEC in | 1000 µF at UBEC out, 470–1000 µF at 12 V in |
 | GND | everything | Pi + 12 V + UBEC + sensors + servo |
 | — diverter coil pair | through the **V1738 3-pole plug** | poles 1–2 = coil+/coil−; pole 3 stays DEAD on the header (anti-reversal key) |
+
+### Why the gate resistor is 220–330 Ω and not 150 Ω
+
+A 3.3 V GPIO into 150 Ω asks for **22 mA** at the instant the gate capacitance
+starts charging, against a pin specified for 16 mA. It will not destroy the pad
+— the output impedance self-limits and the transient is under a microsecond —
+but it is out of spec and it buys nothing: the diverter switches a handful of
+times per run, so edge speed is irrelevant here. 220 Ω draws 15 mA and 330 Ω
+draws 10 mA; both switch the IRLZ44N (Ciss 1700 pF) in well under a
+microsecond. `tools/gen_wiring.py` already drew 220 Ω.
+
+Do not confuse this with the `1 kΩ` in the README's `valve.type: pwm` block:
+that is a **different, unbuilt circuit** — a proportional solenoid PWM'd on
+GPIO18. This rig runs `valve.type: servo`, so GPIO18 carries a servo pulse and
+has no MOSFET on it at all.
+
+Caveat worth knowing for both: the IRLZ44N datasheet characterises R_DS(on) at
+V_GS = 5 V and 4 V. Driven from a 3.3 V GPIO the part runs **off the table**, so
+the 0.022 Ω figure does not apply here. At ~1 A of coil current it does not
+matter, but do not quote that number as if it did.
 
 ### Pluggable break — V1738 3-pole plug + header (in hand 2026-07-27)
 
