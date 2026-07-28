@@ -55,7 +55,7 @@ Para pasar trabajo entre sesiones, usa la herramienta de mensajes entre sesiones
   |---|---|---|
   | Pruebas normales | ≤ 60 kPa | — |
   | Límite del espécimen | 65 kPa (editable) | No se puede ni encolar más |
-  | Techo por corrida | max(setpoint) + 10 kPa | Aborta |
+  | Techo por corrida | min(max(setpoint) + 10 kPa, límite del espécimen) | Aborta |
   | Corte global | 80 kPa | Aborta |
   | Alivio mecánico | ~90 kPa | Ventea sin software |
   | Saturación del sensor | 103 kPa | — |
