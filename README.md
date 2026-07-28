@@ -242,11 +242,15 @@ only partial range from a servo; use a stepper for full multi-turn control).
 
 *`pwm` (MOSFET-driven proportional solenoid):*
 ```
-GPIO18 ──[1kΩ]── gate │ logic-level N-MOSFET (IRLZ44N)
+GPIO18 ──[220Ω]── gate │ logic-level N-MOSFET (IRLZ44N)
    valve coil: +12V ── coil ── MOSFET drain ;  source ── GND
    flyback diode (1N5819/SB560) across coil, cathode → +12V
 ```
-PWM duty sets coil current → valve position. A **12 V normally-open** bleed
+PWM duty sets coil current → valve position. Keep the gate resistor low (~220 Ω,
+not 1 kΩ): this valve runs continuous 1 kHz PWM, so a slow gate edge (3–5 µs at
+1 kΩ) eats into the finest duty step (1 µs) and the delivered current stops
+tracking commanded duty at the extremes — a resolution problem, not a thermal
+one. A **12 V normally-open** bleed
 solenoid fails safe (power loss → open → vent). Set `valve.invert: true` if your
 valve/linkage behaves the opposite way (applies to both types).
 
@@ -345,7 +349,7 @@ your accumulated dataset, all in one place.
 | 2× flyback diode | 1N5819 / SB560 (skip if the driver module has them) |
 | 12 V power supply | sized for both valves' inrush current |
 | Mechanical pressure-relief valve | **safety** — rated below the rig limit; independent of software |
-| Wiring, 1 kΩ gate resistors, fittings, tubing, graduated cylinder | — |
+| Wiring, 220 Ω gate resistors, fittings, tubing, graduated cylinder | — |
 
 ---
 
@@ -367,8 +371,9 @@ reflect them; don't skip them or the rig won't assemble or won't control.
 - Power the **ADS1115 at 3.3 V** and feed the 0.5–4.5 V sensor through a
   **10k/22k divider** (→ ~3.09 V). Never feed 0.5–4.5 V straight in — it clips and
   can over-volt the ADC. Config uses `sensor.type: voltage_divider`.
-- Add a **10k gate-to-source pulldown** + 150–330 Ω series gate resistor on the
-  MOSFET, or the diverter can energise at boot before the code runs.
+- Add a **10k gate-to-source pulldown** + 220–330 Ω series gate resistor on the
+  MOSFET (150 Ω would pull ~22 mA from a 16 mA-rated pin), or the diverter can
+  energise at boot before the code runs.
 - Add ~1000 µF at the UBEC output and ~470 µF at the 12 V input for rail
   stability, and an **inline 3 A fuse** on the 12 V.
 
