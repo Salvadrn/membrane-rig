@@ -108,6 +108,47 @@ prioridad.
   arrancar en modo hardware y `servo_close_us` sigue en 0 (sin calibrar). La
   calibración de extremos va con la válvula DESACOPLADA del vástago.
 
+## ⚠ CAMBIO DE REQUISITO — pruebas hasta 40 PSI (2026-07-27)
+
+Adrián reporta que tiene **ensayos de hasta 40 PSI = 275.8 kPa**, con objetivo de
+diseño ~50 PSI. Todo el rig está dimensionado hoy para ≤60 kPa (8.7 PSI). La
+prueba de 40 PSI **excede toda la escalera actual**: 4.2× el límite del espécimen,
+3.4× el corte global de software, 3.1× el alivio mecánico y 2.7× el fondo de
+escala del sensor.
+
+**Dos piezas del pedido a Roxanne quedan mal especificadas — corregir ANTES de
+enviarlo** (el borrador sigue sin enviar):
+
+| # | Pedido | Problema | Reemplazo |
+|---|---|---|---|
+| 1 | Transductor 0–15 PSI (`B0BG39KF3N`) | satura a 15 PSI | **0–60 PSI**, 0.5–4.5 V ratiométrico, G1/4 |
+| 3 | Alivio ajustable 0–20 PSI (`B01KO7NVYK`) | ventearía durante toda la prueba | ajustable que cubra **~50 PSI** |
+
+**Por qué 60 PSI de fondo de escala:** la prueba de 40 PSI usa el 67 % del span —
+la zona correcta. Uno de 30 PSI satura (133 %); uno de 100 PSI desperdicia
+resolución. Con 60 PSI el alivio puede quedar en ~50 PSI y el sensor **sigue
+leyendo cuando ese alivio abre**, que es la propiedad que no se debe perder.
+
+**Costo a aceptar:** la exactitud pasa de ±1.03 kPa a ±4.14 kPa (±1 % del fondo de
+escala). Si se quieren conservar puntos de prueba bajos (20–60 kPa), ahí la
+exactitud relativa se degrada mucho y la salida es **dos transductores** en la
+misma línea, no uno solo.
+
+**Lo que NO cambia:** el transductor sigue siendo 0.5–4.5 V ratiométrico, así que
+el divisor 10k/22k y todo el front-end quedan igual.
+
+### Bloqueado hasta tener estos datos
+
+Los límites de `config.yaml` (corte global 80 kPa, espécimen 65 kPa) **no se han
+tocado**. Subirlos es aflojar una protección, y el software protege hardware cuyo
+rating no está documentado. Hace falta:
+
+1. **Rating de presión del recipiente y su brida.** 40 PSI = 2.76 bar.
+2. **Qué membrana se ensaya a 40 PSI.** La de 60 mesh tiene límite registrado de
+   65 kPa; a 275.8 kPa se rompe con casi total seguridad.
+3. **Alcance del manómetro digital de Adrián** (solo pantalla, sin salida de
+   datos: sirve como referencia de calibración, no como sensor del lazo).
+
 ## Discrepancias abiertas
 
 - **UBEC 6 V vs 6.8 V.** `BOM.csv` y `ASSEMBLY.md:88` dicen 6 V; `ASSEMBLY.md:40`
