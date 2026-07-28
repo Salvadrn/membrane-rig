@@ -1,0 +1,782 @@
+<div class="hoja-fluidos">
+<style>
+.hoja-fluidos{
+  --tp:#1a1a1a; --ts:#5b5b5b; --s1:#ffffff; --s2:#fafafa; --bd:#e4e4e4;
+  --pwr:#1f5e8b; --ctrl:#7a2f2f; --sig:#8a6d00; --good:#1e7d32; --bad:#b3261e;
+  --data:#6b3fa0; --grey:#9e9e9e;
+  color: var(--text-primary, var(--tp));
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size:14px; line-height:1.6; font-weight:400;
+  max-width:1180px; margin:0 auto; padding:8px 4px 32px;
+}
+@media (prefers-color-scheme: dark){
+  .hoja-fluidos{ --tp:#ececec; --ts:#a6a6a6; --s1:#1b1b1d; --s2:#232326; --bd:#3a3a3d; }
+}
+.hoja-fluidos h1{ font-size:22px; font-weight:500; margin:0 0 6px; letter-spacing:-.01em; }
+.hoja-fluidos h2{ font-size:16px; font-weight:500; margin:0 0 14px; letter-spacing:.06em; text-transform:uppercase; }
+.hoja-fluidos h3{ font-size:14px; font-weight:500; margin:0 0 8px; }
+.hoja-fluidos p{ margin:0 0 10px; }
+.hoja-fluidos .sub{ color: var(--text-secondary, var(--ts)); }
+.hoja-fluidos .bajada{ font-size:14px; color: var(--text-secondary, var(--ts)); margin:0 0 22px; max-width:920px; }
+.hoja-fluidos .caja{ background: var(--surface-1, var(--s1)); border:1px solid var(--border, var(--bd)); border-radius:8px; padding:18px 20px; }
+.hoja-fluidos .rule{ height:1px; background: var(--border, var(--bd)); border:0; margin:26px 0; }
+.hoja-fluidos .cols{ display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start; }
+.hoja-fluidos .cols3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.25rem; }
+@media (max-width:900px){
+  .hoja-fluidos .cols{ grid-template-columns:1fr; }
+  .hoja-fluidos .cols3{ grid-template-columns:1fr; }
+}
+.hoja-fluidos .tiny{ font-size:12px; }
+.hoja-fluidos .why{ font-size:13px; color: var(--text-secondary, var(--ts)); }
+.hoja-fluidos code{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12.5px;
+  background: color-mix(in srgb, var(--grey,#9e9e9e) 16%, transparent); padding:1px 5px; border-radius:4px; }
+
+/* ---- bandas de estado ---- */
+.hoja-fluidos .banda{ border-radius:8px; padding:16px 20px; margin:0 0 22px; }
+.hoja-fluidos .banda-bad{ border:2px solid var(--bad,#b3261e); background: color-mix(in srgb, var(--bad,#b3261e) 10%, transparent); }
+.hoja-fluidos .banda-warn{ border:2px solid #b8860b; background: color-mix(in srgb, #b8860b 12%, transparent); }
+.hoja-fluidos .banda h3{ font-size:15px; font-weight:500; margin:0 0 6px; }
+
+/* ---- filas de destino ---- */
+.hoja-fluidos .fila{ display:grid; grid-template-columns:26px 132px 1fr; gap:12px; align-items:start; padding:9px 0;
+  border-top:1px solid var(--border, var(--bd)); }
+.hoja-fluidos .fila:first-of-type{ border-top:0; }
+.hoja-fluidos .chip{ width:22px; height:22px; border-radius:3px; margin-top:2px; }
+.hoja-fluidos .nom{ font-weight:500; font-size:13.5px; }
+.hoja-fluidos .dst{ font-weight:500; }
+
+/* ---- callouts ---- */
+.hoja-fluidos .co{ border-radius:8px; padding:18px 20px; }
+.hoja-fluidos .co-t{ font-weight:500; margin-bottom:10px; font-size:14.5px; }
+.hoja-fluidos .co-b{ font-size:14px; line-height:1.62; }
+.hoja-fluidos .co-red{ border:2px solid var(--bad,#b3261e); }
+.hoja-fluidos .co-green{ border:2px solid var(--good,#1e7d32); }
+.hoja-fluidos .co-blue{ border:2px solid var(--pwr,#1f5e8b); }
+.hoja-fluidos .co-red .co-t{ color:var(--bad,#b3261e); }
+.hoja-fluidos .co-green .co-t{ color:var(--good,#1e7d32); }
+.hoja-fluidos .co-blue .co-t{ color:var(--pwr,#1f5e8b); }
+
+/* ---- tablas ---- */
+.hoja-fluidos table{ border-collapse:collapse; width:100%; font-size:13.5px; }
+.hoja-fluidos th{ text-align:left; font-weight:500; font-size:12px; letter-spacing:.05em; text-transform:uppercase;
+  color: var(--text-secondary, var(--ts)); padding:0 12px 8px 0; border-bottom:1px solid var(--border, var(--bd)); }
+.hoja-fluidos td{ padding:10px 12px 10px 0; border-bottom:1px solid var(--border, var(--bd)); vertical-align:top; }
+.hoja-fluidos td:first-child{ font-weight:500; }
+.hoja-fluidos .num{ font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+.hoja-fluidos svg{ width:100%; height:auto; color: var(--text-primary, var(--tp)); }
+.hoja-fluidos .mask{ fill: var(--surface-1, var(--s1)); }
+.hoja-fluidos .pend{ display:inline-block; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+  border:1px solid var(--bad,#b3261e); color:var(--bad,#b3261e); border-radius:4px; padding:1px 6px; vertical-align:middle; }
+.hoja-fluidos .conf{ display:inline-block; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+  border:1px solid var(--grey,#9e9e9e); color:var(--grey,#9e9e9e); border-radius:4px; padding:1px 6px; vertical-align:middle; }
+.hoja-fluidos ul{ margin:0 0 10px; padding-left:20px; }
+.hoja-fluidos li{ margin-bottom:6px; }
+</style>
+
+<h1>¿Cómo se plomea el circuito de fluidos?</h1>
+<p class="bajada">
+  Todas las hojas de armado que existen hasta hoy son eléctricas. Esta es la del agua y el aire:
+  del panel del laboratorio hasta el permeado que cae en la probeta. Resuelve cuatro dudas concretas —
+  <strong>de qué lado de la válvula de bola</strong> se tee-an el alivio y el transductor y por qué no da igual,
+  <strong>qué rosca es cada junta</strong> y en cuál va cinta de PTFE y en cuál nunca,
+  <strong>cuál de los tres puertos del solenoide</strong> recibe el permeado (no es el que dice «inlet»),
+  y <strong>qué queda abierto si se va la luz</strong> a media corrida.
+</p>
+
+<div class="banda banda-bad">
+  <h3>Hoy no se puede plomear nada. Lo que sí se puede hacer hoy es MEDIR.</h3>
+  <p style="margin:0 0 8px">
+    Del lado de fluidos faltan <strong>todas</strong> las piezas que se conectan:
+    válvula de alivio, solenoide de 3 vías, transductor, tubería de silicón, kit de barbs, abrazaderas,
+    cinta de PTFE y los adaptadores NPT&times;barb. De los fittings Swagelok de McMaster solo se sabe que Roxanne
+    colocó la orden — <strong>no se sabe si llegaron</strong>. Lo único físicamente presente son las piezas que ya se tenían:
+    válvula de bola, recipiente, probeta, manómetro y la sonda DS18B20.
+  </p>
+  <p style="margin:0" class="tiny sub">
+    Esta hoja no es para armar hoy: es para <strong>comprar bien</strong> y para no equivocarse de rosca.
+    Y hay trabajo real disponible hoy mismo, con un calibrador en la mano, porque son exactamente los cuatro números
+    que faltan para poder ordenar: <strong>(1)</strong> el OD del tubo del rig (probablemente 1/4", <em>no confirmado</em>) —
+    es el que define el tamaño de todo fitting Swagelok; <strong>(2)</strong> la rosca del puerto del manómetro;
+    <strong>(3)</strong> la rosca del puerto de salida de permeado del recipiente; <strong>(4)</strong> el plano del vástago
+    de la bola (cuadrado o doble-D, entrecaras y altura) para el acople impreso.
+    Los cuatro están listados en <code>docs/ASSEMBLY.md</code> § «Measure before designing/buying» y ninguno está registrado en el repo.
+  </p>
+</div>
+
+<div class="banda banda-warn">
+  <h3>El dato que hay que confirmar antes de que Roxanne pase la compra: el rango del alivio</h3>
+  <p style="margin:0" class="tiny">
+    El punto de ajuste que este rig necesita es <strong>~90 kPa = 13.05 psi</strong>. Y en el repo hay
+    <strong>tres descripciones distintas</strong> de la válvula de alivio: <code>BOM.csv</code> lista la
+    <strong>CR25-100</strong> (verificada en el listado del fabricante: <strong>0–100 psi</strong> ajustable, 1/4" NPT macho),
+    mientras que <code>INVENTORY.md</code> pide como item #3 una «válvula de alivio ajustable <strong>0–20 PSI</strong>»
+    con ASIN <code>B01KO7NVYK</code>, que resuelve a un <strong>Midwest Control CPR-25</strong> cuyo título en el listado dice
+    <strong>«5 Psi»</strong>. No son la misma pieza y la diferencia no es cosmética:
+    con un rango 0–100 psi, 13 psi cae en el <strong>13 % inferior de la carrera del tornillo</strong> (ajuste poco repetible);
+    y si lo que llega es un <strong>crack fijo de 5 psi (34.5 kPa)</strong>, <strong>ventea a media prueba de 40 y de 60 kPa</strong>
+    y el rig no puede correr su propia playlist. <span class="pend">confirmar cuál se ordenó</span>
+  </p>
+</div>
+
+<div class="banda banda-warn">
+  <h3>Y antes de comprar el alivio: hay un cambio de requisito abierto que lo invalidaría</h3>
+  <p style="margin:0" class="tiny">
+    <code>INVENTORY.md</code> registra que Adrián reporta <strong>ensayos de hasta 40 PSI (275.8 kPa)</strong>, con objetivo
+    de diseño ~50 PSI. Toda esta hoja está escrita contra la escalera que hoy está <strong>commiteada en
+    <code>config.yaml</code></strong> — pruebas ≤60 kPa, corte global 80 kPa — y esos límites
+    <strong>no se han tocado</strong>, a propósito: subirlos es aflojar una protección sobre un recipiente cuyo rating no
+    está documentado. Pero si el requisito de 40 PSI se confirma, <strong>dos piezas de esta hoja cambian</strong>:
+    el alivio dejaría de ir en 13.05 psi y el transductor de 0–15 PSI saturaría al 37 % de la prueba.
+    <strong>No compres el alivio ni el transductor hasta que eso se resuelva</strong>, porque son justo las dos piezas que
+    se eligen por rango. Lo que <em>no</em> cambia en ningún escenario es el resto de esta hoja: las roscas, el mapa de
+    puertos del solenoide, de qué lado de la bola van las tees, y el failsafe.
+    <span class="pend">requisito sin resolver</span>
+  </p>
+</div>
+
+<hr class="rule">
+
+<h2>Lado del aire — del panel al recipiente</h2>
+
+<div class="caja" style="margin-bottom:14px">
+  <svg viewBox="0 0 1120 492" role="img" aria-label="Circuito de aire: panel del laboratorio, válvula de bola con servo, tee de la válvula de alivio, tee del transductor y manómetro, y recipiente a presión con la membrana en la brida partida">
+
+    <!-- ======== válvula de alivio (pendiente) ======== -->
+    <rect x="372" y="26" width="270" height="66" rx="6" fill="none" stroke="var(--bad,#b3261e)" stroke-width="2" stroke-dasharray="7 4"/>
+    <text x="507" y="50" text-anchor="middle" font-size="12.5" fill="currentColor">Válvula de alivio mecánica ~90 kPa</text>
+    <text x="507" y="67" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">13.05 psi · sin cable · sin software · sin corriente</text>
+    <text x="507" y="84" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">✗ no ha llegado</text>
+
+    <line x1="507" y1="92" x2="507" y2="190" stroke="var(--bad,#b3261e)" stroke-width="2.2" stroke-dasharray="6 4"/>
+    <text x="519" y="118" font-size="10.5" fill="var(--grey,#9e9e9e)">tee con rama 1/4" NPT-H</text>
+    <text x="519" y="132" font-size="10" fill="var(--good,#1e7d32)">PTFE aquí SÍ</text>
+    <text x="519" y="146" font-size="10" fill="var(--good,#1e7d32)">✓ aguas abajo de la bola</text>
+
+    <!-- ======== panel de aire ======== -->
+    <rect x="16" y="160" width="152" height="60" rx="6" fill="none" stroke="var(--pwr,#1f5e8b)" stroke-width="2"/>
+    <text x="92" y="184" text-anchor="middle" font-size="12.5" fill="currentColor">Panel de aire del lab</text>
+    <text x="92" y="202" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">línea amarilla</text>
+    <text x="92" y="240" text-anchor="middle" font-size="10" fill="var(--bad,#b3261e)">presión de suministro:</text>
+    <text x="92" y="253" text-anchor="middle" font-size="10" fill="var(--bad,#b3261e)">no medida, no está en el repo</text>
+
+    <line x1="168" y1="190" x2="252" y2="190" stroke="var(--pwr,#1f5e8b)" stroke-width="2.4"/>
+    <text x="210" y="180" text-anchor="middle" font-size="10.5" fill="var(--pwr,#1f5e8b)">aire</text>
+
+    <!-- ======== válvula de bola ======== -->
+    <rect x="252" y="152" width="172" height="76" rx="6" fill="none" stroke="var(--ctrl,#7a2f2f)" stroke-width="2"/>
+    <text x="338" y="178" text-anchor="middle" font-size="12.5" fill="currentColor">Válvula de bola 90°</text>
+    <text x="338" y="195" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">el servo gira el vástago</text>
+    <text x="338" y="214" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">✓ en la mano</text>
+    <text x="338" y="290" text-anchor="middle" font-size="10.5" fill="var(--ctrl,#7a2f2f)">0 % = cerrada (estado seguro)</text>
+    <text x="338" y="304" text-anchor="middle" font-size="10.5" fill="var(--ctrl,#7a2f2f)">100 % = abierta</text>
+    <text x="338" y="322" text-anchor="middle" font-size="10" fill="var(--bad,#b3261e)">al perder corriente NO sella</text>
+
+    <!-- ======== línea principal + tees ======== -->
+    <line x1="424" y1="190" x2="700" y2="190" stroke="var(--pwr,#1f5e8b)" stroke-width="2.4"/>
+    <circle cx="507" cy="190" r="5" fill="currentColor"/>
+    <circle cx="600" cy="190" r="5" fill="currentColor"/>
+
+    <!-- ======== rama del sensado ======== -->
+    <line x1="600" y1="190" x2="600" y2="292" stroke="var(--sig,#8a6d00)" stroke-width="2.2"/>
+    <text x="612" y="222" font-size="10.5" fill="var(--sig,#8a6d00)">tee de sensado</text>
+    <text x="612" y="236" font-size="10" fill="var(--grey,#9e9e9e)">o directo al puerto del manómetro</text>
+    <text x="612" y="250" font-size="10" fill="var(--bad,#b3261e)">pero entonces pierdes la referencia</text>
+    <text x="612" y="264" font-size="10" fill="var(--good,#1e7d32)">✓ aguas abajo de la bola</text>
+
+    <rect x="436" y="292" width="304" height="118" rx="6" fill="none" stroke="var(--sig,#8a6d00)" stroke-width="2"/>
+    <text x="588" y="316" text-anchor="middle" font-size="12" fill="currentColor">Manómetro de carátula</text>
+    <text x="588" y="332" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">✓ en la mano · es la referencia de calibración</text>
+    <line x1="452" y1="346" x2="724" y2="346" stroke="var(--grey,#9e9e9e)" stroke-width="0.8" stroke-dasharray="3 3"/>
+    <text x="588" y="368" text-anchor="middle" font-size="12" fill="var(--sig,#8a6d00)">Transductor 0–15 PSI · G1/4 · 0.5–4.5 V</text>
+    <text x="588" y="384" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">✗ no ha llegado · satura a 103.4 kPa (15.00 psi)</text>
+    <text x="588" y="401" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">los dos tienen que ver la MISMA presión</text>
+
+    <!-- ======== recipiente ======== -->
+    <line x1="700" y1="190" x2="784" y2="190" stroke="var(--pwr,#1f5e8b)" stroke-width="2.4"/>
+    <polygon points="790,190 780,185 780,195" fill="var(--pwr,#1f5e8b)"/>
+
+    <rect x="790" y="140" width="300" height="296" rx="8" fill="none" stroke="var(--pwr,#1f5e8b)" stroke-width="2"/>
+    <text x="940" y="166" text-anchor="middle" font-size="11" fill="var(--grey,#9e9e9e)">aire a presión (headspace)</text>
+
+    <rect x="804" y="200" width="272" height="118" rx="4" fill="none" stroke="var(--pwr,#1f5e8b)" stroke-width="1.2" stroke-dasharray="4 4"/>
+    <text x="940" y="252" text-anchor="middle" font-size="12" fill="var(--pwr,#1f5e8b)">agua destilada</text>
+    <text x="940" y="272" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">pruebas ≤ 60 kPa (8.70 psi)</text>
+    <text x="940" y="290" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">el aire empuja la columna,</text>
+    <text x="940" y="303" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">nunca toca la malla por arriba</text>
+
+    <!-- brida + membrana -->
+    <rect x="770" y="330" width="340" height="30" rx="3" fill="none" stroke="var(--grey,#9e9e9e)" stroke-width="1.6"/>
+    <circle cx="780" cy="345" r="3.2" fill="var(--grey,#9e9e9e)"/>
+    <circle cx="1100" cy="345" r="3.2" fill="var(--grey,#9e9e9e)"/>
+    <line x1="790" y1="345" x2="1090" y2="345" stroke="var(--good,#1e7d32)" stroke-width="3.5"/>
+
+    <text x="940" y="378" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">brida partida — plano medio, atornillada</text>
+    <text x="940" y="396" text-anchor="middle" font-size="11" fill="var(--good,#1e7d32)">MEMBRANA 60 mesh · A = 0.64 cm² · L = 0.117 mm</text>
+    <text x="940" y="412" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">límite del espécimen 65 kPa (9.43 psi) — lo aplica el SOFTWARE</text>
+    <text x="940" y="428" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">abajo de la malla: ~atmosférico</text>
+
+    <!-- salida de permeado -->
+    <line x1="940" y1="436" x2="940" y2="468" stroke="var(--sig,#8a6d00)" stroke-width="2.4"/>
+    <polygon points="940,476 934,464 946,464" fill="var(--sig,#8a6d00)"/>
+    <text x="928" y="462" text-anchor="end" font-size="10.5" fill="var(--sig,#8a6d00)">salida de permeado ↓</text>
+  </svg>
+</div>
+
+<p class="tiny sub" style="margin:0 0 8px">
+  Los dos puntos negros son <strong>tees reales</strong>, no cruces de línea. Los dos están <strong>aguas abajo</strong> de la
+  válvula de bola, y eso es una decisión, no un accidente: si el alivio se tee-a antes de la bola, cerrar la bola
+  <em>aísla al recipiente de su propio alivio</em>; y si el transductor se tee-a antes, el PID mediría la presión del
+  <em>suministro</em> en vez de la del recipiente y el lazo no cerraría nunca.
+</p>
+
+<hr class="rule">
+
+<h2>Lado del permeado — de la membrana a la probeta</h2>
+
+<div class="caja" style="margin-bottom:14px">
+  <svg viewBox="0 0 1120 250" role="img" aria-label="Circuito de permeado: salida del recipiente, tubería de silicón, solenoide de tres vías, desecho con la sonda DS18B20 y probeta graduada">
+
+    <rect x="16" y="30" width="170" height="60" rx="6" fill="none" stroke="var(--grey,#9e9e9e)" stroke-width="1.8" stroke-dasharray="5 4"/>
+    <text x="101" y="54" text-anchor="middle" font-size="12" fill="currentColor">Salida del recipiente</text>
+    <text x="101" y="72" text-anchor="middle" font-size="9.5" fill="var(--bad,#b3261e)">rosca: no registrada — MÍDELA</text>
+
+    <line x1="186" y1="60" x2="390" y2="60" stroke="var(--sig,#8a6d00)" stroke-width="2.4"/>
+    <text x="288" y="33" text-anchor="middle" font-size="10" fill="var(--sig,#8a6d00)">silicón 1/4" ID + barb + abrazadera</text>
+    <text x="288" y="47" text-anchor="middle" font-size="9.5" fill="var(--bad,#b3261e)">✗ tubería, barbs y abrazaderas: faltan</text>
+    <text x="288" y="80" text-anchor="middle" font-size="10.5" fill="var(--ctrl,#7a2f2f)">→ puerto 2 (COM)</text>
+    <text x="288" y="94" text-anchor="middle" font-size="9.5" fill="var(--grey,#9e9e9e)">el proveedor lo llama «outlet»</text>
+    <circle cx="390" cy="60" r="4.5" fill="var(--ctrl,#7a2f2f)"/>
+
+    <!-- solenoide -->
+    <rect x="390" y="16" width="272" height="200" rx="6" fill="none" stroke="var(--ctrl,#7a2f2f)" stroke-width="2" stroke-dasharray="7 4"/>
+    <text x="526" y="42" text-anchor="middle" font-size="12.5" fill="currentColor">Solenoide 3 vías · 231Y-6-12VDC</text>
+    <text x="526" y="59" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">1/4" NPT-H ×3 · latón/NBR · 12 V 13 W (≈1.08 A)</text>
+    <text x="526" y="77" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">✗ no ha llegado</text>
+
+    <text x="526" y="116" text-anchor="middle" font-size="12.5" fill="var(--good,#1e7d32)">desenergizado → 2 ↔ 3</text>
+    <text x="526" y="134" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">= DESECHO · el failsafe correcto</text>
+    <text x="526" y="170" text-anchor="middle" font-size="12.5" fill="var(--ctrl,#7a2f2f)">energizado → 1 ↔ 2</text>
+    <text x="526" y="188" text-anchor="middle" font-size="10.5" fill="var(--ctrl,#7a2f2f)">= PROBETA · solo al colectar</text>
+
+    <!-- puerto 3 -> desecho -->
+    <circle cx="662" cy="120" r="4.5" fill="var(--good,#1e7d32)"/>
+    <line x1="662" y1="120" x2="790" y2="120" stroke="var(--good,#1e7d32)" stroke-width="2.4"/>
+    <text x="726" y="108" text-anchor="middle" font-size="10" fill="var(--good,#1e7d32)">puerto 3 («escape»)</text>
+    <text x="726" y="139" text-anchor="middle" font-size="9" fill="var(--grey,#9e9e9e)">NPT-H + PTFE + barb</text>
+
+    <!-- puerto 1 -> probeta -->
+    <circle cx="662" cy="186" r="4.5" fill="var(--ctrl,#7a2f2f)"/>
+    <line x1="662" y1="186" x2="790" y2="186" stroke="var(--ctrl,#7a2f2f)" stroke-width="2.4"/>
+    <text x="726" y="174" text-anchor="middle" font-size="10" fill="var(--ctrl,#7a2f2f)">puerto 1 («inlet»)</text>
+    <text x="726" y="205" text-anchor="middle" font-size="9" fill="var(--grey,#9e9e9e)">NPT-H + PTFE + barb</text>
+
+    <!-- destinos -->
+    <rect x="790" y="92" width="200" height="58" rx="6" fill="none" stroke="var(--good,#1e7d32)" stroke-width="2"/>
+    <text x="890" y="116" text-anchor="middle" font-size="12" fill="currentColor">Desecho (vaso)</text>
+    <text x="890" y="134" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">✓ estado por defecto</text>
+
+    <rect x="790" y="158" width="200" height="58" rx="6" fill="none" stroke="var(--grey,#9e9e9e)" stroke-width="2"/>
+    <text x="890" y="182" text-anchor="middle" font-size="12" fill="currentColor">Probeta graduada</text>
+    <text x="890" y="200" text-anchor="middle" font-size="10" fill="var(--good,#1e7d32)">✓ en la mano · 60 s por punto</text>
+
+    <!-- sonda -->
+    <line x1="990" y1="121" x2="1018" y2="121" stroke="var(--data,#6b3fa0)" stroke-width="2"/>
+    <rect x="1020" y="96" width="94" height="52" rx="6" fill="none" stroke="var(--data,#6b3fa0)" stroke-width="2"/>
+    <text x="1067" y="118" text-anchor="middle" font-size="11.5" fill="currentColor">DS18B20</text>
+    <text x="1067" y="136" text-anchor="middle" font-size="9.5" fill="var(--good,#1e7d32)">✓ en la mano</text>
+    <text x="1067" y="166" text-anchor="middle" font-size="9.5" fill="var(--data,#6b3fa0)">→ GPIO4 (1-Wire)</text>
+    <text x="1067" y="180" text-anchor="middle" font-size="9" fill="var(--grey,#9e9e9e)">hoja eléctrica</text>
+  </svg>
+</div>
+
+<div class="caja" style="border-left:3px solid var(--bad,#b3261e); margin-bottom:14px">
+  <h3 style="color:var(--bad,#b3261e)">Tres cosas del lado del permeado que no se ven en el dibujo</h3>
+  <ul class="why" style="margin:0">
+    <li><strong>El permeado NO entra por el puerto que dice «inlet».</strong> El proveedor describe la válvula como
+      3&nbsp;vías normalmente cerrada: <em>«energizada, el escape cierra y el medio fluye de inlet a outlet;
+      desenergizada, el inlet cierra y el medio fluye de outlet a escape»</em>. Traducido a este rig: el permeado entra
+      por el <strong>puerto 2 («outlet»)</strong>, el desecho sale por el <strong>3</strong> y la probeta cuelga del
+      <strong>1</strong>. Si lo plomeas «como suena» — permeado al puerto&nbsp;1 — entonces desenergizado el puerto&nbsp;1
+      <strong>cierra</strong> y la línea de permeado queda <strong>tapada</strong>.</li>
+    <li><strong>Una línea de permeado tapada sube a la presión del recipiente.</strong> El silicón del BOM es explícitamente
+      «low-pressure permeate line only»: con la línea ciega, ese tramo pasa de ~atmosférico a los 60 kPa del recipiente y
+      lo que cede es un barb o una abrazadera. Además el rig no lo detecta: no hay caudalímetro, la presión del recipiente
+      se sigue controlando bien y lo único que lo delata es una probeta vacía al final del punto.</li>
+    <li><strong>Durante los 60&nbsp;s de colecta, el ramal de desecho no fluye.</strong> La sonda queda en agua quieta dentro
+      del vaso justo en la ventana que importa para µ. Con <code>temperature.read_period_s: 3.0</code> y una µ que cambia
+      lentamente eso normalmente no mueve el resultado, pero <strong>sí</strong> lo mueve si el vaso de desecho está a
+      temperatura de cuarto y el permeado no. <span class="pend">decidir con Datos</span></li>
+  </ul>
+</div>
+
+<hr class="rule">
+
+<h2>A dónde va cada cosa</h2>
+
+<div class="caja">
+
+  <div class="fila">
+    <div class="chip" style="background:var(--pwr,#1f5e8b)"></div>
+    <div class="nom" style="color:var(--pwr,#1f5e8b)">Panel de aire</div>
+    <div>
+      <div class="dst">→ a la entrada de la válvula de bola</div>
+      <div class="why">Es la única fuente de presión del rig. Su presión real no está medida ni fijada en ningún archivo
+        (el <code>sim.supply_pressure: 100.0</code> de <code>config.yaml</code> es un modelo, no una medición). Su fitting
+        de salida tampoco está registrado.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--ctrl,#7a2f2f)"></div>
+    <div class="nom" style="color:var(--ctrl,#7a2f2f)">Válvula de bola 90°</div>
+    <div>
+      <div class="dst">→ salida a la tee del alivio, y de ahí al recipiente</div>
+      <div class="why">Es el elemento de control. <code>valve.type: servo</code>, topología <em>inline</em>:
+        0 % = cerrada = estado seguro, 100 % = abierta. Ya está en la mano; el servo va acoplado a su vástago
+        (ver <code>wiring_ubec.html</code>, y no lo acoples todavía).</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--bad,#b3261e)"></div>
+    <div class="nom" style="color:var(--bad,#b3261e)">Válvula de alivio</div>
+    <div>
+      <div class="dst">→ tee <strong>aguas abajo</strong> de la bola, rama 1/4" NPT hembra</div>
+      <div class="why">Entre el alivio y el headspace del recipiente <strong>no puede haber ninguna válvula</strong>.
+        Es el único elemento de la escalera de presión que no depende del software, del Pi ni de la corriente.
+        Se ajusta a ~90 kPa (13.05 psi): arriba del corte global de 80 kPa y abajo del rating del recipiente
+        <span class="pend">rating no registrado</span>.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--sig,#8a6d00)"></div>
+    <div class="nom" style="color:var(--sig,#8a6d00)">Transductor 0–15 PSI</div>
+    <div>
+      <div class="dst">→ tee en el mismo tramo que el manómetro, aguas abajo de la bola</div>
+      <div class="why">Es lo que mide el PID: la presión del <strong>recipiente</strong>. Aguas arriba de la bola leería el
+        suministro y el lazo no podría cerrar. Rosca <strong>G1/4 (BSPP, sello de arandela plana)</strong> — no enrosca en
+        un puerto NPT sin adaptador. De aquí sale la señal de 0.5–4.5 V que va al divisor 10k/22k
+        (esa parte vive en <code>wiring_protoboard.html</code>).</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--grey,#9e9e9e)"></div>
+    <div class="nom" style="color:var(--grey,#9e9e9e)">Manómetro de carátula</div>
+    <div>
+      <div class="dst">→ se queda exactamente donde está</div>
+      <div class="why">Es la <strong>referencia</strong> de la calibración de dos puntos del transductor
+        (<code>docs/ASSEMBLY.md</code>, orden de armado paso 2). Montar el transductor «en el puerto del manómetro» para
+        ahorrarse un adaptador solo funciona si el manómetro se queda: hace falta una tee ahí, o calibrar antes de moverlo.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--pwr,#1f5e8b)"></div>
+    <div class="nom" style="color:var(--pwr,#1f5e8b)">Recipiente a presión</div>
+    <div>
+      <div class="dst">→ el aire entra por el headspace, arriba de la columna de agua</div>
+      <div class="why">Aire sobre agua: el aire nunca toca la membrana por arriba, empuja la columna. Es lo que hace que el
+        recipiente sea un <strong>acumulador de energía</strong> (el gas es compresible) y por eso el alivio tiene que
+        ventear ahí y no en el permeado.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--good,#1e7d32)"></div>
+    <div class="nom" style="color:var(--good,#1e7d32)">Membrana</div>
+    <div>
+      <div class="dst">→ prensada en la brida partida del plano medio</div>
+      <div class="why">A = 0.64 cm², L = 0.117 mm, etiqueta «60 mesh» (<code>config.yaml</code> bloque <code>membrane:</code>).
+        Su límite es <strong>65 kPa</strong> y lo aplica el software en la admisión de la playlist. El alivio mecánico
+        <strong>no</strong> la protege: cracka 25 kPa por encima de su límite.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--sig,#8a6d00)"></div>
+    <div class="nom" style="color:var(--sig,#8a6d00)">Salida de permeado</div>
+    <div>
+      <div class="dst">→ silicón 1/4" ID hasta el puerto 2 del solenoide</div>
+      <div class="why">Baja presión y agua: <strong>barb + abrazadera</strong>, no compresión y no NPT desnudo.
+        La rosca del puerto de salida del recipiente no está registrada en ningún archivo — mídela antes de pedir el adaptador.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--ctrl,#7a2f2f)"></div>
+    <div class="nom" style="color:var(--ctrl,#7a2f2f)">Solenoide · puerto 2</div>
+    <div>
+      <div class="dst">→ aquí entra el permeado (COM)</div>
+      <div class="why">Es el puerto que el proveedor llama «outlet», y es el común: el único que está conectado a algo en
+        <em>los dos</em> estados de la bobina. Por eso recibe el flujo, aunque el nombre diga lo contrario.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--good,#1e7d32)"></div>
+    <div class="nom" style="color:var(--good,#1e7d32)">Solenoide · puerto 3</div>
+    <div>
+      <div class="dst">→ al vaso de desecho</div>
+      <div class="why">Desenergizado, la válvula conecta 2↔3. Eso tiene que coincidir con
+        <code>GpioDiverter</code>, que abre el pin con <code>initial_value=False</code> = desecho. Si estos dos no coinciden,
+        el failsafe queda invertido y <strong>nada en los datos lo delata</strong>: la probeta acumularía permeado fuera
+        de la ventana de colecta y Q saldría alto con el R² intacto.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--ctrl,#7a2f2f)"></div>
+    <div class="nom" style="color:var(--ctrl,#7a2f2f)">Solenoide · puerto 1</div>
+    <div>
+      <div class="dst">→ a la probeta graduada</div>
+      <div class="why">Energizado conecta 1↔2, y eso pasa solo durante <code>test.collection_s: 60.0</code> segundos por punto.
+        La bobina consume ~1.08 A a 12 V (13 W del listado del proveedor) — dato para el presupuesto del fusible de 3 A.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--data,#6b3fa0)"></div>
+    <div class="nom" style="color:var(--data,#6b3fa0)">Sonda DS18B20</div>
+    <div>
+      <div class="dst">→ en el chorro de permeado del ramal de <strong>desecho</strong>, con clip impreso</div>
+      <div class="why">Permeado fresco = la temperatura del agua que entra en µ(T). <strong>No va dentro de la probeta</strong>:
+        cualquier cuerpo sumergido desplaza volumen, y ese volumen se suma directo a la lectura de la probeta, o sea a Q,
+        o sea a k. Ojo: <code>docs/paper/fig1_system.png</code> la dibuja colgada de la probeta — esta hoja sigue a
+        <code>docs/ASSEMBLY.md</code> §4 y a <code>tools/gen_wiring.py</code> paso 5. <span class="pend">discrepancia abierta</span></div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--grey,#9e9e9e)"></div>
+    <div class="nom" style="color:var(--grey,#9e9e9e)">Probeta graduada</div>
+    <div>
+      <div class="dst">→ recibe únicamente lo colectado</div>
+      <div class="why">Todo lo que caiga ahí fuera de la ventana de colecta es error puro en Q. De ahí que el failsafe del
+        solenoide tenga que apuntar a desecho y que nada más se meta en la probeta.</div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="rule">
+
+<h2>Cuatro familias de junta, y no se mezclan</h2>
+
+<div class="caja" style="margin-bottom:14px">
+  <table>
+    <thead><tr><th style="width:170px">Familia</th><th style="width:230px">Qué sella en realidad</th><th style="width:130px">¿Cinta de PTFE?</th><th>Dónde aparece en este rig</th></tr></thead>
+    <tbody>
+      <tr>
+        <td style="color:var(--pwr,#1f5e8b)">Swagelok / compresión</td>
+        <td>La férula muerde el <strong>OD del tubo</strong>. Sello metal-metal sobre la superficie del tubo; la rosca de la tuerca solo aplica fuerza.</td>
+        <td style="color:var(--bad,#b3261e)"><strong>NUNCA</strong></td>
+        <td>Todo el lado del aire: es la plomería que ya tiene el rig. La cinta ahí no sella nada y estorba el asentamiento de la férula.</td>
+      </tr>
+      <tr>
+        <td style="color:var(--ctrl,#7a2f2f)">NPT (cónica)</td>
+        <td>Sellan <strong>las roscas mismas</strong>, por interferencia entre flancos cónicos. Metal contra metal, con riesgo de agarrotarse.</td>
+        <td style="color:var(--good,#1e7d32)"><strong>SÍ</strong> — 2–3 vueltas en el sentido de la rosca, dejando libre el primer hilo</td>
+        <td>Los <strong>3 puertos del solenoide</strong> (1/4" NPT hembra) y la <strong>entrada del alivio</strong> (1/4" NPT macho en la CR25-100).</td>
+      </tr>
+      <tr>
+        <td style="color:var(--sig,#8a6d00)">G1/4 · BSPP (paralela)</td>
+        <td><strong>No sella en la rosca.</strong> Sella una arandela plana o un O-ring contra la cara del puerto.</td>
+        <td style="color:var(--bad,#b3261e)"><strong>NUNCA</strong></td>
+        <td>El <strong>transductor</strong>, y solo él. Necesita adaptador G1/4-H × 1/4"NPT-M <em>con arandela</em>, o G1/4-M → Swagelok.</td>
+      </tr>
+      <tr>
+        <td style="color:var(--good,#1e7d32)">Barb + abrazadera</td>
+        <td>La manguera comprimida contra las corrugaciones del barb. El sello lo hace la <strong>abrazadera</strong>, no la rosca.</td>
+        <td style="color:var(--bad,#b3261e)"><strong>NUNCA</strong></td>
+        <td>Todo el lado del permeado: salida del recipiente, los tres puertos del solenoide vía adaptador NPT×barb, desecho y probeta.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="cols">
+  <div class="caja" style="border-left:3px solid var(--bad,#b3261e)">
+    <h3 style="color:var(--bad,#b3261e)">«1/4 de pulgada» no significa lo mismo en cada columna</h3>
+    <p class="why" style="margin:0">
+      Un fitting <strong>Swagelok de 1/4"</strong> toma tubo de <strong>0.250" (6.35 mm) de diámetro exterior</strong>.
+      Un fitting <strong>NPT de 1/4"</strong> es rosca de tubería nominal, cuyo diámetro mayor mide
+      <strong>~0.540" (13.7 mm)</strong>. Son piezas que <em>no se tocan</em>, y en una orden de compra se escriben
+      con el mismo número. Por eso el BOM agrupa los fittings bajo
+      <code>Fittings — MEASURE tube OD first</code>: <strong>el tamaño Swagelok se decide con el calibrador, no con el catálogo.</strong>
+    </p>
+  </div>
+  <div class="caja" style="border-left:3px solid #b8860b">
+    <h3 style="color:#b8860b">Lo que el BOM todavía no alcanza a especificar</h3>
+    <ul class="why" style="margin:0">
+      <li><strong>Una sola tee para dos tomas.</strong> <code>BOM.csv</code> lista <em>«Swagelok tee for sensor/relief tap»</em> con
+        <strong>Qty 1</strong>, pero el alivio y el transductor son <strong>dos</strong> tomas independientes en la línea de aire.
+        Solo se ahorra una si el transductor se monta en el puerto del manómetro con su propia tee.</li>
+      <li><strong>El tipo de rama no está definido.</strong> El alivio pide rama <strong>1/4" NPT hembra</strong>;
+        el transductor pide <strong>G1/4</strong> o un adaptador. Una tee «tubo × tubo × tubo» no sirve para ninguno de los dos.</li>
+      <li><strong>La cinta de PTFE existe en el BOM</strong> con la nota correcta («NPT (diverter) joints only») pero
+        <strong>no ha llegado</strong>, y sin ella no se puede sellar ningún puerto del solenoide.</li>
+    </ul>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Las tres dudas</h2>
+
+<div class="cols" style="margin-bottom:20px">
+
+  <div class="co co-blue">
+    <div class="co-t">«¿Por qué la válvula de alivio va del lado del aire y no del permeado?»</div>
+    <div class="co-b">
+      <p>Porque del lado del permeado no hay nada que aliviar, y aunque lo hubiera, no podría.</p>
+      <p><strong>La energía está en el aire.</strong> El gas del headspace es compresible: es el que almacena la presión y el
+        que puede seguir empujando aunque se cierre todo. El agua no. Ventear aire baja la presión del recipiente de
+        inmediato; ventear una línea de líquido no baja nada, porque el líquido es incompresible y su gasto ya está limitado
+        por otra cosa.</p>
+      <p><strong>Y esa otra cosa es justamente la membrana.</strong> Un alivio en el permeado quedaría <em>aguas abajo de la
+        restricción que quiere proteger</em>: para que saliera agua por él, esa agua tendría que atravesar primero la malla —
+        que es la pieza delicada. O sea, solo actuaría <em>después</em> de que la malla ya vio toda la ΔP. Llegaría tarde por
+        construcción.</p>
+      <p><strong>Y el permeado ya está abierto a la atmósfera.</strong> En estado de reposo el solenoide desenergizado conecta
+        el permeado con el desecho: es un drenaje abierto a un vaso, a presión ambiente. Un alivio ahí nunca crackearía.</p>
+      <p class="tiny sub" style="margin:0">
+        Nota que vale la pena tener clara: el alivio protege al <strong>recipiente y a quien está parado junto a él</strong>,
+        no a la membrana. Cracka a ~90 kPa y el límite del espécimen es 65 kPa. La malla la protege el software, y solo el software.
+      </p>
+    </div>
+  </div>
+
+  <div class="co co-green">
+    <div class="co-t">«¿Por qué Swagelok y no NPT, y por qué la cinta de teflón solo va en unas juntas?»</div>
+    <div class="co-b">
+      <p><strong>Swagelok no es una elección: es lo que el rig ya es.</strong> La plomería del banco está hecha con
+        fittings de compresión y no se va a rehacer. Por eso <code>.claude/roles/hardware.md</code> lo dice en imperativo:
+        <em>el rig es Swagelok/compresión, no NPT</em>. Comprar NPT «porque es lo normal» significa comprar piezas que
+        físicamente no entran en el banco.</p>
+      <p><strong>La cinta sigue al tipo de sello, no a la costumbre.</strong> Pregúntate siempre <em>dónde sella</em>
+        esta junta:</p>
+      <ul style="margin:6px 0 10px">
+        <li><strong>NPT</strong> sella en la rosca. Es cónica: al apretar, los flancos se aprietan entre sí y sellan —
+          y también se agarrotan. El PTFE es el lubricante y relleno que te deja apretar lo suficiente sin galling. <strong>Ahí sí va.</strong></li>
+        <li><strong>Compresión</strong> sella en el <em>tubo</em>: la férula lo muerde. La rosca de la tuerca no sella nada,
+          solo empuja. Ponerle cinta cambia el par de apriete y contamina el sello. <strong>Nunca.</strong></li>
+        <li><strong>G1/4 (BSPP)</strong> es rosca <em>paralela</em>: por definición no puede sellar entre flancos.
+          El sello es una arandela plana en la cara del puerto. Con cinta y sin arandela, gotea. <strong>Nunca.</strong></li>
+        <li><strong>Barb</strong> sella por la abrazadera que aprieta el silicón sobre las corrugaciones. <strong>Nunca.</strong></li>
+      </ul>
+      <p class="tiny sub" style="margin:0">
+        La trampa concreta que ya está documentada en el <code>README.md</code>: el transductor es
+        <strong>G1/4</strong> y los puertos del solenoide y del alivio son <strong>1/4" NPT</strong>. Roscan «casi» y no
+        sellan; forzarlo raja el puerto. Hace falta un adaptador G1/4-H × 1/4"NPT-M con arandela, y sobre esa cara plana
+        <strong>no</strong> va PTFE aunque el otro extremo del mismo adaptador sí lo lleve.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="co co-red">
+  <div class="co-t">«Si se va la luz a media corrida, ¿qué queda abierto y qué queda cerrado?»</div>
+  <div class="co-b">
+    <div class="cols" style="gap:1.5rem">
+      <div>
+        <p><strong>El solenoide cae a desecho. Correcto.</strong> No tiene bobina energizada, y sin bobina conecta el
+          puerto 2 con el 3. El permeado sigue cayendo al vaso y la probeta no se contamina con volumen fuera de ventana.
+          Ese es el failsafe que sí funciona sin corriente, y funciona <em>porque</em> el resorte de la válvula y
+          <code>GpioDiverter(initial_value=False)</code> apuntan al mismo lado.</p>
+        <p><strong>La bola NO cierra.</strong> Un servo no tiene resorte de retorno: sostiene la posición por fricción y
+          engranaje. Si iba en 55 % de apertura cuando se fue la luz, se queda en 55 % de apertura — y ahora nadie la puede
+          mover, porque el Pi también se apagó. El recipiente sigue llenándose hacia la presión del suministro.</p>
+      </div>
+      <div>
+        <p><strong>Se apagó toda la escalera menos un peldaño.</strong> Los cuatro peldaños de abajo — pruebas ≤60,
+          espécimen 65, techo por corrida max(setpoint)+10, corte global 80 — son <em>todos</em> de software. Sin Pi,
+          los cuatro desaparecen. El único que queda de pie es el <strong>alivio mecánico a ~90 kPa</strong>, que está
+          <strong>25 kPa por encima</strong> del límite del espécimen. Traducción honesta: al perder corriente,
+          la membrana ya no está protegida; solo lo está el recipiente.</p>
+        <p style="margin:0"><strong>Por eso apagar el rig no es cerrar el aire.</strong> Al final de cada sesión hay que
+          <strong>cerrar el suministro a mano</strong>, aguas arriba de la bola. No es una recomendación de prudencia:
+          es el único acto que efectivamente corta la fuente de presión, y no hay ninguna pieza en el rig que lo haga por ti.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>La escalera de presión, y dónde vive cada peldaño</h2>
+
+<div class="caja">
+  <table>
+    <thead><tr><th style="width:210px">Peldaño</th><th style="width:90px">kPa</th><th style="width:90px">psi</th><th style="width:190px">Quién lo aplica</th><th>Dónde vive físicamente</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Pruebas normales</td><td class="num">≤ 60</td><td class="num">≤ 8.70</td>
+        <td>el operador / la playlist</td>
+        <td><code>test.setpoints: [20, 40, 60]</code>. Es el rango en el que el rig trabaja de verdad.</td>
+      </tr>
+      <tr>
+        <td>Límite del espécimen</td><td class="num">65</td><td class="num">9.43</td>
+        <td>software, en la admisión</td>
+        <td><code>membrane.max_pressure</code>. Nada por encima se puede ni encolar. Viaja con la playlist y desde la UI <strong>solo puede apretarse</strong>.</td>
+      </tr>
+      <tr>
+        <td>Techo por corrida</td><td class="num">max(setpoint) + 10</td><td class="num">+1.45</td>
+        <td>supervisor de seguridad</td>
+        <td><code>safety.overshoot_margin: 10.0</code>. Una prueba de 20 kPa aborta cerca de 30, no a 80.</td>
+      </tr>
+      <tr>
+        <td>Corte global</td><td class="num">80</td><td class="num">11.60</td>
+        <td>supervisor de seguridad</td>
+        <td><code>safety.max_pressure</code>. Cierra la bola, manda el diverter a desecho y aborta.</td>
+      </tr>
+      <tr style="background:color-mix(in srgb, var(--bad,#b3261e) 8%, transparent)">
+        <td style="color:var(--bad,#b3261e)">Alivio mecánico</td><td class="num">~90</td><td class="num">13.05</td>
+        <td style="color:var(--bad,#b3261e)"><strong>hardware — nadie más</strong></td>
+        <td>La tee aguas abajo de la bola. <strong>El único peldaño que sigue existiendo sin corriente y sin Pi.</strong> <span class="pend">pieza no ha llegado</span></td>
+      </tr>
+      <tr>
+        <td>Saturación del sensor</td><td class="num">103.4</td><td class="num">15.00</td>
+        <td>física del transductor</td>
+        <td><code>sensor.range_max</code>. Arriba de <code>safety.max_plausible: 105.0</code> (15.23 psi) la lectura se trata como <strong>falla de instrumento</strong>, no como presión.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="tiny sub" style="margin:14px 0 0">
+    La columna de psi está aquí por una razón práctica: <strong>las válvulas de alivio se compran y se ajustan en psi</strong>,
+    y el repo habla puro kPa. Convertida a 1 psi = 6.894757 kPa. El alivio tiene que quedar
+    <strong>arriba de 11.60 psi</strong> (si no, ventea antes que el corte global y se vuelve el peldaño que gobierna)
+    y <strong>abajo del rating del recipiente</strong> — que <span class="pend">no está escrito en ningún archivo del repo</span>.
+    Pregúntaselo a Kwangsoo antes de fijar el tornillo.
+  </p>
+  <p class="tiny sub" style="margin:10px 0 0">
+    Esta tabla es la escalera <strong>commiteada hoy</strong> en <code>config.yaml</code>, que es la que el software
+    realmente aplica. Hay un cambio de requisito abierto (ensayos a 40 PSI) que la reescribiría entera —
+    ver la banda amarilla al inicio de la hoja.
+  </p>
+</div>
+
+<hr class="rule">
+
+<h2>Qué pasa en cada momento (failsafe del lado de fluidos)</h2>
+
+<div class="caja">
+  <table>
+    <thead><tr><th style="width:280px">Momento</th><th style="width:250px">Aire</th><th style="width:200px">Permeado</th><th>Consecuencia</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Arranca el software en <code>mode: hardware</code></td>
+        <td>La bola salta a 0 % (700 µs) sin avisar.</td>
+        <td>Desecho.</td>
+        <td><code>ServoValve.__init__</code> llama <code>to_safe()</code> al construirse. Si el acople ya está en el vástago, empuja contra el tope.</td>
+      </tr>
+      <tr>
+        <td>Termina una corrida normal</td>
+        <td><code>close()</code>: asienta, sostiene 1.5 s, suelta el servo.</td>
+        <td>Desecho.</td>
+        <td>El recipiente se despresuriza <strong>solo por permeación a través de la malla</strong>: no hay venteo. Tarda.</td>
+      </tr>
+      <tr>
+        <td>La bola no sella de verdad</td>
+        <td>Sigue alimentando.</td>
+        <td>Desecho.</td>
+        <td>A los 20 s el supervisor compara: si la presión no bajó al menos 1 kPa (<code>close_check_s</code> / <code>close_check_min</code>), la UI avisa «valve may not have closed». No corrige: avisa.</td>
+      </tr>
+      <tr style="background:color-mix(in srgb, var(--bad,#b3261e) 8%, transparent)">
+        <td style="color:var(--bad,#b3261e)">Se va la luz a media corrida</td>
+        <td style="color:var(--bad,#b3261e)"><strong>Queda donde iba. NO cierra.</strong></td>
+        <td style="color:var(--good,#1e7d32)"><strong>Cae a desecho ✓</strong></td>
+        <td>El recipiente sube hacia el suministro. Único freno: el alivio a ~90 kPa, que está arriba del límite de la malla. <strong>Hay que cerrar el suministro a mano.</strong></td>
+      </tr>
+      <tr>
+        <td>Se desconecta el cable del transductor</td>
+        <td>Cierra y aborta.</td>
+        <td>Desecho.</td>
+        <td>0 V se mapea a −12.93 kPa, cae bajo <code>min_plausible: −5.0</code> y dispara <code>SENSOR_FAULT</code> tras 3 lecturas (~150 ms). Es el <em>kill test</em> de <code>ASSEMBLY.md</code>.</td>
+      </tr>
+      <tr>
+        <td>Se zafa una manguera del permeado a media corrida</td>
+        <td>Sigue controlando normal.</td>
+        <td>Se derrama al piso.</td>
+        <td><strong>El rig no se entera.</strong> No hay caudalímetro: la presión se sigue sosteniendo bien y Q sale bajo o cero. Solo lo delata la probeta al final del punto. No hay failsafe de fluidos aquí.</td>
+      </tr>
+      <tr>
+        <td>El solenoide quedó plomeado al revés</td>
+        <td>Normal.</td>
+        <td>Colecta cuando no debe, o se tapa.</td>
+        <td>Los dos modos son silenciosos: uno infla Q con el R² intacto, el otro presuriza una línea de silicón de baja presión. Verifícalo con agua en el banco antes de montarlo.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<hr class="rule">
+
+<h2>Estado del inventario para esta hoja</h2>
+<div class="cols3">
+  <div class="caja" style="border-left:3px solid var(--good,#1e7d32)">
+    <h3 style="color:var(--good,#1e7d32)">✓ En la mano</h3>
+    <p class="why" style="margin:0">Válvula de bola de aire (SS) · Recipiente a presión · Probeta graduada ·
+      Manómetro de carátula · Sonda DS18B20</p>
+    <p class="tiny sub" style="margin:10px 0 0">Todas eran «ya se tenía», salvo la sonda (llegó 2026-07-27). Ninguna se
+      conecta a otra sin una pieza que falta.</p>
+  </div>
+  <div class="caja" style="border-left:3px solid var(--bad,#b3261e)">
+    <h3 style="color:var(--bad,#b3261e)">✗ No ha llegado</h3>
+    <p class="why" style="margin:0">Válvula de alivio · Solenoide 3 vías 231Y-6-12VDC · Transductor 0–15 PSI ·
+      Tubería de silicón 1/4" ID · Kit de barbs · Abrazaderas · Cinta de PTFE · Adaptadores 1/4" NPT-M × barb (×3)</p>
+    <p class="tiny sub" style="margin:10px 0 0">Es <strong>todo</strong> lo que se conecta. Por eso hoy no hay ni una junta
+      que se pueda hacer.</p>
+  </div>
+  <div class="caja" style="border-left:3px solid var(--grey,#9e9e9e)">
+    <h3 style="color:var(--grey,#9e9e9e)">? Estado desconocido</h3>
+    <p class="why" style="margin:0">Fittings Swagelok / McMaster: Roxanne ya colocó la orden, <strong>no se sabe si llegó</strong>.
+      Y aunque haya llegado, el tamaño se pidió sin medir el OD del tubo.</p>
+    <p class="tiny sub" style="margin:10px 0 0">Confirmar recepción con Kwangsoo, y verificar contra el calibrador antes de
+      dar por buena la talla.</p>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Discrepancias abiertas de esta hoja</h2>
+<div class="caja">
+  <ul class="why" style="margin:0">
+    <li><strong>Cuál es la válvula de alivio.</strong> <code>BOM.csv</code> dice CR25-100 (0–100 psi ajustable, 1/4" NPT-M);
+      <code>INVENTORY.md</code> item #3 dice «ajustable 0–20 PSI» con ASIN <code>B01KO7NVYK</code>, que resuelve a un
+      Midwest Control CPR-25 anunciado como «5 Psi». <strong>Tres piezas distintas para el mismo renglón.</strong>
+      El criterio de selección es simple y está arriba: tiene que poder <em>fijarse</em> en 13.05 psi, lo cual descarta un
+      crack fijo y hace poco recomendable un rango 0–100.</li>
+    <li><strong>Dónde va la sonda DS18B20.</strong> <code>docs/paper/fig1_system.png</code> la cuelga de la probeta;
+      <code>docs/ASSEMBLY.md</code> §4 y <code>tools/gen_wiring.py</code> paso 5 la ponen en el chorro del desecho.
+      Esta hoja sigue a ASSEMBLY, por el argumento de desplazamiento de volumen. Hay que alinear la figura del paper.</li>
+    <li><strong>Rating de presión del recipiente.</strong> <code>ASSEMBLY.md</code> pide fijar el alivio «below the vessel's
+      limit», pero ese límite <strong>no está escrito en ningún archivo del repo</strong>. Sin ese número, «~90 kPa» es una
+      elección razonada contra el corte de software, no contra el recipiente.</li>
+    <li><strong>Consumo de la bobina del diverter.</strong> <code>ASSEMBLY.md</code> y <code>wiring_ubec.html</code> dicen que
+      no está registrado. El listado del proveedor da <strong>13 W a 12 V ≈ 1.08 A</strong>, que con los ~0.95 A del UBEC
+      suma ~2.03 A contra el fusible de 3 A. <span class="conf">del listado, no medido</span> — vale la pena confirmarlo
+      contra la placa de la válvula cuando llegue y reflejarlo en <code>ASSEMBLY.md</code>.</li>
+    <li><strong>Presión mínima de operación del solenoide.</strong> El listado da rango 0–115 psi, lo que sugiere acción
+      directa (y por eso funcionaría en un permeado a ~0 barg). <span class="pend">confirmar en el datasheet</span>:
+      una válvula asistida por piloto necesitaría un diferencial mínimo y en esta línea nunca abriría.</li>
+    <li><strong>Orden físico de los puertos en el cuerpo.</strong> El mapa funcional 1/2/3 viene de la descripción del
+      proveedor, pero <strong>cuál grabado corresponde a cuál puerto en la pieza real no está en el repo</strong>.
+      Léelo del cuerpo de la válvula y verifica con agua en el banco antes de plomear.</li>
+  </ul>
+</div>
+
+<p class="tiny sub" style="margin-top:22px">
+  Fuentes: <code>.claude/roles/hardware.md</code> · <code>config.yaml</code> (bloques <code>sensor:</code>, <code>valve:</code>,
+  <code>diverter:</code>, <code>safety:</code>, <code>membrane:</code>, <code>test:</code>, <code>temperature:</code>) ·
+  <code>docs/ASSEMBLY.md</code> · <code>BOM.csv</code> · <code>INVENTORY.md</code> · <code>README.md</code> (§ Build review) ·
+  <code>tools/gen_wiring.py</code> · <code>src/hal/servo_valve.py</code> · <code>src/hal/gpio_diverter.py</code> ·
+  <code>src/hal/ds18b20.py</code> · <code>docs/paper/gen_paper.js</code> ·
+  listado del fabricante del solenoide 231Y-6-12VDC (ESValves) y de la válvula de alivio CR25-100.
+  <strong>Nada de esta hoja está medido en el rig</strong>: no hay una sola junta hecha, ninguna presión verificada y
+  ningún fitting probado. Los tamaños de rosca del recipiente, del manómetro y del panel están sin medir a propósito —
+  marcados, no adivinados.
+</p>
+</div>
