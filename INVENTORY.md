@@ -40,7 +40,14 @@ bloquean ni el fusible ni el diodo. Con lo que ya hay en la mano:
    transductor.
 
 4. **Cablear la sonda DS18B20** (dato→GPIO4, + pull-up 4.7k a 3.3 V) y verla
-   enumerar. Requiere habilitar 1-Wire **y reiniciar** la primera vez:
+   enumerar. **Ojo — bloqueo mecánico:** las tres puntas de la sonda son de
+   conductor **trenzado**, y un clip de protoboard está hecho para conductor
+   sólido: no se sostienen en la fila. El cable 22AWG del inventario también es
+   trenzado. Hay que resolverlo antes (soldar colas de conductor sólido, o
+   crimpear puntas dupont); estañar la punta *sirve* en protoboard pero es
+   segundo mejor, y bajo tornillo (V1738) **no** se hace, porque el estaño fluye
+   y la unión se afloja — eso ya lo dice `docs/ASSEMBLY.md`.
+   Requiere habilitar 1-Wire **y reiniciar** la primera vez:
 
    ```
    sudo raspi-config nonint do_onewire 0   # luego reboot
@@ -53,8 +60,13 @@ bloquean ni el fusible ni el diodo. Con lo que ya hay en la mano:
    de permeato hay que cambiar `temperature.source` de `manual` a `probe` en
    `config.yaml`; hoy sigue en `manual`, que reporta ruido simulado, no medición.
 
-Los pasos 1, 2 y 4 no necesitan multímetro. El 3 sí, y el multímetro **no está en
-`BOM.csv` ni confirmado en este inventario**.
+Los pasos 1, 2 y 4 no necesitan multímetro. El 3 sí — **pero hay una alternativa
+sin multímetro**: `sensor.ads_channel` es 0, así que **A1 del ADS1115 está libre**.
+Metiendo la entrada del divisor también a A1, el ratio sale como `A0/A1` leído por
+el mismo ADC, y los errores de ganancia y de referencia **se cancelan en el
+cociente** — sale mejor que con un multímetro barato. Requiere un script corto con
+`adafruit_ads1x15` (el rig solo lee A0). Propuesta sin verificar; ver
+`docs/wiring_protoboard.html`.
 
 ## Pendiente de compra
 
