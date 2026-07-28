@@ -37,6 +37,7 @@ ROWS = [
  ("Fittings — MEASURE tube OD first (Swagelok rig)", "Inline blade-fuse holder + 3A fuse", 1, 6.00, "Amazon", "https://www.amazon.com/s?k=inline+blade+fuse+holder+12v+3A", "Fire safety on the 12V"),
  ("Fittings — MEASURE tube OD first (Swagelok rig)", "M3 screws/standoffs + baseplate", 1, 10.00, "Amazon", "https://www.amazon.com/s?k=M3+standoff+screw+assortment+kit", "Mount Pi/ADS/servo bracket"),
  ("Fittings — MEASURE tube OD first (Swagelok rig)", "22AWG stranded hookup wire (spool)", 1, 8.00, "Amazon", "https://www.amazon.com/s?k=22AWG+stranded+hookup+wire+kit", "Reach solenoid/servo/12V/probe"),
+ ("Fittings — MEASURE tube OD first (Swagelok rig)", "V1738 pluggable terminal block, 3-pole (plug + header)", 1, 0.00, "Adrian (bought separately)", "", "IN HAND 2026-07-27. Price/link PENDING - bought outside the Roxanne order, so $0.00 here on purpose. Breakaway joint for the legs that cross to the wet/moving side (diverter coil, probe, servo) so they unplug without tearing down the breadboard. MEASURE the pitch before soldering: 5.08 mm lands on alternating breadboard columns, 3.81/3.5 mm does NOT fit a breadboard at all."),
  ("Fittings — MEASURE tube OD first (Swagelok rig)", "Electrolytic caps 1000µF + 470µF", 1, 3.00, "Amazon", "https://www.amazon.com/s?k=1000uf+470uf+25v+electrolytic+capacitor", "Rail stability"),
  ("Fittings — MEASURE tube OD first (Swagelok rig)", "Pi/electronics enclosure (splash protection)", 1, 0.00, "In-house 3D print", "", "Designed & printed by you"),
  ("Fittings — MEASURE tube OD first (Swagelok rig)", "Zip ties + heat-shrink assortment", 1, 8.00, "Amazon", "https://www.amazon.com/s?k=heat+shrink+tubing+zip+ties+assortment+kit", "Strain relief + insulate splices"),
@@ -52,6 +53,7 @@ NOTES = [
  "Sensor 0-15 PSI (0-103 kPa) for <=60 kPa tests. ADS1115 at 3.3V + 10k/22k divider. DS18B20 on GPIO4 + 4.7k pullup.",
  "Control is COARSE (servo trims a quarter-turn ball valve). k is still valid: Q is regressed vs the MEASURED mean pressure per point.",
  "OPTIONAL (yellow): supply-side sensor for feed-forward, only if needed.",
+ "V1738 3-pole pluggable block: IN HAND, listed at $0.00 (Adrian bought it, not part of the Roxanne order). Preferred use = the diverter coil on poles 1-2 with pole 3 left DEAD on the header: a plug inserted backwards then OPENS the circuit (permeate keeps going to waste = fail-safe) instead of forward-biasing the 1N5819 flyback across the 12 V rail. Mark polarity on BOTH halves before soldering.",
  "FIRST TEST once assembled: sweep the servo across the ball valve's travel and log pressure BEFORE tuning PID; use the dial gauge for a 2-point sensor cal.",
 ]
 
