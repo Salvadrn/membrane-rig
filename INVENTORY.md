@@ -22,6 +22,7 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 | Servo DS3218 | confirmado por Adrián. **No energizar todavía** (ver bloqueos) |
 | ADS1115 ADC (HiLetgo) | confirmado por Adrián. El "hilego" del chat era esta pieza |
 | Kit de resistencias 1 % | confirmado por Adrián; verificado que trae 22 kΩ (por eso el divisor es 10k/22k y no 10k/20k) |
+| Sonda DS18B20 waterproof | llegó 2026-07-27; era el item #4 del pedido. Desbloquea la cadena de temperatura completa |
 
 ## Se puede hacer HOY — sin que falte nada
 
@@ -38,8 +39,22 @@ bloquean ni el fusible ni el diodo. Con lo que ya hay en la mano:
    (un 3 % de error aquí sesga `k` un 3 % con el R² intacto). No necesita el
    transductor.
 
-Requiere multímetro — **no está en `BOM.csv` ni confirmado en este inventario**.
-Si no hay, los pasos 1 y 2 se pueden hacer igual; el 3 no.
+4. **Cablear la sonda DS18B20** (dato→GPIO4, + pull-up 4.7k a 3.3 V) y verla
+   enumerar. Requiere habilitar 1-Wire **y reiniciar** la primera vez:
+
+   ```
+   sudo raspi-config nonint do_onewire 0   # luego reboot
+   ls /sys/bus/w1/devices/                 # debe aparecer un 28-…
+   ```
+
+   Gotcha del driver: `Ds18b20` resuelve la ruta `/sys/bus/w1/devices/28-*` **una
+   sola vez al construirse**, así que conectar la sonda con la app corriendo no
+   sirve — hay que reiniciar la app. Y cuando la sonda quede montada en el chorro
+   de permeato hay que cambiar `temperature.source` de `manual` a `probe` en
+   `config.yaml`; hoy sigue en `manual`, que reporta ruido simulado, no medición.
+
+Los pasos 1, 2 y 4 no necesitan multímetro. El 3 sí, y el multímetro **no está en
+`BOM.csv` ni confirmado en este inventario**.
 
 ## Pendiente de compra
 
@@ -51,7 +66,6 @@ prioridad.
 | 1 | Transductor de presión 0–15 PSI, 0.5–4.5 V, G1/4 | B0BG39KF3N |
 | 2 | Solenoide 3 vías 12 V para agua (231Y-6-12VDC) | ESValves |
 | 3 | Válvula de alivio ajustable 0–20 PSI | B01KO7NVYK |
-| 4 | Sonda DS18B20 waterproof | B0FLDRGXZD |
 | 5 | Adaptador 1/4" NPT-M × barb (×3) | B07VJK7KML |
 | 6 | Barrel jack 5.5×2.1 → terminal de tornillo | B077QD4G3Q |
 | 7 | Portafusibles inline + fusible 3 A | B088FNTJDV |
