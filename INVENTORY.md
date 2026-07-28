@@ -108,46 +108,48 @@ prioridad.
   arrancar en modo hardware y `servo_close_us` sigue en 0 (sin calibrar). La
   calibración de extremos va con la válvula DESACOPLADA del vástago.
 
-## ⚠ CAMBIO DE REQUISITO — pruebas hasta 40 PSI (2026-07-27)
+## Presión de ensayo: 35 kPa — confirmado (2026-07-27)
 
-Adrián reporta que tiene **ensayos de hasta 40 PSI = 275.8 kPa**, con objetivo de
-diseño ~50 PSI. Todo el rig está dimensionado hoy para ≤60 kPa (8.7 PSI). La
-prueba de 40 PSI **excede toda la escalera actual**: 4.2× el límite del espécimen,
-3.4× el corte global de software, 3.1× el alivio mecánico y 2.7× el fondo de
-escala del sensor.
+**RESUELTO — falsa alarma, y el diseño actual NO cambia.** Adrián dijo primero
+"pruebas de hasta 40 PSI", pero fue confusión de unidades: **sus ensayos son de
+35 kPa** (= 5.08 PSI = 0.35 bar). Eso cabe cómodo en todo lo que ya está
+dimensionado. Nada del rig se rediseña.
 
-**Dos piezas del pedido a Roxanne quedan mal especificadas — corregir ANTES de
-enviarlo** (el borrador sigue sin enviar):
+| Capa | kPa | margen sobre 35 kPa |
+|---|---|---|
+| setpoints configurados (max) | 60.0 | 1.7× |
+| límite del espécimen | 65.0 | 1.9× |
+| corte global de software | 80.0 | 2.3× |
+| alivio mecánico | ~90.0 | 2.6× |
+| tope del transductor 0–15 PSI | 103.4 | 3.0× |
+| tope del Keller LEX1 (2 bar) | 200.0 | 5.7× |
 
-| # | Pedido | Problema | Reemplazo |
-|---|---|---|---|
-| 1 | Transductor 0–15 PSI (`B0BG39KF3N`) | satura a 15 PSI | **0–60 PSI**, 0.5–4.5 V ratiométrico, G1/4 |
-| 3 | Alivio ajustable 0–20 PSI (`B01KO7NVYK`) | ventearía durante toda la prueba | ajustable que cubra **~50 PSI** |
+El ensayo usa el **34 % del span** del transductor de 0–15 PSI — la zona correcta.
+Exactitud ±1 % FS = ±1.03 kPa = **±3.0 %** en el punto de 35 kPa.
 
-**Por qué 60 PSI de fondo de escala:** la prueba de 40 PSI usa el 67 % del span —
-la zona correcta. Uno de 30 PSI satura (133 %); uno de 100 PSI desperdicia
-resolución. Con 60 PSI el alivio puede quedar en ~50 PSI y el sensor **sigue
-leyendo cuando ese alivio abre**, que es la propiedad que no se debe perder.
+**El transductor 0–15 PSI del pedido (item #1) es el correcto. No se cambia.**
 
-**Costo a aceptar:** la exactitud pasa de ±1.03 kPa a ±4.14 kPa (±1 % del fondo de
-escala). Si se quieren conservar puntos de prueba bajos (20–60 kPa), ahí la
-exactitud relativa se degrada mucho y la salida es **dos transductores** en la
-misma línea, no uno solo.
+### Lo que SÍ sigue mal: el alivio (item #3)
 
-**Lo que NO cambia:** el transductor sigue siendo 0.5–4.5 V ratiométrico, así que
-el divisor 10k/22k y todo el front-end quedan igual.
+Único punto vivo, y ahora está **más apretado** que antes:
 
-### Bloqueado hasta tener estos datos
+`BOM.csv` especifica un **CR25-100** (ajustable 0–100 psi). Pero `INVENTORY` item #3
+dice "ajustable 0–20 PSI" con ASIN `B01KO7NVYK`, que al rastrearlo apunta a un
+Midwest CPR-25 anunciado como **"5 Psi"** — dato de título de búsqueda, sin
+confirmar porque la página devuelve error.
 
-Los límites de `config.yaml` (corte global 80 kPa, espécimen 65 kPa) **no se han
-tocado**. Subirlos es aflojar una protección, y el software protege hardware cuyo
-rating no está documentado. Hace falta:
+Si ese alivio es de **5 psi fijos = 34.5 kPa**, se abre **por debajo del ensayo de
+35 kPa**: ventearía durante toda la prueba. Un alivio por debajo de la presión de
+trabajo no protege — impide trabajar, que es lo que empuja a quitarlo.
 
-1. **Rating de presión del recipiente y su brida.** 40 PSI = 2.76 bar.
-2. **Qué membrana se ensaya a 40 PSI.** La de 60 mesh tiene límite registrado de
-   65 kPa; a 275.8 kPa se rompe con casi total seguridad.
-3. **Alcance del manómetro digital de Adrián** (solo pantalla, sin salida de
-   datos: sirve como referencia de calibración, no como sensor del lazo).
+**Confirmar antes de ordenar:** que sea ajustable y que su rango cubra un punto de
+consigna de ~90 kPa (13 psi), por debajo del límite del recipiente.
+
+### Sigue sin documentarse
+
+**El rating de presión del recipiente y su brida.** `ASSEMBLY.md` manda fijar el
+alivio "below the vessel's limit" y ese límite no existe escrito en ningún archivo
+del repo. A 35 kPa el margen es cómodo, pero el número debería estar registrado.
 
 ## Discrepancias abiertas
 
