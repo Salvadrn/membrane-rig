@@ -101,30 +101,63 @@ assembly moves as a unit.
 | — sensor signal | 10k/22k divider → ADS A0 | never feed 4.5 V straight in |
 | GPIO4 | DS18B20 data | + 4.7k pull-up to 3.3 V; enable 1-Wire |
 | GPIO18 | servo signal | servo power from **UBEC 6 V**, not the Pi |
-| GPIO23 | IRLZ44N gate via **220–330 Ω** | + 10k gate pull-down; drain → solenoid−; flyback across coil |
+| GPIO23 | IRLZ44N gate via **470 Ω** | + 10k gate pull-down; drain → solenoid−; flyback across coil |
 | 12 V PSU | fuse 3 A → solenoid+ and UBEC in | 1000 µF at UBEC out, 470–1000 µF at 12 V in |
 | GND | everything | Pi + 12 V + UBEC + sensors + servo |
 | — diverter coil pair | through the **V1738 3-pole plug** | poles 1–2 = coil+/coil−; pole 3 stays DEAD on the header (anti-reversal key) |
 
-### Why the gate resistor is 220–330 Ω and not 150 Ω
+### Why the gate resistor is 470 Ω
 
-A 3.3 V GPIO into 150 Ω asks for **22 mA** at the instant the gate capacitance
-starts charging, against a pin specified for 16 mA. It will not destroy the pad
-— the output impedance self-limits and the transient is under a microsecond —
-but it is out of spec and it buys nothing: the diverter switches a handful of
-times per run, so edge speed is irrelevant here. 220 Ω draws 15 mA and 330 Ω
-draws 10 mA; both switch the IRLZ44N (Ciss 1700 pF) in well under a
-microsecond. `tools/gen_wiring.py` already drew 220 Ω.
+Peak current into the gate is just V/R at the instant the gate capacitance
+starts charging:
 
-Do not confuse this with the `1 kΩ` in the README's `valve.type: pwm` block:
-that is a **different, unbuilt circuit** — a proportional solenoid PWM'd on
-GPIO18. This rig runs `valve.type: servo`, so GPIO18 carries a servo pulse and
-has no MOSFET on it at all.
+| R | peak | vs BCM283x (16 mA) | vs **BCM2711 / Pi 4 (8 mA)** |
+|---|---|---|---|
+| 150 Ω | 22 mA | over | over |
+| 220 Ω | 15 mA | ok | **over** |
+| 330 Ω | 10 mA | ok | **over** |
+| **470 Ω** | **7 mA** | ok | **ok** |
 
-Caveat worth knowing for both: the IRLZ44N datasheet characterises R_DS(on) at
+This doc previously justified 220 Ω against a **16 mA** pin limit. That figure
+is from the BCM283x used on earlier Pis; the Pi 4's BCM2711 is documented at
+**8 mA** max drive (I_OH 7 mA @ 2.6 V), which puts 220 Ω and 330 Ω out of spec
+too. Rather than adjudicate the datasheets, take the value that is inside both:
+**470 Ω**.
+
+It costs nothing. Edge time is τ = R·Ciss = 0.8 µs at 470 Ω versus 0.37 µs at
+220 Ω, on a diverter that switches about six times per run — the speed is worth
+nothing here, so there is no reason to spend pin current on it. (The unbuilt
+`valve.type: pwm` topology on GPIO18 is the opposite case: it switches
+continuously at 1 kHz against 1 µs duty steps, so it wants the *fast* end. It
+does not exist in this rig.)
+
+None of this would destroy a pad — the output self-limits and the transient is
+sub-microsecond. It is about staying inside spec when doing so is free.
+
+Caveat worth knowing either way: the IRLZ44N datasheet characterises R_DS(on) at
 V_GS = 5 V and 4 V. Driven from a 3.3 V GPIO the part runs **off the table**, so
 the 0.022 Ω figure does not apply here. At ~1 A of coil current it does not
 matter, but do not quote that number as if it did.
+
+### Coil current does cross the breadboard — mind the two clips
+
+The 12 V rail stays off the breadboard, but the IRLZ44N itself sits in it, so
+its **drain and source legs carry the full coil current through their clips**
+(rows 38 and 39 of the proposed layout).
+
+The coil current is no longer a guess: the ESValves listing for the
+231Y-6-12VDC gives **13 W at 12 V ≈ 1.08 A** (listing figure, not measured).
+That is *above* the ~1 A a breadboard contact is rated for, so this is not a
+thin margin — it is over the limit.
+
+Fix, now mandatory rather than advisable: solder the 22 AWG runs **directly to
+the D and S legs** of the MOSFET instead of letting the current pass through
+breadboard contacts. The gate side stays on the board, where it carries
+microamps.
+
+Same number closes the fuse budget: 1.08 A of coil plus ~0.95 A drawn by the
+UBEC ≈ **2.03 A**, against the 3 A fuse. That fits, with the honest caveat that
+both figures are catalogue values and neither has been measured on the rig.
 
 ### Pluggable break — V1738 3-pole plug + header (in hand 2026-07-27)
 

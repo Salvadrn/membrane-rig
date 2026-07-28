@@ -153,7 +153,7 @@ label(ax, 96, 56.2, "✗  la corriente del servo NUNCA sale del Pi", BAD, 8.6, h
 
 # ---------------------------------------------------------- ROW 4: diverter
 section(ax, 29, 48.0, "DIVERTER   (solenoide de 3 vías)", CTRL)
-box(ax, 38, 38.0, 19, 8, "220 Ω serie\n+ 10k a GND", HAVE_FC, HAVE_EC, 8.4)
+box(ax, 38, 38.0, 19, 8, "470 Ω serie\n+ 10k a GND", HAVE_FC, HAVE_EC, 8.4)
 box(ax, 62, 38.0, 18, 8, "MOSFET\nIRLZ44N", HAVE_FC, HAVE_EC, 8.6)
 box(ax, 85, 38.0, 21, 8, "Solenoide 3 vías\n12 V (agua)", MISS_FC, MISS_EC, 8.6)
 box(ax, 111, 38.0, 19, 8, "Diodo 1N5819\n(flyback)", MISS_FC, MISS_EC, 8.4)
@@ -224,6 +224,8 @@ rules = [
      "jala picos de ~2 A y el Pi se reinicia solo  →  aliméntalo del UBEC"),
     ("Transductor directo al ADS1115",
      "el ADC vive a 3.3 V y la señal llega a 4.5 V: lo quemas  →  divisor 10k/22k primero"),
+    ("Gate del MOSFET con menos de 470 Ω",
+     "el pin del Pi 4 da 8 mA; 220 Ω le pide 15  →  470 Ω, y no pierdes nada"),
     ("Tierras separadas",
      "sin GND común las lecturas flotan y el MOSFET no conmuta bien  →  une TODOS los GND"),
     ("Solenoide sin diodo flyback",
@@ -231,12 +233,12 @@ rules = [
     ("Dejar la compuerta del MOSFET al aire",
      "al arrancar, el pin queda indefinido y la solenoide puede activarse sola  →  10k a GND"),
 ]
-yy = 46.5
+yy = 47.0
 for title, why in rules:
-    label(ax, COLX, yy, "✗", BAD, 11.5, ha="left", weight="bold")
-    label(ax, COLX + 3.8, yy, title, INK, 9.2, ha="left", weight="bold")
-    label(ax, COLX + 3.8, yy - 3.1, why, MUTED, 8.0, ha="left")
-    yy -= 7.6
+    label(ax, COLX, yy, "✗", BAD, 11.0, ha="left", weight="bold")
+    label(ax, COLX + 3.8, yy, title, INK, 9.0, ha="left", weight="bold")
+    label(ax, COLX + 3.8, yy - 2.8, why, MUTED, 7.8, ha="left")
+    yy -= 6.4
 
 # ============================================================ BUILD ORDER
 label(ax, 3, 10.0, "ORDEN DE ARMADO   —   de lo más seguro a lo más riesgoso", INK, 13, ha="left", weight="bold")
