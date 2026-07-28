@@ -1,0 +1,667 @@
+<div class="hoja-ubec">
+<style>
+.hoja-ubec{
+  --tp:#1a1a1a; --ts:#5b5b5b; --s1:#ffffff; --s2:#fafafa; --bd:#e4e4e4;
+  --pwr:#1f5e8b; --ctrl:#7a2f2f; --sig:#8a6d00; --good:#1e7d32; --bad:#b3261e;
+  --data:#6b3fa0; --grey:#9e9e9e;
+  color: var(--text-primary, var(--tp));
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size:14px; line-height:1.6; font-weight:400;
+  max-width:1180px; margin:0 auto; padding:8px 4px 32px;
+}
+@media (prefers-color-scheme: dark){
+  .hoja-ubec{ --tp:#ececec; --ts:#a6a6a6; --s1:#1b1b1d; --s2:#232326; --bd:#3a3a3d; }
+}
+.hoja-ubec h1{ font-size:22px; font-weight:500; margin:0 0 6px; letter-spacing:-.01em; }
+.hoja-ubec h2{ font-size:16px; font-weight:500; margin:0 0 14px; letter-spacing:.06em; text-transform:uppercase; }
+.hoja-ubec h3{ font-size:14px; font-weight:500; margin:0 0 8px; }
+.hoja-ubec p{ margin:0 0 10px; }
+.hoja-ubec .sub{ color: var(--text-secondary, var(--ts)); }
+.hoja-ubec .bajada{ font-size:14px; color: var(--text-secondary, var(--ts)); margin:0 0 22px; max-width:900px; }
+.hoja-ubec .caja{ background: var(--surface-1, var(--s1)); border:1px solid var(--border, var(--bd)); border-radius:8px; padding:18px 20px; }
+.hoja-ubec .rule{ height:1px; background: var(--border, var(--bd)); border:0; margin:26px 0; }
+.hoja-ubec .cols{ display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start; }
+.hoja-ubec .cols3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.25rem; }
+@media (max-width:900px){
+  .hoja-ubec .cols{ grid-template-columns:1fr; }
+  .hoja-ubec .cols3{ grid-template-columns:1fr; }
+}
+.hoja-ubec .tiny{ font-size:12px; }
+.hoja-ubec .why{ font-size:13px; color: var(--text-secondary, var(--ts)); }
+.hoja-ubec code{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12.5px;
+  background: color-mix(in srgb, var(--grey,#9e9e9e) 16%, transparent); padding:1px 5px; border-radius:4px; }
+
+/* ---- bandas de estado ---- */
+.hoja-ubec .banda{ border-radius:8px; padding:16px 20px; margin:0 0 22px; }
+.hoja-ubec .banda-bad{ border:2px solid var(--bad,#b3261e); background: color-mix(in srgb, var(--bad,#b3261e) 10%, transparent); }
+.hoja-ubec .banda-warn{ border:2px solid #b8860b; background: color-mix(in srgb, #b8860b 12%, transparent); }
+.hoja-ubec .banda h3{ font-size:15px; font-weight:500; margin:0 0 6px; }
+
+/* ---- filas de destino ---- */
+.hoja-ubec .fila{ display:grid; grid-template-columns:26px 108px 1fr; gap:12px; align-items:start; padding:9px 0;
+  border-top:1px solid var(--border, var(--bd)); }
+.hoja-ubec .fila:first-of-type{ border-top:0; }
+.hoja-ubec .chip{ width:22px; height:22px; border-radius:3px; margin-top:2px; }
+.hoja-ubec .nom{ font-weight:500; font-size:13.5px; }
+.hoja-ubec .dst{ font-weight:500; }
+
+/* ---- tira de pines ---- */
+.hoja-ubec .tira{ display:flex; gap:16px; padding:6px 0 0; }
+.hoja-ubec .pin{ text-align:center; }
+.hoja-ubec .pinbar{ width:7px; height:28px; margin:0 auto; border-radius:1px; }
+.hoja-ubec .pinlab{ writing-mode:vertical-rl; font-size:12px; margin:5px auto 0; letter-spacing:.02em; }
+
+/* ---- callouts ---- */
+.hoja-ubec .co{ border-radius:8px; padding:18px 20px; }
+.hoja-ubec .co-t{ font-weight:500; margin-bottom:10px; font-size:14.5px; }
+.hoja-ubec .co-b{ font-size:14px; line-height:1.62; }
+.hoja-ubec .co-red{ border:2px solid var(--bad,#b3261e); }
+.hoja-ubec .co-green{ border:2px solid var(--good,#1e7d32); }
+.hoja-ubec .co-blue{ border:2px solid var(--pwr,#1f5e8b); }
+.hoja-ubec .co-red .co-t{ color:var(--bad,#b3261e); }
+.hoja-ubec .co-green .co-t{ color:var(--good,#1e7d32); }
+.hoja-ubec .co-blue .co-t{ color:var(--pwr,#1f5e8b); }
+
+/* ---- tabla failsafe ---- */
+.hoja-ubec table{ border-collapse:collapse; width:100%; font-size:13.5px; }
+.hoja-ubec th{ text-align:left; font-weight:500; font-size:12px; letter-spacing:.05em; text-transform:uppercase;
+  color: var(--text-secondary, var(--ts)); padding:0 12px 8px 0; border-bottom:1px solid var(--border, var(--bd)); }
+.hoja-ubec td{ padding:10px 12px 10px 0; border-bottom:1px solid var(--border, var(--bd)); vertical-align:top; }
+.hoja-ubec td:first-child{ font-weight:500; width:210px; }
+
+.hoja-ubec svg{ width:100%; height:auto; color: var(--text-primary, var(--tp)); }
+/* tapa las líneas que pasan por detrás de una etiqueta, con el MISMO fondo de la caja */
+.hoja-ubec .mask{ fill: var(--surface-1, var(--s1)); }
+.hoja-ubec .pend{ display:inline-block; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+  border:1px solid var(--bad,#b3261e); color:var(--bad,#b3261e); border-radius:4px; padding:1px 6px; vertical-align:middle; }
+.hoja-ubec .conf{ display:inline-block; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+  border:1px solid var(--grey,#9e9e9e); color:var(--grey,#9e9e9e); border-radius:4px; padding:1px 6px; vertical-align:middle; }
+.hoja-ubec ul{ margin:0 0 10px; padding-left:20px; }
+.hoja-ubec li{ margin-bottom:6px; }
+</style>
+
+<h1>Cómo se conecta el UBEC</h1>
+<p class="bajada">
+  El UBEC es la fuente propia del servo DS3218 que gira la válvula de bola del inlet de aire.
+  Esta hoja resuelve cuatro dudas: por qué el servo no puede colgarse del riel de 5&nbsp;V del Pi,
+  qué hace exactamente un UBEC que no puede hacer ni un divisor ni un regulador lineal,
+  por qué la señal sí sale del Pi pero la corriente no aunque sea el mismo cable de tres hilos,
+  y dónde van los dos capacitores cuando lleguen.
+</p>
+
+<div class="banda banda-bad">
+  <h3>⛔ Puedes CABLEAR todo esto hoy. NO puedes ENERGIZARLO.</h3>
+  <p style="margin:0 0 8px">
+    Falta el <strong>fusible de 3&nbsp;A</strong> (item&nbsp;#7 del pedido pendiente, portafusibles inline B088FNTJDV).
+    La fuente de 12&nbsp;V 3&nbsp;A <strong>sí</strong> está en la mano desde el 2026-07-27, así que la tentación de
+    "nada más probar tantito" es real. No.
+  </p>
+  <p style="margin:0" class="tiny sub">
+    Sin fusible, el único límite de corriente del riel de 12&nbsp;V es la propia fuente: 3&nbsp;A entregados con gusto
+    a lo que sea que esté mal. Un jumper que puentee 12&nbsp;V contra el nodo de 6&nbsp;V, la entrada del UBEC al revés,
+    o un hilo suelto de cable trenzado cruzando el riel, y esos 3&nbsp;A se van completos al servo, al capacitor o al MOSFET.
+    El UBEC trae protección contra polaridad invertida <em>en su entrada</em> — el servo y los capacitores no traen nada.
+    El fusible es lo que convierte "se quemó un componente" en "se quemó un fusible".
+    <strong>Arma el cableado, deja la fuente desenchufada de la pared, y espera el item&nbsp;#7.</strong>
+  </p>
+</div>
+
+<div class="banda banda-warn">
+  <h3>⚠ Y aunque llegue el fusible: no acoples el servo al vástago todavía</h3>
+  <p style="margin:0" class="tiny">
+    <code>ServoValve.__init__</code> llama <code>to_safe()</code> <em>al construirse</em>: en cuanto el software arranque en
+    <code>mode: hardware</code>, el servo salta a 700&nbsp;µs sin avisar. Si para entonces el acople ya está en el vástago,
+    empuja la válvula contra su tope. Orden correcto: (1) servo DESACOPLADO, (2) verificas a dónde llega el extremo de
+    700&nbsp;µs, (3) recién ahí acoplas. Además <code>servo_close_us</code> sigue en <code>0</code> = sin calibrar.
+  </p>
+</div>
+
+<hr class="rule">
+
+<div class="cols">
+
+  <!-- ============ COLUMNA IZQUIERDA ============ -->
+  <div>
+
+    <h2>La pieza como se ve</h2>
+
+    <div class="caja" style="margin-bottom:18px">
+      <h3 style="color:var(--pwr,#1f5e8b)">UBEC Hobbywing 3&nbsp;A &nbsp;·&nbsp; 43 × 17 × 7 mm, 11 g</h3>
+      <p class="why" style="margin-bottom:14px">
+        No es un módulo con tira de pines: es un ladrillito con blindaje metálico, un par de cables por cada extremo
+        y un <strong>jumper de selección</strong> en medio. Entra 12&nbsp;V por un lado, sale 6&nbsp;V por el otro.
+      </p>
+
+      <!-- brick -->
+      <svg viewBox="-16 0 576 150" role="img" aria-label="Croquis del UBEC: entrada, jumper de 5V/6V y salida">
+        <!-- cuerpo -->
+        <rect x="150" y="38" width="220" height="62" rx="6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="160" y="46" width="200" height="46" rx="3" fill="none" stroke="var(--grey,#9e9e9e)" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="260" y="66" text-anchor="middle" font-size="12.5" fill="currentColor">UBEC-3A</text>
+        <text x="260" y="82" text-anchor="middle" font-size="11" fill="var(--grey,#9e9e9e)">blindaje metálico</text>
+
+        <!-- entrada -->
+        <line x1="60" y1="56" x2="150" y2="56" stroke="var(--bad,#b3261e)" stroke-width="3"/>
+        <line x1="60" y1="82" x2="150" y2="82" stroke="currentColor" stroke-width="3"/>
+        <text x="56" y="60" text-anchor="end" font-size="11.5" fill="var(--bad,#b3261e)">rojo  IN +</text>
+        <text x="56" y="86" text-anchor="end" font-size="11.5" fill="currentColor">negro  IN −</text>
+        <text x="105" y="112" text-anchor="middle" font-size="11" fill="var(--pwr,#1f5e8b)">ENTRADA 5.5 – 26 V</text>
+        <text x="105" y="126" text-anchor="middle" font-size="11" fill="var(--good,#1e7d32)">12 V cae justo en medio ✓</text>
+
+        <!-- jumper -->
+        <rect x="240" y="16" width="42" height="16" rx="2" fill="none" stroke="var(--good,#1e7d32)" stroke-width="1.8"/>
+        <circle cx="250" cy="24" r="2.2" fill="var(--good,#1e7d32)"/>
+        <circle cx="261" cy="24" r="2.2" fill="var(--good,#1e7d32)"/>
+        <circle cx="272" cy="24" r="2.2" fill="var(--good,#1e7d32)"/>
+        <line x1="261" y1="32" x2="261" y2="38" stroke="var(--good,#1e7d32)" stroke-width="1.4"/>
+        <text x="292" y="21" font-size="11.5" fill="var(--good,#1e7d32)">jumper: 5 V ó 6 V</text>
+        <text x="292" y="34" font-size="11" fill="var(--good,#1e7d32)">→ ponlo en 6 V</text>
+
+        <!-- salida -->
+        <line x1="370" y1="56" x2="460" y2="56" stroke="var(--bad,#b3261e)" stroke-width="3"/>
+        <line x1="370" y1="82" x2="460" y2="82" stroke="currentColor" stroke-width="3"/>
+        <text x="466" y="60" font-size="11.5" fill="var(--bad,#b3261e)">rojo  OUT +</text>
+        <text x="466" y="86" font-size="11.5" fill="currentColor">negro  OUT −</text>
+        <text x="415" y="112" text-anchor="middle" font-size="11" fill="var(--ctrl,#7a2f2f)">SALIDA 6.0 V @ 3 A</text>
+        <text x="415" y="126" text-anchor="middle" font-size="11" fill="var(--grey,#9e9e9e)">rizo &lt; 50 mVp-p</text>
+      </svg>
+
+      <p class="tiny sub" style="margin:12px 0 0">
+        <span class="conf">confirmar contra tu unidad</span>
+        Hobbywing describe la selección como <em>jumper cap</em> y algunos listados de Amazon como <em>switch</em>: mira
+        cuál trae el tuyo. La salida sale de fábrica en un conector hembra tipo servo en algunos lotes y como par pelado en
+        otros — <strong>identifica + y − con el multímetro, no por el color</strong>, antes de que el servo toque nada.
+      </p>
+    </div>
+
+    <div class="caja">
+      <h3 style="color:var(--ctrl,#7a2f2f)">Conector del servo DS3218 — el orden físico importa</h3>
+      <div class="tira" style="padding-left:8px">
+        <div class="pin">
+          <div class="pinbar" style="background:#1a1a1a; outline:1px solid var(--grey,#9e9e9e)"></div>
+          <div class="pinlab" style="color:var(--text-primary,var(--tp))">1 · café · GND</div>
+        </div>
+        <div class="pin">
+          <div class="pinbar" style="background:var(--bad,#b3261e)"></div>
+          <div class="pinlab" style="color:var(--bad,#b3261e)">2 · rojo · V+ 6 V</div>
+        </div>
+        <div class="pin">
+          <div class="pinbar" style="background:var(--ctrl,#7a2f2f)"></div>
+          <div class="pinlab" style="color:var(--ctrl,#7a2f2f)">3 · naranja · señal</div>
+        </div>
+        <div style="align-self:flex-start; padding-left:18px; max-width:280px">
+          <p class="why" style="margin:0">
+            En <em>todo</em> conector de servo el <strong>V+ vive en la posición del medio</strong>. Por eso un plug
+            invertido 180° no desconecta la alimentación: solo intercambia GND ↔ señal, el servo <em>sí</em> arranca,
+            y su corriente de retorno se va por GPIO18.
+          </p>
+          <p class="why" style="margin:8px 0 0">
+            El plug del servo <strong>no se enchufa al UBEC</strong>. Sus tres hilos se separan: dos van al par de 6&nbsp;V
+            y uno va al Pi. Eso es literalmente la respuesta a la duda azul de abajo.
+          </p>
+        </div>
+      </div>
+      <p class="tiny sub" style="margin:14px 0 0">
+        Los colores café/rojo/naranja son el estándar de estos servos digitales chinos y lo que reporta ANNIMOS, pero
+        <strong>la posición manda sobre el color</strong>: hay lotes en negro/rojo/blanco. Si dudas, mide continuidad
+        entre la carcasa metálica del servo y el hilo de la posición 1.
+      </p>
+    </div>
+
+    <h2 style="margin-top:28px">A dónde va cada conductor</h2>
+
+    <div class="caja">
+      <div class="fila">
+        <div class="chip" style="background:var(--bad,#b3261e)"></div>
+        <div class="nom" style="color:var(--bad,#b3261e)">UBEC IN +</div>
+        <div>
+          <div class="dst">→ al riel de 12 V, <em>después</em> del fusible</div>
+          <div class="why">Nunca antes del fusible: la protección tiene que quedar entre la fuente y todo lo demás.
+            <span class="pend">fusible pendiente</span></div>
+        </div>
+      </div>
+      <div class="fila">
+        <div class="chip" style="background:#1a1a1a; outline:1px solid var(--grey,#9e9e9e)"></div>
+        <div class="nom">UBEC IN −</div>
+        <div>
+          <div class="dst">→ a la barra de tierra común</div>
+          <div class="why">La misma barra del Pi, de la fuente de 12 V, del servo y de los sensores. Una sola tierra en todo el rig.</div>
+        </div>
+      </div>
+      <div class="fila">
+        <div class="chip" style="background:var(--good,#1e7d32)"></div>
+        <div class="nom" style="color:var(--good,#1e7d32)">Jumper 5 V / 6 V</div>
+        <div>
+          <div class="dst">→ posición <strong>6 V</strong></div>
+          <div class="why">Este UBEC solo entrega 5 V ó 6 V. No existe una posición de 6.8 V — ver la nota de conflicto abajo.</div>
+        </div>
+      </div>
+      <div class="fila">
+        <div class="chip" style="background:var(--bad,#b3261e)"></div>
+        <div class="nom" style="color:var(--bad,#b3261e)">UBEC OUT +</div>
+        <div>
+          <div class="dst">→ al nodo de 6 V &nbsp;→&nbsp; hilo <strong>rojo</strong> del servo</div>
+          <div class="why">Aquí también aterriza el capacitor de 1000 µF cuando llegue. Este nodo no toca ningún pin del Pi. Jamás.</div>
+        </div>
+      </div>
+      <div class="fila">
+        <div class="chip" style="background:#1a1a1a; outline:1px solid var(--grey,#9e9e9e)"></div>
+        <div class="nom">UBEC OUT −</div>
+        <div>
+          <div class="dst">→ a la misma barra de tierra común</div>
+          <div class="why">Es el retorno del motor del servo <em>y</em> la referencia contra la que el servo lee el pulso del Pi. Las dos cosas por el mismo cobre.</div>
+        </div>
+      </div>
+      <div class="fila">
+        <div class="chip" style="background:var(--grey,#9e9e9e)"></div>
+        <div class="nom" style="color:var(--grey,#9e9e9e)">LED del UBEC</div>
+        <div>
+          <div class="dst">sin conectar — es indicador</div>
+          <div class="why">Enciende cuando la salida está en rango. Es tu confirmación visual de que el 6 V vive, no un pin de señal.</div>
+        </div>
+      </div>
+      <div class="fila">
+        <div class="chip" style="background:#1a1a1a; outline:1px solid var(--grey,#9e9e9e)"></div>
+        <div class="nom">Servo · café (pos 1)</div>
+        <div>
+          <div class="dst">→ barra de tierra común</div>
+          <div class="why">Se conecta PRIMERO y se desconecta AL FINAL. Ver la tabla de failsafe: quitarlo con V+ puesto manda el retorno por GPIO18.</div>
+        </div>
+      </div>
+      <div class="fila">
+        <div class="chip" style="background:var(--bad,#b3261e)"></div>
+        <div class="nom" style="color:var(--bad,#b3261e)">Servo · rojo (pos 2)</div>
+        <div>
+          <div class="dst">→ nodo de 6 V (UBEC OUT +)</div>
+          <div class="why">1.67 A de pico al calarse. Este hilo y el café van punto a punto, <strong>no por los resortes del protoboard</strong>.</div>
+        </div>
+      </div>
+      <div class="fila">
+        <div class="chip" style="background:var(--ctrl,#7a2f2f)"></div>
+        <div class="nom" style="color:var(--ctrl,#7a2f2f)">Servo · naranja (pos 3)</div>
+        <div>
+          <div class="dst">→ <strong>GPIO18 · pin físico 12</strong> del Pi</div>
+          <div class="why">PWM por hardware (BCM 12/13/18/19). Es una entrada lógica: microamperes. Un jumper delgado sobra aquí.</div>
+        </div>
+      </div>
+      <div class="fila">
+        <div class="chip" style="background:var(--pwr,#1f5e8b)"></div>
+        <div class="nom" style="color:var(--pwr,#1f5e8b)">Pi · pin 2 (5 V)</div>
+        <div>
+          <div class="dst">→ SOLO al V+ del transductor de presión</div>
+          <div class="why">No toca el UBEC, no toca el servo, no toca el nodo de 6 V. Es un riel distinto que casualmente vive cerca.</div>
+        </div>
+      </div>
+      <div class="fila">
+        <div class="chip" style="background:#1a1a1a; outline:1px solid var(--grey,#9e9e9e)"></div>
+        <div class="nom">Pi · pin 6 (GND)</div>
+        <div>
+          <div class="dst">→ barra de tierra común</div>
+          <div class="why">Es el único cobre que el Pi comparte con el mundo de 12 V / 6 V. Sin él el servo no tiene contra qué comparar el pulso.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="caja" style="margin-top:18px; border-left:3px solid var(--bad,#b3261e)">
+      <h3 style="color:var(--bad,#b3261e)">Conflicto de documentación: 6 V vs 6.8 V <span class="pend">pendiente de arreglar</span></h3>
+      <p class="why" style="margin:0">
+        <code>docs/ASSEMBLY.md:40</code> y <code>:62</code> y el rol de Hardware dicen <em>"a 6.8&nbsp;V"</em>.
+        El UBEC que está en la mano <strong>no puede hacer 6.8&nbsp;V</strong>: su salida es un selector de dos posiciones,
+        5&nbsp;V ó 6&nbsp;V. <code>BOM.csv</code>, <code>tools/gen_bom.py</code> y <code>ASSEMBLY.md:88</code> ya dicen 6&nbsp;V —
+        esos tres están bien. Cablea a <strong>6&nbsp;V</strong>. Consecuencia derivada: el umbral de par de arranque
+        <em>≤1.0 N·m → DS3218 pelón</em> se calculó suponiendo 6.8&nbsp;V; a 6&nbsp;V hay ~5&nbsp;% menos par y el umbral
+        baja a <strong>≈0.95 N·m</strong> (banda de reducción 2:1: 0.95–1.42 N·m). Todavía no está corregido en los docs.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- ============ COLUMNA DERECHA ============ -->
+  <div>
+    <h2>El esquemático</h2>
+
+    <div class="caja">
+      <svg viewBox="0 0 700 620" role="img" aria-label="Esquemático: fuente de 12 V, fusible pendiente, UBEC, servo, Pi y barra de tierra común">
+
+        <!-- ======== cadena de 12 V ======== -->
+        <rect x="16" y="26" width="140" height="56" rx="5" fill="none" stroke="var(--pwr,#1f5e8b)" stroke-width="1.8"/>
+        <text x="86" y="49" text-anchor="middle" font-size="12.5" fill="currentColor">Fuente 12 V 3 A</text>
+        <text x="86" y="66" text-anchor="middle" font-size="11" fill="var(--good,#1e7d32)">✓ en la mano</text>
+
+        <line x1="156" y1="46" x2="200" y2="46" stroke="var(--pwr,#1f5e8b)" stroke-width="2.2"/>
+
+        <!-- fusible pendiente -->
+        <rect x="200" y="24" width="140" height="44" rx="5" fill="none" stroke="var(--bad,#b3261e)" stroke-width="2" stroke-dasharray="6 4"/>
+        <text x="270" y="42" text-anchor="middle" font-size="12.5" fill="var(--bad,#b3261e)">FUSIBLE 3 A</text>
+        <text x="270" y="59" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">no ha llegado</text>
+        <text x="270" y="86" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">sin esto NO se energiza</text>
+
+        <line x1="340" y1="46" x2="500" y2="46" stroke="var(--pwr,#1f5e8b)" stroke-width="2.2"/>
+        <text x="424" y="34" text-anchor="middle" font-size="11" fill="var(--pwr,#1f5e8b)">12 V</text>
+
+        <!-- nodo del riel de 12 V -->
+        <circle cx="356" cy="46" r="5" fill="currentColor"/>
+
+        <!-- 470 uF pendiente -->
+        <line x1="356" y1="46" x2="356" y2="112" stroke="var(--pwr,#1f5e8b)" stroke-width="2.2"/>
+        <line x1="338" y1="112" x2="374" y2="112" stroke="var(--bad,#b3261e)" stroke-width="2.4" stroke-dasharray="5 3"/>
+        <line x1="342" y1="124" x2="370" y2="124" stroke="var(--bad,#b3261e)" stroke-width="2.4" stroke-dasharray="5 3"/>
+        <line x1="356" y1="124" x2="356" y2="512" stroke="var(--pwr,#1f5e8b)" stroke-width="2.2"/>
+        <text x="332" y="106" text-anchor="end" font-size="11" fill="var(--bad,#b3261e)">470 µF</text>
+        <text x="332" y="119" text-anchor="end" font-size="10" fill="var(--bad,#b3261e)">falta</text>
+        <text x="332" y="132" text-anchor="end" font-size="10" fill="var(--grey,#9e9e9e)">raya = − → GND</text>
+
+        <!-- entrada del UBEC -->
+        <line x1="500" y1="46" x2="500" y2="112" stroke="var(--pwr,#1f5e8b)" stroke-width="2.2"/>
+        <text x="510" y="70" font-size="10.5" fill="var(--grey,#9e9e9e)">riel de 12 V</text>
+        <text x="510" y="86" font-size="10.5" fill="var(--good,#1e7d32)">✓ dentro de 5.5–26 V</text>
+
+        <!-- ======== UBEC ======== -->
+        <rect x="440" y="112" width="248" height="80" rx="6" fill="none" stroke="var(--pwr,#1f5e8b)" stroke-width="2"/>
+        <text x="564" y="138" text-anchor="middle" font-size="13" fill="currentColor">UBEC 12 V → 6 V · 3 A</text>
+        <text x="564" y="155" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">buck conmutado (no aislado)</text>
+        <text x="564" y="172" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">3 A cont. ✓ &gt; 1.67 A de calado</text>
+        <text x="564" y="187" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">jumper en 6 V</text>
+
+        <!-- IN- del UBEC -->
+        <line x1="440" y1="168" x2="406" y2="168" stroke="currentColor" stroke-width="2.2"/>
+        <line x1="406" y1="168" x2="406" y2="512" stroke="currentColor" stroke-width="2.2"/>
+        <text x="400" y="163" text-anchor="end" font-size="10.5" fill="var(--grey,#9e9e9e)">IN −</text>
+
+        <!-- OUT- del UBEC -->
+        <line x1="520" y1="192" x2="520" y2="206" stroke="currentColor" stroke-width="2.2"/>
+        <line x1="520" y1="206" x2="432" y2="206" stroke="currentColor" stroke-width="2.2"/>
+        <line x1="432" y1="206" x2="432" y2="512" stroke="currentColor" stroke-width="2.2"/>
+        <text x="528" y="204" font-size="10.5" fill="var(--grey,#9e9e9e)">OUT −</text>
+
+        <!-- OUT+ del UBEC: nodo de 6 V -->
+        <line x1="640" y1="192" x2="640" y2="350" stroke="var(--ctrl,#7a2f2f)" stroke-width="2.4"/>
+        <circle cx="640" cy="252" r="5" fill="currentColor"/>
+        <text x="632" y="224" text-anchor="end" font-size="10" fill="var(--good,#1e7d32)">✓ el DS3218 acepta 4.8–6.8 V</text>
+        <text x="632" y="240" text-anchor="end" font-size="12.5" fill="var(--ctrl,#7a2f2f)">6.0 V</text>
+        <text x="632" y="320" text-anchor="end" font-size="10.5" fill="var(--bad,#b3261e)">rojo · V+</text>
+        <text x="632" y="336" text-anchor="end" font-size="10.5" fill="var(--ctrl,#7a2f2f)">1.67 A pico al calarse</text>
+
+        <!-- 1000 uF pendiente, colgando del nodo de 6 V -->
+        <line x1="640" y1="252" x2="458" y2="252" stroke="var(--ctrl,#7a2f2f)" stroke-width="2.4"/>
+        <line x1="458" y1="252" x2="458" y2="292" stroke="var(--ctrl,#7a2f2f)" stroke-width="2.4"/>
+        <line x1="440" y1="292" x2="476" y2="292" stroke="var(--bad,#b3261e)" stroke-width="2.4" stroke-dasharray="5 3"/>
+        <line x1="444" y1="304" x2="472" y2="304" stroke="var(--bad,#b3261e)" stroke-width="2.4" stroke-dasharray="5 3"/>
+        <line x1="458" y1="304" x2="458" y2="512" stroke="var(--ctrl,#7a2f2f)" stroke-width="2.2"/>
+        <text x="484" y="284" font-size="11" fill="var(--bad,#b3261e)">1000 µF</text>
+        <text x="484" y="297" font-size="10" fill="var(--bad,#b3261e)">falta — va pegado al servo</text>
+        <text x="484" y="310" font-size="10" fill="var(--grey,#9e9e9e)">raya = − → GND</text>
+
+        <!-- ======== SERVO ======== -->
+        <rect x="470" y="350" width="218" height="106" rx="6" fill="none" stroke="var(--ctrl,#7a2f2f)" stroke-width="2"/>
+        <text x="579" y="376" text-anchor="middle" font-size="13" fill="currentColor">Servo DS3218</text>
+        <text x="579" y="393" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">4.8–6.8 V · 270° · IP66</text>
+        <line x1="492" y1="404" x2="666" y2="404" stroke="var(--grey,#9e9e9e)" stroke-width="0.8" stroke-dasharray="3 3"/>
+        <text x="579" y="422" text-anchor="middle" font-size="10.5" fill="var(--ctrl,#7a2f2f)">chip de control ← señal (µA)</text>
+        <text x="579" y="440" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">puente H + motor ← 6 V (A)</text>
+
+        <!-- retorno del servo -->
+        <line x1="660" y1="456" x2="660" y2="512" stroke="currentColor" stroke-width="2.4"/>
+        <text x="652" y="488" text-anchor="end" font-size="10.5" fill="var(--grey,#9e9e9e)">café · GND</text>
+
+        <!-- ======== señal: cruza sin conectarse (saltos) ======== -->
+        <path d="M270,400 H350 A6,6 0 0 1 362,400 H400 A6,6 0 0 1 412,400 H426 A6,6 0 0 1 438,400 H452 A6,6 0 0 1 464,400 H470"
+              fill="none" stroke="var(--ctrl,#7a2f2f)" stroke-width="2.2"/>
+        <polygon points="470,400 460,395 460,405" fill="var(--ctrl,#7a2f2f)"/>
+        <rect x="288" y="362" width="176" height="20" rx="3" class="mask"/>
+        <text x="294" y="376" font-size="10.5" fill="var(--ctrl,#7a2f2f)">pulsos 0 ↔ 3.3 V · 50 Hz</text>
+        <rect x="288" y="410" width="176" height="34" rx="3" class="mask"/>
+        <text x="294" y="423" font-size="9.5" fill="var(--good,#1e7d32)">700–2300 µs ✓ cabe en 500–2500 µs</text>
+        <text x="294" y="436" font-size="9.5" fill="var(--good,#1e7d32)">✓ acepta lógica de 3.3–5 V</text>
+
+        <!-- ======== Raspberry Pi ======== -->
+        <rect x="96" y="300" width="174" height="182" rx="6" fill="none" stroke="var(--pwr,#1f5e8b)" stroke-width="2"/>
+        <text x="183" y="326" text-anchor="middle" font-size="13" fill="currentColor">Raspberry Pi 4</text>
+
+        <line x1="270" y1="352" x2="318" y2="352" stroke="var(--pwr,#1f5e8b)" stroke-width="2.2"/>
+        <polygon points="330,352 318,347 318,357" fill="var(--pwr,#1f5e8b)"/>
+        <text x="264" y="356" text-anchor="end" font-size="11" fill="currentColor">5 V · pin 2</text>
+        <rect x="342" y="332" width="92" height="30" rx="3" class="mask"/>
+        <text x="346" y="344" font-size="10" fill="var(--pwr,#1f5e8b)">al transductor</text>
+        <text x="346" y="356" font-size="10" fill="var(--grey,#9e9e9e)">y a nada más</text>
+
+        <text x="264" y="404" text-anchor="end" font-size="11" fill="currentColor">GPIO18 · pin 12</text>
+
+        <line x1="270" y1="458" x2="330" y2="458" stroke="currentColor" stroke-width="2.4"/>
+        <line x1="330" y1="458" x2="330" y2="512" stroke="currentColor" stroke-width="2.4"/>
+        <text x="264" y="462" text-anchor="end" font-size="11" fill="currentColor">GND · pin 6</text>
+
+        <!-- prohibicion 5V <-> 6V -->
+        <line x1="326" y1="336" x2="340" y2="308" stroke="var(--bad,#b3261e)" stroke-width="2" stroke-dasharray="5 3"/>
+        <rect x="280" y="244" width="118" height="62" rx="5" class="mask" stroke="var(--bad,#b3261e)" stroke-width="1.6"/>
+        <g stroke="var(--bad,#b3261e)" stroke-width="3" stroke-linecap="round">
+          <line x1="289" y1="254" x2="299" y2="264"/>
+          <line x1="299" y1="254" x2="289" y2="264"/>
+        </g>
+        <text x="306" y="264" font-size="10" fill="var(--bad,#b3261e)">NUNCA unir</text>
+        <text x="289" y="281" font-size="10" fill="var(--bad,#b3261e)">el 5 V del Pi con</text>
+        <text x="289" y="295" font-size="10" fill="var(--bad,#b3261e)">el nodo de 6 V</text>
+
+        <!-- ======== fuente negativa ======== -->
+        <line x1="50" y1="82" x2="50" y2="512" stroke="currentColor" stroke-width="2.2"/>
+        <text x="58" y="120" font-size="10.5" fill="var(--grey,#9e9e9e)">− de la fuente</text>
+
+        <!-- ======== barra de tierra ======== -->
+        <line x1="36" y1="512" x2="688" y2="512" stroke="currentColor" stroke-width="4"/>
+        <circle cx="50"  cy="512" r="4.5" fill="currentColor"/>
+        <circle cx="330" cy="512" r="4.5" fill="currentColor"/>
+        <circle cx="356" cy="512" r="4.5" fill="currentColor"/>
+        <circle cx="406" cy="512" r="4.5" fill="currentColor"/>
+        <circle cx="432" cy="512" r="4.5" fill="currentColor"/>
+        <circle cx="458" cy="512" r="4.5" fill="currentColor"/>
+        <circle cx="660" cy="512" r="4.5" fill="currentColor"/>
+
+        <!-- simbolo de tierra -->
+        <line x1="170" y1="512" x2="170" y2="530" stroke="currentColor" stroke-width="2.6"/>
+        <line x1="154" y1="530" x2="186" y2="530" stroke="currentColor" stroke-width="3"/>
+        <line x1="160" y1="539" x2="180" y2="539" stroke="currentColor" stroke-width="3"/>
+        <line x1="165" y1="548" x2="175" y2="548" stroke="currentColor" stroke-width="3"/>
+        <text x="198" y="536" font-size="11.5" fill="currentColor">0 V — tierra común</text>
+        <text x="198" y="551" font-size="10.5" fill="var(--grey,#9e9e9e)">Pi + fuente 12 V + UBEC + servo + sensores: TODO aterriza aquí</text>
+
+        <!-- leyenda -->
+        <text x="36" y="584" font-size="10.5" fill="var(--bad,#b3261e)">— — —   punteado rojo = pieza que todavía no llega (dibujada en su lugar para que no se te olvide dónde va)</text>
+        <text x="36" y="600" font-size="10.5" fill="var(--grey,#9e9e9e)">●  punto relleno = nodo, ahí se unen los cables    ·    ⌒  puente = los cables se cruzan y NO se tocan</text>
+      </svg>
+    </div>
+
+    <div class="caja" style="margin-top:18px; border-left:3px solid var(--bad,#b3261e)">
+      <h3 style="color:var(--bad,#b3261e)">Los dos capacitores — para qué sirve cada uno <span class="pend">no han llegado</span></h3>
+      <p class="why" style="margin:0 0 10px">
+        Item&nbsp;#8 del pedido pendiente (<em>Kit de capacitores electrolíticos</em>, B0DZ2DNSG7). Van dibujados arriba en su
+        posición para que cuando lleguen no haya que volver a preguntar.
+      </p>
+      <p class="why" style="margin:0 0 10px">
+        <strong style="color:var(--ctrl,#7a2f2f)">1000 µF en la SALIDA del UBEC (nodo de 6 V).</strong>
+        Cuando la bola se despega del asiento, el servo pasa de 5&nbsp;mA a ~1.67&nbsp;A en menos de un milisegundo.
+        El lazo de control del UBEC tarda decenas de microsegundos en reaccionar, y el cable entre los dos tiene inductancia.
+        El capacitor es el tanque local que entrega ese escalón para que el 6&nbsp;V no se hunda y el servo no se reinicie
+        a media carrera. <strong>Va pegado al servo, no pegado al UBEC</strong> — el cable de por medio es parte del problema.
+      </p>
+      <p class="why" style="margin:0 0 10px">
+        <strong style="color:var(--pwr,#1f5e8b)">470 µF en la ENTRADA de 12 V</strong>, después del fusible, junto a donde el UBEC y
+        la solenoide se cuelgan del riel. La fuente de pared está al otro extremo de un cable de barril y ese cable tiene
+        inductancia: cada vez que el UBEC o la bobina piden un escalón, el riel de 12&nbsp;V rebota y se hunde. El capacitor
+        lo sostiene localmente y además le da a dónde ir a la energía que la bobina devuelve al cortar.
+      </p>
+      <p class="why" style="margin:0">
+        <strong style="color:var(--bad,#b3261e)">Y aquí sí hay polaridad.</strong> Las resistencias del divisor son pasivas
+        <em>y</em> sin polaridad. Un electrolítico es pasivo <em>pero con polaridad</em>: la <strong>franja impresa marca la
+        pata NEGATIVA</strong> y esa va a GND. Al revés se calienta, se abomba y revienta. El kit del BOM es de 25&nbsp;V,
+        que sobra para los dos nodos (el riel de 12&nbsp;V pide ≥16&nbsp;V).
+      </p>
+    </div>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Las tres dudas</h2>
+<div class="cols3">
+
+  <div class="co co-red">
+    <div class="co-t">«¿Por qué el servo no puede alimentarse del riel de 5 V del Pi, si ahí hay 5 V?»</div>
+    <div class="co-b">
+      <p>Porque hay 5&nbsp;V pero no hay <em>corriente</em>, y porque ese riel es además el instrumento de medición.</p>
+      <p><strong>Modo de falla 1 — se reinicia el Pi.</strong> El DS3218 pide <strong>1.5&nbsp;A</strong> al calarse
+      (dato del datasheet a 5&nbsp;V; a 6&nbsp;V son ~1.67&nbsp;A), y calarse es exactamente lo que hace al vencer el par
+      de arranque de la válvula. El pin 2 del Pi no es una salida regulada: es el mismo riel de 5&nbsp;V que alimenta al SoC,
+      sacado directo del USB-C. El PMIC del Pi tiene un detector fijo en <strong>4.63&nbsp;V</strong>: en cuanto el tirón
+      del servo hunde el riel debajo de eso, el Pi baja relojes, tira el rayito de bajo voltaje y, si baja más, se reinicia
+      a media corrida — con la celda presurizada.</p>
+      <p><strong>Modo de falla 2 — el que nadie ve.</strong> El transductor de presión es
+      <strong>ratiométrico</strong>: su salida 0.5–4.5&nbsp;V está referida a su propia alimentación, que es ese mismo
+      riel de 5&nbsp;V. Si el servo hunde el riel un 5&nbsp;% (5.00 → 4.75&nbsp;V), a 60&nbsp;kPa reales el transductor
+      entrega 2.680&nbsp;V en vez de 2.821&nbsp;V, y <code>_signal_to_pressure()</code> —que asume 0.5–4.5&nbsp;V fijos—
+      reporta <strong>56.4&nbsp;kPa</strong>. Un error de −6&nbsp;% que aparece y desaparece al ritmo del servo, con el PID
+      persiguiendo su propia fuente. Es la misma familia de sesgo silencioso que el <code>divider_ratio</code> mal puesto:
+      el R² sale precioso y el dato está mal.</p>
+      <p class="tiny sub" style="margin:0">El 56.4 kPa es una cuenta hecha con la función de transferencia ratiométrica, no una medición.</p>
+    </div>
+  </div>
+
+  <div class="co co-green">
+    <div class="co-t">«¿Qué hace un UBEC y por qué no basta un divisor o un regulador lineal?»</div>
+    <div class="co-b">
+      <p><strong>El divisor no puede, y ya sabes por qué.</strong> En la hoja del ADS1115 quedó claro: una resistencia es
+      pasiva, no tiene pin de alimentación, no <em>fabrica</em> corriente. Un divisor solo reparte el voltaje de lo que
+      entra, y solo mientras casi nada le jale corriente. Con dos resistencias de 1&nbsp;kΩ desde 12&nbsp;V mides
+      6.00&nbsp;V perfectos… <em>en vacío</em>. Visto desde afuera es una fuente de 6&nbsp;V detrás de 500&nbsp;Ω: en corto
+      absoluto entrega <strong>12&nbsp;mA</strong>. Los <strong>4&nbsp;mA</strong> que el DS3218 consume simplemente estando
+      quieto ya la hunden a <strong>4.0&nbsp;V</strong> — por debajo del mínimo de 4.8&nbsp;V del servo. Ni siquiera
+      enciende. Y su corriente de calado, 1.5&nbsp;A, es <strong>375× más</strong> que todo lo que ese divisor puede dar.</p>
+      <p><strong>El lineal sí puede, pero se cocina.</strong> Un 7806 o un LM317 sí es activo y sí entrega corriente. Su
+      problema es cómo: quema la diferencia como calor. P&nbsp;=&nbsp;(12−6)&nbsp;V&nbsp;×&nbsp;1.67&nbsp;A =
+      <strong>10&nbsp;W</strong> dentro de un TO-220. Un TO-220 pelado tiene ~62&nbsp;°C/W al aire (dato del datasheet del
+      IRLZ44N, mismo encapsulado): 10&nbsp;W son <strong>620&nbsp;°C sobre el ambiente</strong>. Entra en protección térmica
+      en segundos y suelta el servo a media carrera. Rendimiento: 50&nbsp;%. Y la mayoría están dados a ≤1–1.5&nbsp;A, menos
+      que el calado del servo.</p>
+      <p><strong>El UBEC es un convertidor conmutado (buck).</strong> No divide ni quema: pica los 12&nbsp;V a alta
+      frecuencia contra una bobina y lo filtra, así que potencia que entra ≈ potencia que sale. Los mismos 10&nbsp;W de
+      salida le cuestan ~11&nbsp;W de entrada, o sea ~<strong>0.95&nbsp;A</strong> del riel de 12&nbsp;V en vez de 1.67&nbsp;A,
+      y el calor dentro de la caja baja de 10&nbsp;W a ~1&nbsp;W. Y sobre todo <em>regula</em>: 6.00&nbsp;V se quedan en
+      6.00&nbsp;V desde 5&nbsp;mA hasta 3&nbsp;A, con rizo &lt;50&nbsp;mVp-p.</p>
+      <p class="tiny sub" style="margin:0">Hobbywing no publica eficiencia para esta unidad; el 85–90 % es lo típico de la clase.</p>
+    </div>
+  </div>
+
+  <div class="co co-blue">
+    <div class="co-t">«¿Por qué la señal sí sale del Pi pero la corriente no, si es el mismo cable de tres hilos?»</div>
+    <div class="co-b">
+      <p>Porque no es <em>un</em> cable: son <strong>tres conductores separados</strong> que solo van pegados en la misma
+      cinta. Adentro del servo terminan en lugares distintos.</p>
+      <p><strong>El naranja</strong> llega a una <em>entrada</em> del chip de control. Una entrada lógica es
+      alta impedancia: consume microamperes. GPIO18 nada más carga y descarga esa entrada 50 veces por segundo. El
+      datasheet del DS3218 dice que acepta lógica de <strong>3.3–5&nbsp;V</strong>, así que los 3.3&nbsp;V del Pi entran
+      directos, sin nivelador.</p>
+      <p><strong>El rojo y el café</strong> van al puente H y al motor. Esa corriente hace un <em>lazo completamente
+      aparte</em> que nunca pasa por el Pi: UBEC&nbsp;+ → rojo → motor → café → UBEC&nbsp;−. El Pi ni se entera.</p>
+      <p><strong>Lo que une los dos mundos es la tierra.</strong> Un pulso no es "3.3&nbsp;V" a secas: es 3.3&nbsp;V
+      <em>respecto a algo</em>. El chip del servo compara el naranja contra <em>su</em> tierra. Si la tierra del Pi y la del
+      UBEC no son el mismo nodo de cobre, el servo no tiene contra qué comparar: el pulso queda indefinido y el servo
+      tiembla o ignora todo. Por eso GND es el único hilo obligatoriamente compartido.</p>
+      <p><strong>Y por eso el conector invertido mata.</strong> El V+ vive en la posición del medio, así que voltear el plug
+      no lo desconecta: intercambia GND ↔ señal. El servo arranca, y su retorno —hasta 1.67&nbsp;A— busca camino por
+      GPIO18, un pad dado a <strong>16&nbsp;mA</strong>. Cien veces por encima. GPIO muerto, probablemente Pi muerto. Es la
+      fila «Servo DS3218 → do NOT» de la tabla del V1738 en <code>ASSEMBLY.md</code>, y el único V1738 que tienes ya está
+      asignado a la bobina del diverter.</p>
+    </div>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Qué pasa en cada momento (failsafe)</h2>
+<div class="caja">
+  <table>
+    <thead><tr><th>Momento</th><th>Qué hace el servo</th><th>Por qué</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Enchufas los 12 V, el Pi apenas booteando</td>
+        <td>Nada. Queda flojo donde lo dejaste.</td>
+        <td>El UBEC entrega 6 V de inmediato, pero GPIO18 arranca como <em>entrada</em> (alta impedancia): no hay pulsos, no hay orden. El servo sostiene por fricción y engranaje. No salta a ningún lado.</td>
+      </tr>
+      <tr>
+        <td>Arranca el software en <code>mode: hardware</code></td>
+        <td><strong>Salta a 700 µs de golpe.</strong></td>
+        <td><code>ServoValve.__init__</code> llama <code>to_safe()</code> al construirse. 700 µs = 0 % = bola cerrada. Si el acople ya está puesto, empuja contra el tope. Desacopla antes de la primera corrida.</td>
+      </tr>
+      <tr>
+        <td>Se va la corriente a media corrida</td>
+        <td><strong>NO cierra.</strong> Se queda donde iba.</td>
+        <td>Un servo no tiene resorte de retorno: sostiene por fricción. El failsafe real es la válvula de alivio mecánica (~90 kPa) y cerrar el suministro a mano. Está así a propósito en <code>servo_valve.py</code>.</td>
+      </tr>
+      <tr>
+        <td>Se zafa el hilo naranja (señal)</td>
+        <td>Sostiene la última posición ordenada.</td>
+        <td>El PID sigue calculando contra nada y la presión deriva. <strong>El software no se entera</strong>: no hay realimentación del servo, safety solo mira la presión. A diferencia del sensor, aquí no hay kill test posible.</td>
+      </tr>
+      <tr>
+        <td>Se zafa el hilo café (GND) con V+ puesto</td>
+        <td style="color:var(--bad,#b3261e)"><strong>El peor caso.</strong></td>
+        <td>El retorno del motor busca otro camino y el único que le queda hacia el Pi es la señal → GPIO18, 16 mA contra 1.67 A. Regla: <strong>la tierra se conecta primero y se desconecta al final</strong>. Nunca la hagas la conexión desmontable.</td>
+      </tr>
+      <tr>
+        <td>Se va el 12 V pero el Pi sigue vivo</td>
+        <td>Servo flojo; el Pi sigue mandando pulsos a la nada.</td>
+        <td>La presión deja de controlarse pero el software cree que sí. Igual que el caso anterior: solo la presión medida lo delata, y solo si la deriva es suficiente.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<hr class="rule">
+
+<h2>Antes de energizar (cuando llegue el fusible)</h2>
+<div class="cols">
+  <div class="caja">
+    <h3 style="color:var(--good,#1e7d32)">Con el multímetro, en este orden</h3>
+    <ul class="why">
+      <li><strong>Continuidad de tierras primero.</strong> Un solo punto de la barra contra: GND del Pi (pin 6), IN− del UBEC, OUT− del UBEC, negativo de la fuente. Los cuatro deben pitar. Si alguno no, no sigas.</li>
+      <li><strong>Mide el riel antes de conectar al receptor.</strong> Con el fusible puesto y el servo <em>desconectado</em>: 12 V en la entrada del UBEC (las fuentes baratas leen 12.3–13 V en vacío, es normal) y <strong>6.0 V ± 0.2</strong> en la salida. Anota cuál lead es + y cuál −.</li>
+      <li><strong>Recién ahí conectas el servo</strong>, y en este orden: café → barra de tierra, rojo → 6 V, naranja → GPIO18.</li>
+      <li><strong>Verifica el extremo de 700 µs con el servo DESACOPLADO</strong> antes de que el acople toque el vástago.</li>
+    </ul>
+  </div>
+  <div class="caja">
+    <h3 style="color:var(--bad,#b3261e)">Cosas que este cableado no perdona</h3>
+    <ul class="why">
+      <li><strong>El nodo de 6 V no toca ningún pin del Pi.</strong> Ni el de 5 V, ni el de 3.3 V, ni un GPIO. 6 V en un GPIO de 3.3 V lo mata.</li>
+      <li><strong>Los dos hilos de potencia del servo no van por el protoboard.</strong> Un contacto de protoboard está dado a ~1 A típico y el servo pide 1.67 A al calarse. Punto a punto, 22 AWG. Solo las tierras se juntan en la barra.</li>
+      <li><strong>El fusible va entre la fuente y todo lo demás</strong>, no entre el UBEC y el servo. Lo que protege es el riel de 12 V.</li>
+      <li><strong>Presupuesto del fusible de 3 A:</strong> el UBEC pide ~0.95 A cuando el servo se cala. La bobina del diverter de ESValves <span class="conf">no está registrada en el repo</span> — léela de la válvula y confirma que la suma queda debajo de 3 A antes de meter el fusible.</li>
+    </ul>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Estado del inventario para esta hoja</h2>
+<div class="cols3">
+  <div class="caja" style="border-left:3px solid var(--good,#1e7d32)">
+    <h3 style="color:var(--good,#1e7d32)">✓ En la mano</h3>
+    <p class="why" style="margin:0">UBEC 12V→6V 3 A · Servo DS3218 · Fuente 12 V 3 A · Raspberry Pi 4</p>
+  </div>
+  <div class="caja" style="border-left:3px solid var(--bad,#b3261e)">
+    <h3 style="color:var(--bad,#b3261e)">✗ Bloquea energizar</h3>
+    <p class="why" style="margin:0">Fusible 3 A + portafusibles (item #7) · Capacitores 1000 µF y 470 µF (item #8)</p>
+  </div>
+  <div class="caja" style="border-left:3px solid var(--grey,#9e9e9e)">
+    <h3 style="color:var(--grey,#9e9e9e)">? Estado desconocido</h3>
+    <p class="why" style="margin:0">Protoboard 830 + jumpers · Cable 22 AWG trenzado. Sin ellos esta hoja se queda en lectura.</p>
+  </div>
+</div>
+
+<p class="tiny sub" style="margin-top:22px">
+  Fuentes: <code>.claude/roles/hardware.md</code> · <code>config.yaml</code> (bloque <code>valve:</code>) ·
+  <code>docs/ASSEMBLY.md</code> · <code>BOM.csv</code> · <code>tools/gen_wiring.py</code> ·
+  <code>src/hal/servo_valve.py</code> · <code>INVENTORY.md</code> ·
+  datasheet ANNIMOS DS3218MG · especificación Hobbywing UBEC-3A · datasheet IRLZ44N (PD-9.1346B, para el dato térmico del TO-220).
+  Los números de par, corriente y tensión de esta hoja son de datasheet o calculados, <strong>ninguno está medido en el rig</strong>.
+</p>
+</div>
