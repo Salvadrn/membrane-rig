@@ -124,6 +124,22 @@ safety:
   # point being that a delicate mesh must never see pressure it wasn't asked
   # to see. 0 disables (the global cutoff governs).
   overshoot_margin: 10.0
+  # WHY ABSOLUTE (not a % of setpoint): mesh damage and the specimen limit are
+  # both absolute, so an absolute margin bounds the worst-case over-stress to
+  # setpoint+10 kPa everywhere — the physically meaningful invariant. A relative
+  # margin would be worse: at high setpoints it lets pressure coast further in
+  # ABSOLUTE terms (toward the specimen limit / global cutoff); at low setpoints
+  # it gets tighter than the loop's disturbance-rejection transients and
+  # nuisance-aborts. Measured worst-case overshoot of the tuned loop (offline_sim,
+  # +-8 kPa supply wobble): +0.82 / +0.89 / +1.42 kPa at sp 20 / 40 / 60 — so
+  # 10 kPa is ~7-12x headroom. The +50%/+17% "asymmetry" is a % artefact, not a
+  # physical one. FUTURE (only if the rig's pressure range ever changes): a hybrid
+  #   ceiling = setpoint + max(absolute_floor, fraction*setpoint)
+  # keeps tightness consistent high while guaranteeing an absolute floor low. Do
+  # this then too: clamp the ceiling to the specimen limit so a fault can't push
+  # the mesh past its declared limit (today sp 60 + 10 = 70 can top a 65 kPa
+  # specimen). Both move the safety ladder -> Adrián's OK + Paper heads-up; NOT
+  # needed at the <=35 kPa the rig actually runs.
   # After a run the feed is shut, so pressure MUST start bleeding down through
   # the membrane. If it hasn't dropped by close_check_min within close_check_s,
   # the valve did not actually seat -> warn in the UI rather than leave a
@@ -163,6 +179,14 @@ sim:
   # Rise ~seconds; fall tau ~ 1/k_drain (~20 s). Overshoot is expensive to undo.
   k_in: 0.3                # inflow gain at full open (fast rise)
   k_drain: 0.05            # permeation-only decay (slow fall)
+  # DERIVED CEILING (matters for sim coverage): with the valve full open the
+  # plant settles at k_in*supply/(k_in+k_drain) = 0.3*100/0.35 = 85.7 kPa. That
+  # is only 5.7 kPa (~7%) above the 80 kPa global cutoff — which is the ONLY
+  # reason the sim can still exercise an OVERPRESSURE abort at all. Raising
+  # safety.max_pressure, lowering supply_pressure, or raising k_drain shrinks (or
+  # closes) that window, and the sim would then pass without ever tripping its own
+  # global cutoff, silently. If you touch any of the three, re-check that the
+  # ceiling still clears the cutoff with margin.
   process_noise: 0.05      # plant noise (std)
   sensor_noise: 0.15       # measurement noise (std)
   # Simulated permeate flow so sim mode auto-produces a Darcy Q-vs-dP line.

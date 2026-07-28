@@ -103,6 +103,20 @@ src/config.py         config.yaml
   `test.ramp_kpa_s` **pasa por `k()`**, así que con `units: psi` se convierte a kPa/s.
   `validate()` truena si `safety.max_pressure > sensor.range_max` (103.4) o si
   `membrane.max_pressure > safety.max_pressure`.
+- **`validate()` es un interlock fail-closed, no solo higiene.** Un config fuera
+  de rango **ni siquiera carga**: rechaza `safety.max_pressure > sensor.range_max`,
+  `membrane.max_pressure > safety.max_pressure` y cualquier `setpoint >
+  specimen_limit`. Es la razón por la que un rediseño de presión (p. ej. el falso
+  "40 PSI" de jul-2026, que en realidad eran 35 kPa) es **imposible de introducir
+  por accidente** — el software falla cerrado antes de arrancar. No lo debilites a
+  warning.
+- **El sim satura en 85.7 kPa** = `k_in·supply/(k_in+k_drain)` = 0.3·100/0.35,
+  solo **5.7 kPa (~7%) sobre el corte global de 80** — por eso el sim *sí* alcanza
+  a disparar un `OVERPRESSURE`. Subir `max_pressure`, bajar `supply_pressure` o
+  subir `k_drain` cierra esa ventana y el sim pasaría sin poder ejercitar su
+  propio corte, en silencio. Sobretiro real medido del lazo: **+0.82/+0.89/+1.42
+  kPa a sp 20/40/60** (offline_sim, wobble ±8). Detalle en los comentarios de
+  `config.yaml` (`sim:` y `overshoot_margin`).
 - **El límite solo se aprieta.** `pressure_limit_kpa()` = el más chico entre
   `cfg.specimen_limit_kpa()` (65 kPa) y `playlist.membrane_limit_kpa`;
   `set_membrane_limit()` clampa contra el corte global y **rechaza cambios a media

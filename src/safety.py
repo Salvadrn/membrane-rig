@@ -46,7 +46,15 @@ class SafetyMonitor:
         A test at 20 kPa has no business ever reaching the 80 kPa global cutoff;
         letting it get there before aborting would destroy a delicate specimen.
         The run ceiling is max(setpoint) + overshoot margin, never above the
-        global cutoff. Returns the effective ceiling."""
+        global cutoff. Returns the effective ceiling.
+
+        Why the margin is absolute (not a % of setpoint), plus a documented gap
+        the ceiling is NOT clamped to the specimen limit, so a setpoint within
+        `overshoot_margin` of that limit (e.g. sp 60 with a 65 kPa specimen) can
+        fault-abort a few kPa above the mesh's declared limit — see the
+        overshoot_margin rationale in config.yaml. Neither bites at the <=35 kPa
+        range the rig runs (ceiling 45 << 65); revisiting either moves the safety
+        ladder and needs Adrián's sign-off."""
         self.max_pressure = self.hard_max
         self.limit_name = "safety cutoff"
         if self.overshoot_margin > 0 and setpoints_kpa:
