@@ -109,6 +109,13 @@ class SafetyConfig:
     # upper bound (panel regulator setting) is known: without it there is no
     # physical ceiling on what the cell can see, so raising must not be possible.
     operator_raise_max_kpa: float = 0.0
+    # Frozen-signal detector. A live electrical signal is ALWAYS noisy, so the raw
+    # ADC value being bit-identical for this many consecutive reads (while a run is
+    # armed) is impossible with a healthy sensor and flags a dead transducer /
+    # frozen I2C. Configurable, not constant, because the real noise floor is not
+    # known until the ADS1115 is on the bench: if it ever false-fires, RAISE this,
+    # never remove the check. 0 disables it. ~10 = 0.5 s at 20 Hz.
+    frozen_raw_reads: int = 10
 
 
 @dataclass
@@ -281,6 +288,7 @@ class Config:
             close_check_s=float(sf.get("close_check_s", 20.0)),
             close_check_min_drop_kpa=k(sf.get("close_check_min_drop", 1.0)),
             operator_raise_max_kpa=k(sf.get("operator_raise_max", 0.0)),
+            frozen_raw_reads=int(sf.get("frozen_raw_reads", 10)),
         )
 
         t = raw.get("test", {})

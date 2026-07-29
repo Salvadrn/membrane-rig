@@ -156,6 +156,18 @@ safety:
   # thing that bounds a runaway, so raising must stay impossible until that
   # number exists. Global cutoff + sensor faults are NEVER recoverable/raisable.
   operator_raise_max: 0.0
+  # Frozen-signal detector (the sharpest guard against a stuck sensor). A live
+  # electrical signal ALWAYS carries noise (~0.15 kPa here = ~32 ADC counts, so a
+  # healthy reading moves >1 LSB every sample), so the raw value being bit-
+  # identical for this many consecutive reads is physically impossible with a
+  # healthy sensor even if pressure is dead still — it is the signature of a dead
+  # transducer or frozen I2C. Catches the worst case (a sensor stuck LOW at a
+  # plausible value, which the plausibility band and the global cutoff both miss
+  # because they read the same lying number). Startup: log `raw` at rest for a
+  # minute and confirm it moves >1 LSB between samples; the noise floor above is a
+  # model assumption until measured. If it ever false-fires, RAISE this count,
+  # NEVER remove the check. 0 disables. ~10 = 0.5 s at 20 Hz.
+  frozen_raw_reads: 10
 
 # ------------------------------------------------------------------- test ---
 test:
