@@ -110,7 +110,8 @@ class SafetyMonitor:
         # rot pressure thresholds. If it ever false-fires the fix is to RAISE
         # frozen_raw_reads, never to remove the check.
         raw = getattr(reading, "raw", None)
-        if self._armed and self.frozen_reads > 0 and raw is not None and not math.isnan(raw):
+        raw_live = raw is not None and not math.isnan(raw)
+        if self._armed and self.frozen_reads > 0 and raw_live:
             if self._last_raw is not None and raw == self._last_raw:
                 self._raw_repeat += 1
             else:
@@ -121,8 +122,10 @@ class SafetyMonitor:
                     f"sensor signal frozen: raw {raw!r} identical for "
                     f"{self._raw_repeat + 1} reads (dead transducer / frozen I2C)"
                 )
-        else:
-            self._last_raw = raw
+        # A non-live read (NaN/None — e.g. an interspersed dead read) is a GAP, not
+        # a fresh sample: leave _raw_repeat and _last_raw untouched. Otherwise a
+        # sensor alternating frozen<->dead would reset the frozen counter on every
+        # NaN and evade this detector, while each frozen read still nudges the PID.
 
         bad = (
             reading.healthy is False
