@@ -167,6 +167,17 @@ safety:
   # minute and confirm it moves >1 LSB between samples; the noise floor above is a
   # model assumption until measured. If it ever false-fires, RAISE this count,
   # NEVER remove the check. 0 disables. ~10 = 0.5 s at 20 Hz.
+  #
+  # Why 10 and not less: during the count the PID keeps opening on the frozen-low
+  # reading, and no pressure check can help (they all read the same lying sensor)
+  # — measured worst case ~+27 kPa built in ~0.65 s at a high supply, bounded only
+  # by the source regulator. A smaller N shrinks that blind window, BUT 10 is
+  # deliberately conservative ABSENT A MEASURED NOISE FLOOR: lowering it against an
+  # unknown floor risks false-firing on a quiet front-end, and a detector that
+  # aborts good runs gets switched off. The prerequisite to lowering N is to wire
+  # the ADS1115 and MEASURE the real front-end noise (the >1 LSB startup check
+  # above gives it) — then N can drop to whatever keeps bit-identical-by-chance
+  # impossible. Measure first; don't guess.
   frozen_raw_reads: 10
   # Plant-response watchdog: catches the loop losing authority over pressure —
   # valve pinned open but pressure not responding (stuck valve, shut supply, or a
