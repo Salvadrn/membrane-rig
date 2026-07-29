@@ -45,6 +45,11 @@ class Experiment:
     run_name: str = ""
     note: str = ""
     results: List[dict] = field(default_factory=list)
+    # Provenance: True if the operator raised this run's ceiling mid-test. Such a
+    # run saw pressure the mesh was not declared to tolerate, so its k is not
+    # comparable to the others — excluded from the combined fit by default (see
+    # collected_points) and surfaced through the export so it survives to Excel.
+    ceiling_raised: bool = False
 
     def points(self) -> List[tuple]:
         """(mean pressure kPa, flow m^3/s) for successful points with a volume."""
@@ -129,12 +134,15 @@ class Playlist:
         done = [i for i in self.items if i.status in TERMINAL]
         return done[-1] if done else None
 
-    def collected_points(self) -> List[tuple]:
+    def collected_points(self, include_raised: bool = False) -> List[tuple]:
         """Every measured (pressure, flow) point across finished items — the
-        combined Q-vs-dP dataset for the specimen."""
+        combined Q-vs-dP dataset for the specimen. Runs that raised their ceiling
+        mid-test are EXCLUDED by default: they saw pressure the mesh was not
+        declared to tolerate, so their k is not comparable (provenance, not UI).
+        Pass include_raised=True only to deliberately fold them back in."""
         pts: List[tuple] = []
         for i in self.items:
-            if i.status == DONE:
+            if i.status == DONE and (include_raised or not i.ceiling_raised):
                 pts.extend(i.points())
         return pts
 

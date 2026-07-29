@@ -125,6 +125,18 @@ class Sequencer:
             self._finalize(success=False, note=note)
         self.phase = Phase.DONE
 
+    def restart_current_point(self, now: float) -> None:
+        """Re-run the CURRENT setpoint from scratch: back to STABILIZING, any
+        partial collection discarded, index unchanged, no result appended. Used by
+        the controller's ceiling-recovery flow — a point that hit the ceiling
+        mid-collection carries the over-pressure excursion in its pressure record,
+        so it is thrown away and redone, never resumed (that pressure record is
+        exactly what produces k)."""
+        if self.finished or self._idx >= len(self._setpoints):
+            return
+        self._enter_stabilizing(now)   # resets phase_start + band_since
+        self._acc = _Accum()           # drop any samples already taken this point
+
     @property
     def finished(self) -> bool:
         return self.phase in (Phase.DONE, Phase.IDLE)

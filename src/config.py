@@ -101,6 +101,14 @@ class SafetyConfig:
     # pressurised specimen sitting there unnoticed. 0 disables the check.
     close_check_s: float = 20.0
     close_check_min_drop_kpa: float = 1.0
+    # Operator ceiling raise (the recovery flow). The highest the operator may
+    # raise a run's ceiling to, mid-run, from the overpressure alarm. 0 = born
+    # INERT: the effective cap falls back to the specimen limit, i.e. the ceiling
+    # cannot be raised above where the clamp already put it, so "raise" does
+    # nothing. It NEVER exceeds the global cutoff. Keep 0 until the air-SUPPLY
+    # upper bound (panel regulator setting) is known: without it there is no
+    # physical ceiling on what the cell can see, so raising must not be possible.
+    operator_raise_max_kpa: float = 0.0
 
 
 @dataclass
@@ -272,6 +280,7 @@ class Config:
             overshoot_margin_kpa=k(sf.get("overshoot_margin", 10.0)),
             close_check_s=float(sf.get("close_check_s", 20.0)),
             close_check_min_drop_kpa=k(sf.get("close_check_min_drop", 1.0)),
+            operator_raise_max_kpa=k(sf.get("operator_raise_max", 0.0)),
         )
 
         t = raw.get("test", {})
@@ -367,6 +376,9 @@ class Config:
             errs.append("safety.max_pressure exceeds the sensor's full-scale range")
         if self.membrane.max_pressure_kpa > self.safety.max_pressure_kpa:
             errs.append("membrane.max_pressure exceeds safety.max_pressure")
+        if self.safety.operator_raise_max_kpa > self.safety.max_pressure_kpa:
+            errs.append("safety.operator_raise_max exceeds safety.max_pressure "
+                        "(the operator may never raise a ceiling past the global cutoff)")
         limit = self.specimen_limit_kpa()
         for sp in self.test.setpoints_kpa:
             if sp > limit:
