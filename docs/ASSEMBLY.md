@@ -96,15 +96,39 @@ assembly moves as a unit.
 
 | From (Pi) | To | Notes |
 |---|---|---|
-| 5V (pin 2) | transducer V+ | ratiometric 0.5–4.5 V sensor |
+| 5V (pin 2) | transducer V+ (**red**) | ratiometric 0.5–4.5 V sensor |
 | GPIO2/GPIO3 (SDA/SCL) | ADS1115 | ADS powered at **3.3 V** |
-| — sensor signal | 10k/22k divider → ADS A0 | never feed 4.5 V straight in |
+| — sensor signal (**green**) | 10k/22k divider → ADS A0 | never feed 4.5 V straight in |
 | GPIO4 | DS18B20 data | + 4.7k pull-up to 3.3 V; enable 1-Wire |
 | GPIO18 | servo signal | servo power from **UBEC 6 V**, not the Pi |
 | GPIO23 | IRLZ44N gate via **470 Ω** | + 10k gate pull-down; drain → solenoid−; flyback across coil |
 | 12 V PSU | fuse 3 A → solenoid+ and UBEC in | 1000 µF at UBEC out, 470–1000 µF at 12 V in |
 | GND | everything | Pi + 12 V + UBEC + sensors + servo |
 | — diverter coil pair | through the **V1738 3-pole plug** | poles 1–2 = coil+/coil−; pole 3 stays DEAD on the header (anti-reversal key) |
+
+### The transducer's three leads — and the two things that go wrong
+
+The unit that arrived has **red / black / green**: red `V+`, black `GND`, green
+signal. That is a colour variant — the same part ships with yellow signal — so
+**the colours are a starting hypothesis, not the confirmation.** Confirm by
+measurement, and the measurement is one you already have to do:
+
+> Power red and black from the Pi's 5 V (pin 2) and GND, then **measure green
+> against black**. At atmosphere it must read **~0.500 V**. That single reading
+> confirms the pinout *and* is the bench zero check — it is one test, not two.
+> Measure again after the divider for **0.3438 V** and the whole chain is
+> validated.
+
+Two ways to get this wrong:
+
+- **Red and black cannot be swapped.** These sensors carry no reverse-polarity
+  protection; backwards supply can destroy the unit outright. If the colours are
+  ambiguous, meter before powering, not after.
+- **The pressure side has no inlet and outlet.** It is a *single* port — a blind
+  tap. The transducer does **not** go in-line in the feed; it goes on a **tee**
+  (or in the existing manometer port) and reads the pressure of whatever it is
+  screwed into. Plumbing it in series is a real mistake people make with a
+  two-terminal-looking part; there is nothing to pass through it.
 
 ### Why the gate resistor is 470 Ω
 
