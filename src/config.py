@@ -116,6 +116,16 @@ class SafetyConfig:
     # known until the ADS1115 is on the bench: if it ever false-fires, RAISE this,
     # never remove the check. 0 disables it. ~10 = 0.5 s at 20 Hz.
     frozen_raw_reads: int = 10
+    # Plant-response watchdog: if the valve is pinned >= watchdog_valve_pct for
+    # watchdog_hold_s and pressure never rose watchdog_min_rise_kpa from where it
+    # was when the valve pinned, the loop has lost authority over pressure (stuck
+    # valve, shut supply, or a sensor stuck low while the real cell climbs). Uses
+    # whether pressure MOVED (integrated), not dP/dt, so a legitimate plateau
+    # below an unreachable setpoint — which rose first — is left to
+    # stabilize_timeout and does NOT fire. watchdog_hold_s = 0 disables.
+    watchdog_valve_pct: float = 70.0
+    watchdog_hold_s: float = 8.0
+    watchdog_min_rise_kpa: float = 2.0
 
 
 @dataclass
@@ -289,6 +299,9 @@ class Config:
             close_check_min_drop_kpa=k(sf.get("close_check_min_drop", 1.0)),
             operator_raise_max_kpa=k(sf.get("operator_raise_max", 0.0)),
             frozen_raw_reads=int(sf.get("frozen_raw_reads", 10)),
+            watchdog_valve_pct=float(sf.get("watchdog_valve_pct", 70.0)),
+            watchdog_hold_s=float(sf.get("watchdog_hold_s", 8.0)),
+            watchdog_min_rise_kpa=k(sf.get("watchdog_min_rise", 2.0)),
         )
 
         t = raw.get("test", {})

@@ -77,6 +77,15 @@ class RigController:
         self._ramp_sp: Optional[float] = None
         self._ramp_for: Optional[float] = None  # which true setpoint the ramp tracks
 
+        # Plant-response watchdog (detector B): the valve command is here, not in
+        # the SafetyMonitor, so this lives in the controller. See _plant_watchdog.
+        self._wd_valve_pct = cfg.safety.watchdog_valve_pct
+        self._wd_hold_ticks = int(cfg.safety.watchdog_hold_s / self._dt) if cfg.safety.watchdog_hold_s > 0 else 0
+        self._wd_min_rise = cfg.safety.watchdog_min_rise_kpa
+        self._wd_open_p: Optional[float] = None
+        self._wd_ticks = 0
+        self._wd_rose = False
+
         # water temperature (a test variable): polled slowly off the fast loop.
         # mu is derived from it; the run-mean temp feeds the permeability calc.
         self._water_temp_c = cfg.temperature.manual_c
@@ -208,6 +217,9 @@ class RigController:
             self._collect_vol_m3 = 0.0
             self._ramp_sp = None
             self._ramp_for = None
+            self._wd_open_p = None
+            self._wd_ticks = 0
+            self._wd_rose = False
             self._temp_sum = 0.0
             self._temp_n = 0
             self._close_check_until = 0.0
@@ -558,6 +570,56 @@ class RigController:
             self._ramp_sp = max(setpoint_kpa, self._ramp_sp - step)
         return self._ramp_sp
 
+    def _plant_watchdog(self, command: float, pressure: float) -> Optional[str]:
+        """Detector B: has the loop LOST authority over pressure? If the valve is
+        pinned open (>= watchdog_valve_pct) for watchdog_hold_s and pressure never
+        rose watchdog_min_rise from where it sat when the valve pinned, the loop is
+        commanding pressure up and nothing is happening — a stuck valve, a shut
+        supply, or a sensor stuck LOW while the real cell climbs (the frozen-signal
+        detector catches the *frozen* variant; this catches a stuck-low reading
+        that still carries noise). Integrated, not dP/dt: a legitimate plateau
+        below an unreachable setpoint ROSE first, so it sets _wd_rose and is left
+        to stabilize_timeout; only a plant that never responded fires. Returns a
+        fault reason or None. It is safe on any *measurable* specimen — to hold
+        even the lowest setpoint a sample must build far more than min_rise, so the
+        only things that fire are a real fault or an unmeasurable (super-permeable)
+        sample that could not be tested anyway. Lock held."""
+        if self._wd_hold_ticks <= 0:
+            return None
+        if command >= self._wd_valve_pct:
+            if self._wd_open_p is None:
+                self._wd_open_p = pressure
+                self._wd_ticks = 0
+                self._wd_rose = False
+            self._wd_ticks += 1
+            if pressure - self._wd_open_p >= self._wd_min_rise:
+                self._wd_rose = True
+            if self._wd_ticks >= self._wd_hold_ticks and not self._wd_rose:
+                return (
+                    f"plant unresponsive: valve at {command:.0f}% for "
+                    f"{self._wd_ticks * self._dt:.0f} s but pressure held near "
+                    f"{pressure:.1f} kPa (stuck valve / shut supply / sensor stuck low)"
+                )
+        else:
+            self._wd_open_p = None
+            self._wd_ticks = 0
+            self._wd_rose = False
+        return None
+
+    def _abort_fault(self, reason: str, now: float, pressure: float,
+                     index: int = 0, total: int = 0) -> None:
+        """Hard fault: vent-safe, abort the sequencer, end the run. NOT
+        recoverable — used for plant/sensor faults where retrying can't help.
+        Lock held."""
+        self._fault_reason = reason
+        self._safe_all()
+        if self._active:
+            self.sequencer.abort(reason, now)
+            self._end_run(reason)
+        self.status["fault"] = reason
+        self._update_status(pressure, None, 0.0, False, Phase.DONE, index, total,
+                            now - self._run_start, 0.0, in_band=False)
+
     def _temp_loop(self) -> None:
         """Poll the water-temperature probe slowly (blocking reads are fine here,
         off the fast control loop). Cache the latest good reading + its viscosity."""
@@ -712,6 +774,15 @@ class RigController:
                     command = self.pid.update(self._pid_target(seq.setpoint_kpa, pressure),
                                               pressure, self._dt)
                     self.valve.set_command(command)
+                    # Detector B: if the loop has lost authority over pressure
+                    # (valve pinned, nothing happening), vent-abort — not
+                    # recoverable, retrying can't unstick a valve or a dead sensor.
+                    wd_reason = self._plant_watchdog(command, pressure)
+                    if wd_reason:
+                        self._abort_fault(wd_reason, now, pressure, seq.index, seq.total)
+                        if self.plant is not None:
+                            self.plant.step(self._dt)
+                        return
                     self.diverter.set_measured(seq.diverter_measured)
                     elapsed = now - self._run_start
                     self._temp_sum += self._water_temp_c

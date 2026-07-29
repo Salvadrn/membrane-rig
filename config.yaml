@@ -168,6 +168,19 @@ safety:
   # model assumption until measured. If it ever false-fires, RAISE this count,
   # NEVER remove the check. 0 disables. ~10 = 0.5 s at 20 Hz.
   frozen_raw_reads: 10
+  # Plant-response watchdog: catches the loop losing authority over pressure —
+  # valve pinned open but pressure not responding (stuck valve, shut supply, or a
+  # sensor stuck low while the real cell climbs). Fires only if the valve is
+  # >= watchdog_valve_pct for watchdog_hold_s AND pressure NEVER rose
+  # watchdog_min_rise from where it was when the valve pinned. Integrated, not
+  # dP/dt, so a legitimate plateau under an unreachable setpoint (pressure rose
+  # then flattened) is left to stabilize_timeout, not aborted. Safe on any
+  # measurable specimen: to hold even the 20 kPa lowest setpoint a sample must
+  # build far more than 2 kPa, so only an unmeasurable (super-permeable) sample or
+  # a real fault fires. watchdog_hold_s = 0 disables.
+  watchdog_valve_pct: 70.0
+  watchdog_hold_s: 8.0
+  watchdog_min_rise: 2.0
 
 # ------------------------------------------------------------------- test ---
 test:
