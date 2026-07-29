@@ -1,0 +1,1221 @@
+<div class="hoja-banco">
+<style>
+.hoja-banco{
+  --tp:#1a1a1a; --ts:#5b5b5b; --s1:#ffffff; --s2:#fafafa; --bd:#e4e4e4;
+  --pwr:#1f5e8b; --ctrl:#7a2f2f; --sig:#8a6d00; --good:#1e7d32; --bad:#b3261e;
+  --data:#6b3fa0; --grey:#9e9e9e; --warn:#b8860b; --gnd:#1a1a1a;
+  color: var(--text-primary, var(--tp));
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size:14px; line-height:1.6; font-weight:400;
+  max-width:1180px; margin:0 auto; padding:8px 4px 32px;
+}
+@media (prefers-color-scheme: dark){
+  .hoja-banco{ --tp:#ececec; --ts:#a6a6a6; --s1:#1b1b1d; --s2:#232326; --bd:#3a3a3d; --gnd:#c9c9c9; }
+}
+.hoja-banco h1{ font-size:22px; font-weight:500; margin:0 0 6px; letter-spacing:-.01em; }
+.hoja-banco h2{ font-size:16px; font-weight:500; margin:0 0 14px; letter-spacing:.06em; text-transform:uppercase; }
+.hoja-banco h3{ font-size:14px; font-weight:500; margin:0 0 8px; }
+.hoja-banco h4{ font-size:13px; font-weight:500; margin:14px 0 6px; letter-spacing:.05em; text-transform:uppercase; color:var(--text-secondary, var(--ts)); }
+.hoja-banco p{ margin:0 0 10px; }
+.hoja-banco .sub{ color: var(--text-secondary, var(--ts)); }
+.hoja-banco .bajada{ font-size:14px; color: var(--text-secondary, var(--ts)); margin:0 0 22px; max-width:940px; }
+.hoja-banco .caja{ background: var(--surface-1, var(--s1)); border:1px solid var(--border, var(--bd)); border-radius:8px; padding:18px 20px; }
+.hoja-banco .rule{ height:1px; background: var(--border, var(--bd)); border:0; margin:26px 0; }
+.hoja-banco .cols{ display:grid; grid-template-columns:1fr 1fr; gap:1.6rem; align-items:start; }
+.hoja-banco .cols3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.1rem; }
+.hoja-banco .cols23{ display:grid; grid-template-columns:1.35fr 1fr; gap:1.6rem; align-items:start; }
+@media (max-width:900px){
+  .hoja-banco .cols, .hoja-banco .cols3, .hoja-banco .cols23{ grid-template-columns:1fr; }
+}
+.hoja-banco .tiny{ font-size:12px; }
+.hoja-banco .why{ font-size:13px; color: var(--text-secondary, var(--ts)); }
+.hoja-banco code{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12.5px;
+  background: color-mix(in srgb, var(--grey) 16%, transparent); padding:1px 5px; border-radius:4px; }
+.hoja-banco b{ font-weight:500; }
+.hoja-banco strong{ font-weight:500; }
+
+/* ---- bandas ---- */
+.hoja-banco .banda{ border-radius:8px; padding:16px 20px; margin:0 0 20px; }
+.hoja-banco .banda-bad{ border:2px solid var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+.hoja-banco .banda-warn{ border:2px solid var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.hoja-banco .banda-data{ border:2px solid var(--data); background: color-mix(in srgb, var(--data) 10%, transparent); }
+.hoja-banco .banda h3{ font-size:15px; font-weight:500; margin:0 0 6px; }
+
+/* ---- pills de estado ---- */
+.hoja-banco .pill{ display:inline-block; font-size:11px; letter-spacing:.045em; text-transform:uppercase;
+  border:1px solid var(--c); color:var(--c); border-radius:4px; padding:1px 7px; white-space:nowrap;
+  background: color-mix(in srgb, var(--c) 9%, transparent); }
+.hoja-banco .p-hoy{ --c:var(--good); }
+.hoja-banco .p-ciego{ --c:var(--warn); }
+.hoja-banco .p-pi{ --c:var(--data); }
+.hoja-banco .p-falta{ --c:var(--bad); }
+
+/* ---- bloques de armado ---- */
+.hoja-banco .blk{ background: var(--surface-1, var(--s1)); border:1px solid var(--border, var(--bd));
+  border-left:4px solid var(--c, var(--good)); border-radius:8px; padding:16px 18px; margin:0 0 14px; }
+.hoja-banco .blk-h{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+.hoja-banco .blk-n{ font-size:19px; font-weight:500; color:var(--c); line-height:1; }
+.hoja-banco .blk-t{ font-size:15px; font-weight:500; }
+.hoja-banco .mide{ border-radius:6px; padding:10px 12px; margin:10px 0 0; font-size:13.5px;
+  border:1px dashed var(--good); background: color-mix(in srgb, var(--good) 8%, transparent); }
+.hoja-banco .difi{ border-radius:6px; padding:10px 12px; margin:8px 0 0; font-size:13.5px;
+  border:1px dashed var(--data); background: color-mix(in srgb, var(--data) 8%, transparent); }
+.hoja-banco .stop{ border-radius:6px; padding:10px 12px; margin:8px 0 0; font-size:13.5px;
+  border:1px dashed var(--bad); background: color-mix(in srgb, var(--bad) 8%, transparent); }
+
+/* ---- filas de destino ---- */
+.hoja-banco .fila{ display:grid; grid-template-columns:24px 104px 1fr; gap:11px; align-items:start; padding:8px 0;
+  border-top:1px solid var(--border, var(--bd)); }
+.hoja-banco .fila:first-of-type{ border-top:0; }
+.hoja-banco .chip{ width:20px; height:20px; border-radius:3px; margin-top:3px; }
+.hoja-banco .nom{ font-weight:500; font-size:13.5px; }
+.hoja-banco .dst{ font-weight:500; }
+
+/* ---- tira de pines ---- */
+.hoja-banco .tira{ display:flex; gap:15px; padding:6px 0 0; }
+.hoja-banco .pin{ text-align:center; }
+.hoja-banco .pinbar{ width:7px; height:26px; margin:0 auto; border-radius:1px; }
+.hoja-banco .pinlab{ writing-mode:vertical-rl; font-size:12px; margin:5px auto 0; letter-spacing:.02em; }
+
+/* ---- callouts ---- */
+.hoja-banco .co{ border-radius:8px; padding:18px 20px; }
+.hoja-banco .co-t{ font-weight:500; margin-bottom:10px; font-size:14.5px; }
+.hoja-banco .co-b{ font-size:14px; line-height:1.62; }
+.hoja-banco .co-red{ border:2px solid var(--bad); }
+.hoja-banco .co-green{ border:2px solid var(--good); }
+.hoja-banco .co-blue{ border:2px solid var(--pwr); }
+.hoja-banco .co-red .co-t{ color:var(--bad); }
+.hoja-banco .co-green .co-t{ color:var(--good); }
+.hoja-banco .co-blue .co-t{ color:var(--pwr); }
+
+/* ---- tablas ---- */
+.hoja-banco table{ border-collapse:collapse; width:100%; font-size:13.5px; }
+.hoja-banco th{ text-align:left; font-weight:500; font-size:12px; letter-spacing:.05em; text-transform:uppercase;
+  color: var(--text-secondary, var(--ts)); padding:0 12px 8px 0; border-bottom:1px solid var(--border, var(--bd)); }
+.hoja-banco td{ padding:9px 12px 9px 0; border-bottom:1px solid var(--border, var(--bd)); vertical-align:top; }
+.hoja-banco tr.why td{ border-bottom:0; padding-top:0; font-size:12.5px; color:var(--text-secondary, var(--ts)); }
+.hoja-banco svg{ width:100%; height:auto; color: var(--text-primary, var(--tp)); }
+.hoja-banco .mask{ fill: var(--surface-1, var(--s1)); }
+.hoja-banco ul{ margin:0 0 10px; padding-left:19px; }
+.hoja-banco li{ margin-bottom:6px; }
+.hoja-banco .num{ font-variant-numeric: tabular-nums; font-weight:500; }
+</style>
+
+<h1>¿En qué orden se arma el banco, y dónde exactamente se detiene hoy?</h1>
+<p class="bajada">
+  Una sola hoja para tener al lado del protoboard de principio a fin. No es otra topología —
+  las filas y los pines son los de <code>docs/wiring_protoboard.html</code>. Lo que agrega es la
+  <b>secuencia</b>: qué se hace primero para no desarmar después, qué número se mide en cada bloque
+  con el multímetro, y las cuatro fronteras donde el rig se queda sin piezas. La cadena de sensado
+  está casi completa; “casi” tiene cuatro nombres y aquí están marcados en rojo, no en letra chica.
+</p>
+
+<div class="banda banda-data">
+  <h3>Hoy se CABLEA y se mide con multímetro. Hoy NO se verifica con la Pi.</h3>
+  <p style="margin:0 0 8px">
+    <code>membrane-rig.local</code>, <code>raspberrypi.local</code> y <code>100.117.23.112</code>
+    no responden, y el software del rig <b>nunca se instaló</b> en la Pi. Es <code>install.sh</code> el
+    que instala <code>i2c-tools</code> y habilita I²C y 1-Wire, así que <b><code>i2cdetect</code> todavía
+    no existe</b> en esa máquina y ningún driver puede leer nada. General lo está resolviendo.
+  </p>
+  <p style="margin:0">
+    Por eso <b>toda verificación que dependa de la Pi vive en una sola checklist al final</b> de esta
+    hoja, no entremezclada en los pasos. Lo que sí se puede comprobar hoy —continuidad, voltajes de
+    riel, el ratio real del divisor, la salida del transductor— va marcado bloque por bloque, porque
+    <b>hay multímetro y cautín</b> (confirmado con Adrián el 2026-07-29).
+  </p>
+</div>
+
+<div class="caja" style="margin-bottom:22px">
+  <h4 style="margin-top:0">Los cuatro estados que usa esta hoja</h4>
+  <div class="cols" style="gap:1rem">
+    <div>
+      <p style="margin:0 0 8px"><span class="pill p-hoy">hoy · se mide</span> &nbsp;se cablea y queda
+        <b>verificado</b> hoy mismo con el multímetro. Es el estado que cierra un bloque de verdad.</p>
+      <p style="margin:0"><span class="pill p-ciego">hoy · a ciegas</span> &nbsp;se cablea hoy pero
+        su comprobación no existe todavía. Queda plantado y no se energiza.</p>
+    </div>
+    <div>
+      <p style="margin:0 0 8px"><span class="pill p-pi">diferido · pide la Pi</span> &nbsp;necesita
+        <code>install.sh</code> corrido, I²C/1-Wire habilitados y reboot. Va a la checklist final.</p>
+      <p style="margin:0"><span class="pill p-falta">bloqueado · falta pieza</span> &nbsp;no se cablea:
+        la pieza no está en la mesa. Cuatro fronteras, más abajo.</p>
+    </div>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Paso 0 — terminar las puntas trenzadas</h2>
+<p class="bajada" style="margin-bottom:16px">
+  Va <b>primero</b> porque hacerlo después implica desarmar: cada punta trenzada que ya esté
+  plantada hay que sacarla, soldarla y volver a plantarla. Un clip de protoboard es un resorte hecho
+  para conductor <b>sólido</b> de 0.4–0.7 mm. Un trenzado se despeina al entrar: unos hilos se doblan
+  afuera, dos o tres tocan, y queda un intermitente que cambia si mueves la mesa.
+</p>
+
+<div class="cols23">
+  <div class="caja">
+    <h3>Qué llega trenzado a este banco</h3>
+    <table>
+      <tr><th style="width:210px">Cable</th><th>Estado</th></tr>
+      <tr><td><b>Sonda DS18B20</b> — 3 puntas (rojo VDD · amarillo DQ · negro GND)</td>
+          <td>trenzado <b>confirmado</b> — <code>INVENTORY.md</code></td></tr>
+      <tr><td><b>Cable 22AWG</b> del carrete</td>
+          <td>trenzado <b>confirmado</b> — <code>BOM.csv</code> dice “22AWG <i>stranded</i>”</td></tr>
+      <tr><td><b>Transductor de presión</b> — 3 puntas (rojo V+ · negro GND · señal)</td>
+          <td><span class="pill p-ciego">confirmar en la pieza</span> casi seguro trenzado también:
+              ningún archivo del repo lo dice</td></tr>
+    </table>
+    <p class="why" style="margin:12px 0 0">
+      El transductor es el que nadie había escrito. Su pigtail de 3 hilos entra al protoboard en las
+      filas 12–14, así que si es trenzado —lo normal en estos módulos— necesita el mismo tratamiento
+      que la sonda. <b>Míralo antes de empezar a soldar</b>, para hacer las tres piezas en una sentada.
+      Si en vez de puntas desnudas trae un <b>conector</b>, no lo cortes: suéldale un pigtail hembra
+      o llévalo a tornillo.
+    </p>
+    <p class="why" style="margin:8px 0 0">
+      El color de la señal del transductor <b>no está fijado en el repo</b>. Rojo=V+ y negro=GND sí
+      (los escribe <code>wiring_protoboard.html</code>); el tercero suele ser amarillo, verde o azul.
+      Confírmalo contra la etiqueta del sensor antes de plantarlo: invertir señal y GND pone A0 en
+      ≈3.4 V (abs máx del ADS1115 = VDD+0.3 = 3.6 V) y el rig reporta &gt;100 kPa y aborta.
+    </p>
+  </div>
+
+  <div class="caja">
+    <h3>La receta, con cautín</h3>
+    <p style="margin:0 0 10px">Con cautín en la mesa la opción recomendada es <b>soldar una cola de
+      conductor sólido de ~5 cm</b> a cada punta trenzada y aislar el empalme.</p>
+    <ol style="margin:0 0 10px; padding-left:20px">
+      <li>Pela 4–5 mm de la punta trenzada y retuércela.</li>
+      <li><b>Sacrifica un jumper macho del kit:</b> córtalo a 5 cm del pin. Ese pin rígido es lo que
+        entra al clip. Funciona igual si el alambre del jumper es sólido o flexible, porque lo que
+        se inserta es el pin, no el cable.</li>
+      <li>Empalma en línea (los dos cables lado a lado, no punta a punta), estaña, deja que fluya.</li>
+      <li>Aísla y da alivio de tensión: la soldadura es rígida y el cable se fatiga justo ahí.</li>
+    </ol>
+    <p class="why" style="margin:0">
+      <b>Por qué no basta con estañar la punta trenzada.</b> Estañada sí entra al hoyo, pero es un
+      bloque sólido más gordo que el conductor de diseño: <b>abre el clip</b>. El resorte queda
+      cediendo y con el tiempo pierde presión de contacto — a veces con ese cable, a veces con el
+      siguiente que uses en esa fila. Sirve de emergencia; no para el banco que va a sostener una
+      medición durante semanas.
+    </p>
+  </div>
+</div>
+
+<div class="banda banda-bad" style="margin-top:16px">
+  <h3>Bajo tornillo NO se estaña — nunca</h3>
+  <p style="margin:0">
+    En el <b>V1738</b>, en el barrel jack a tornillo y en cualquier clamp: el estaño <b>fluye en
+    frío</b> bajo presión sostenida, la junta se afloja sola con el tiempo y nadie lo ve. Ahí va
+    trenzado desnudo y retorcido, o ferrule. Estañar es para el hoyo del protoboard; el tornillo
+    quiere cobre. (<code>docs/ASSEMBLY.md</code>, “Before soldering”.)
+  </p>
+</div>
+
+<div class="banda banda-warn">
+  <h3>Cómo aislar hoy: el termorretráctil es el item&nbsp;#9 y NO ha llegado</h3>
+  <p style="margin:0 0 8px">
+    Item #9 del pedido pendiente (<code>B07WWWPR2X</code>, 650 pzas 2:1) — y en la misma línea del BOM
+    viajan los <b>cinchos</b>, así que tampoco hay con qué dar alivio de tensión. Opciones, en orden:
+  </p>
+  <ul style="margin:0">
+    <li><b>Cinta de aislar</b>, si tienes. Ojo: <b>la cinta tampoco está en <code>BOM.csv</code></b>
+      — nadie la listó. Confírmalo antes de contar con ella.</li>
+    <li><b>Escalonar los tres empalmes</b> ~1 cm cada uno a lo largo del cable, para que dos juntas
+      desnudas no puedan tocarse aunque el bulto se doble. Con 3.3 V y 5 V el riesgo no es una
+      descarga: es un corto entre empalmes vecinos y la fatiga mecánica.</li>
+    <li><b>Esperar el #9</b> y hacer las tres piezas de una vez. Es la opción limpia si el resto
+      del banco no te bloquea.</li>
+  </ul>
+</div>
+
+<div class="caja">
+  <h3>Herramientas: lo que hay, y lo que <code>BOM.csv</code> no lista</h3>
+  <div class="cols3">
+    <div>
+      <p style="margin:0 0 6px"><b style="color:var(--good)">En la mesa</b></p>
+      <ul style="margin:0" class="tiny">
+        <li>Cautín + soldadura</li>
+        <li>Multímetro</li>
+      </ul>
+      <p class="why" style="margin:8px 0 0">Confirmado con Adrián el 2026-07-29. <b>Los dos habilitan
+        verificación real hoy</b>, sin la Pi.</p>
+    </div>
+    <div>
+      <p style="margin:0 0 6px"><b style="color:var(--bad)">Sin confirmar / no hay</b></p>
+      <ul style="margin:0" class="tiny">
+        <li>Crimpeadora y pines dupont</li>
+        <li>Termorretráctil (item #9)</li>
+        <li>Cinchos (misma línea del #9)</li>
+        <li>Cinta de aislar</li>
+      </ul>
+    </div>
+    <div>
+      <p style="margin:0 0 6px"><b style="color:var(--warn)">Hace falta para el Paso 0 y nadie la listó</b></p>
+      <ul style="margin:0" class="tiny">
+        <li>Pinza de corte</li>
+        <li>Pelacables (una navaja muerde hilos)</li>
+        <li>Tercera mano o pinza para sujetar</li>
+        <li>Esponja/latón para la punta del cautín</li>
+        <li>Opcional: flux y alcohol isopropílico</li>
+      </ul>
+    </div>
+  </div>
+  <p class="why" style="margin:12px 0 0">
+    <b><code>BOM.csv</code> no lista ni una sola herramienta</b> — ni multímetro, ni cautín, ni
+    soldadura, ni pinzas. Si el laboratorio no las presta, son compra aparte que no aparece en ningún
+    total. Y <b>tampoco hay alambre sólido en el BOM</b>: la única línea de cable es
+    “22AWG <i>stranded</i>”, así que la cola sólida del Paso 0 sale de sacrificar jumpers del kit.
+    Si los jumpers del kit terminaran en cable desnudo en vez de pin, no habría de dónde sacarla —
+    <b>confírmalo antes de cortar el primero</b>.
+  </p>
+</div>
+
+<hr class="rule">
+
+<h2>Paso 0.5 — medir los rieles del header antes de conectar nada</h2>
+
+<div class="cols23">
+  <div class="caja">
+    <p style="margin:0 0 10px">
+      Dos minutos con el multímetro que evitan la falla más tonta posible: cablear todo contra un
+      riel que no está ahí. Con la Pi alimentada por su USB-C y <b>nada</b> conectado al header:
+    </p>
+    <table>
+      <tr><th style="width:190px">Medición</th><th>Esperado</th><th>Si no sale</th></tr>
+      <tr><td>pin 2 → pin 6</td><td class="num">5.0 V ±5 %</td>
+          <td>sin 5 V no hay transductor: es ratiométrico y su salida <b>cuelga de este riel</b></td></tr>
+      <tr><td>pin 1 → pin 6</td><td class="num">3.3 V ±5 %</td>
+          <td>sin 3.3 V no hay ADS1115 ni pull-up de la sonda</td></tr>
+      <tr><td>pin 1 ↔ pin 17</td><td>continuidad</td>
+          <td>son el mismo 3.3 V; confirma que estás contando bien los pines</td></tr>
+      <tr><td>pin 2 ↔ pin 4</td><td>continuidad</td>
+          <td>son el mismo 5 V</td></tr>
+    </table>
+    <p class="why" style="margin:12px 0 0">
+      Anota los dos voltajes reales. El de 5 V no es cosmético: el cero esperado del transductor
+      <b>escala con él</b> (Paso D).
+    </p>
+  </div>
+
+  <div class="banda banda-warn" style="margin:0">
+    <h3>«¿De dónde salen los 5 V si la Pi no responde por red?»</h3>
+    <p style="margin:0 0 8px">
+      <b>No es lo mismo “sin red” que “muerta”.</b> Una Pi energizada que arranca pero no aparece en
+      la red entrega 5 V y 3.3 V en su header con total normalidad — el header no sabe nada de
+      Ethernet ni de Wi-Fi. Ese caso te sirve para todo este banco.
+    </p>
+    <p style="margin:0 0 8px">
+      Si la Pi está muerta de verdad (no enciende, el PMIC no arranca), <b>los 3.3 V desaparecen</b>
+      porque los genera la propia placa. Los 5 V del pin 2 suelen sobrevivir —vienen del riel de
+      entrada USB-C— pero eso <b>no lo verifiqué</b> en esta placa.
+    </p>
+    <p style="margin:0">
+      Por eso el Paso 0.5 <b>se mide, no se asume</b>. Si falta alguno de los dos rieles, hace falta
+      otra fuente para el transductor, y entonces el cero de 0.500 V deja de valer tal cual: vuelve
+      al callout de abajo.
+    </p>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Bloques cableables hoy, en orden de armado</h2>
+<p class="bajada" style="margin-bottom:18px">
+  El orden no es estético: cada bloque queda <b>verificable por separado</b> antes de que el
+  siguiente lo tape, y el bloque B va antes que el D por una razón eléctrica concreta (ver B).
+  Las filas son las de <code>docs/wiring_protoboard.html</code> — todo el rig vive en la mitad
+  <b>f–j</b> y en los dos rieles de arriba.
+</p>
+
+<!-- ============================ A ============================ -->
+<div class="blk" style="--c:var(--pwr)">
+  <div class="blk-h">
+    <div class="blk-n">A</div>
+    <div class="blk-t">Rieles y tierra común del protoboard</div>
+    <span class="pill p-hoy">hoy · se mide</span>
+  </div>
+  <div class="cols">
+    <div>
+      <div class="fila"><div class="chip" style="background:var(--pwr)"></div>
+        <div class="nom" style="color:var(--pwr)">riel +</div>
+        <div><div class="dst">← Pi pin 1 (3.3 V), un solo cable</div>
+          <div class="why">alimenta VDD del ADS1115 (fila 1) y el extremo alto del pull-up de 4.7 kΩ (fila 26)</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--gnd)"></div>
+        <div class="nom">riel −</div>
+        <div><div class="dst">← Pi pin 6 (GND), un solo cable</div>
+          <div class="why">es la referencia contra la que el ADS1115 mide A0. Hoy no circula ni un miliamperio de potencia por él, y eso es lo que lo hace legítimo</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--grey)"></div>
+        <div class="nom" style="color:var(--grey)">rieles de abajo</div>
+        <div><div class="dst">vacíos, a propósito</div>
+          <div class="why">si necesitas más hoyos de GND, puentea − con −. <b>Nunca 12 V en un riel</b></div></div></div>
+    </div>
+    <div>
+      <div class="mide" style="margin-top:0">
+        <b>Mide hoy — dos cosas:</b>
+        <ol style="margin:6px 0 0; padding-left:18px">
+          <li><b>¿El riel viene partido a la mitad?</b> Muchos protoboards de 830 lo traen. Pon las
+            puntas en los dos extremos del mismo riel: <b>debe haber continuidad</b>. Si no,
+            puentea las dos mitades y <b>vuelve a medir</b>.</li>
+          <li><b>Riel + contra riel −:</b> debe dar <b>circuito abierto</b>. Con 3.3 V vivos y un
+            corto entre rieles estás cortocircuitando un regulador de la Pi.</li>
+        </ol>
+      </div>
+      <p class="why" style="margin:10px 0 0">
+        Un puente de jumper en el camino de una <b>tierra</b> es exactamente la resistencia que
+        produce presión fantasma cuando la bobina empiece a circular. Hoy no importa; el día que
+        importe ya no lo vas a estar mirando. Déjalo bien ahora.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ B ============================ -->
+<div class="blk" style="--c:var(--sig)">
+  <div class="blk-h">
+    <div class="blk-n">B</div>
+    <div class="blk-t">Divisor 10k / 22k — y el número que se anota</div>
+    <span class="pill p-hoy">hoy · se mide</span>
+  </div>
+  <div class="cols23">
+    <div>
+      <div class="fila"><div class="chip" style="background:var(--sig)"></div>
+        <div class="nom" style="color:var(--sig)">R1 = 10 kΩ</div>
+        <div><div class="dst">fila 14 (h14) ↔ fila 18 (h18)</div>
+          <div class="why">en serie desde la señal del sensor. Dos patas, sin polaridad, <b>sin pin de alimentación</b></div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--sig)"></div>
+        <div class="nom" style="color:var(--sig)">R2 = 22 kΩ</div>
+        <div><div class="dst">fila 18 (i18) → riel −</div>
+          <div class="why">sin este camino a tierra no circula corriente, no hay caída en R1 y no hay división. Y el ADC mide contra esa <b>misma</b> tierra</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--sig)"></div>
+        <div class="nom" style="color:var(--sig)">punto medio</div>
+        <div><div class="dst">fila 18 (g18) → fila 7 = A0</div>
+          <div class="why">4.5 V × 0.6875 = <b>3.094 V</b> ✓ cabe bajo el riel de 3.3 V del ADC</div></div></div>
+
+      <div class="mide">
+        <b>Mide hoy — el ratio real, y anótalo:</b>
+        <ol style="margin:6px 0 0; padding-left:18px">
+          <li><b>Ohmmetro primero:</b> mide cada resistencia antes de plantarla. No confíes en las
+            bandas — <b>470 Ω y 4.7 kΩ solo difieren en el multiplicador</b>
+            (amarillo-violeta-negro-<b>negro</b> vs -<b>café</b>).</li>
+          <li>Con el <b>transductor todavía fuera</b> de la fila 14, jumper del <b>riel + (3.3 V)</b>
+            a la fila 14.</li>
+          <li>Mide <b>Vin</b> en la fila 14 y <b>Vout</b> en la fila 18. <code>ratio = Vout / Vin</code>.
+            Con 3.3 V, Vout ≈ <b class="num">2.269 V</b>.</li>
+          <li>Escribe el número en <code>sensor.divider_ratio</code> de <code>config.yaml</code>.
+            Nominal <b class="num">0.6875</b>; con resistencias al 1 % lo esperable es
+            <b class="num">0.683 – 0.692</b>. Fuera de esa banda: resistencia equivocada, contacto
+            malo, o el divisor está cargado por algo.</li>
+        </ol>
+      </div>
+      <p class="why" style="margin:10px 0 0">
+        <b>Retira el jumper de inyección</b> antes de landear el transductor. Y no inyectes el riel
+        contra la salida del sensor: por eso este bloque va <b>antes</b> del D, no después.
+      </p>
+    </div>
+
+    <div>
+      <div class="co co-green">
+        <div class="co-t">«¿No necesito una fuente de precisión para medir el ratio?»</div>
+        <div class="co-b">
+          No. Mides <b>entrada y salida con el mismo multímetro</b> y divides: el valor de la fuente
+          aparece arriba y abajo del cociente y <b>se cancela</b>. Cualquier voltaje estable sirve —
+          los 3.3 V del riel están perfectos. Lo único que sí importa es que <b>no se mueva entre
+          las dos lecturas</b>: mídelas seguidas, no con diez minutos de diferencia.
+          <div style="margin-top:10px">
+            Lo que <b>no</b> se cancela es la impedancia de entrada del multímetro, porque queda en
+            paralelo con R2. Con <b>10 MΩ</b> (lo normal en DC volts) el sesgo es −0.07 %:
+            despreciable. Con un multímetro de <b>1 MΩ</b> son −0.68 % — del tamaño de la tolerancia
+            de las resistencias, y en el sentido malo. Busca el dato en su manual.
+          </div>
+        </div>
+      </div>
+      <div class="co co-red" style="margin-top:14px">
+        <div class="co-t">«¿Tan importante es este número?»</div>
+        <div class="co-b">
+          Es el que gatea un <code>k</code> publicable. Dejar <b>0.667</b> sobre un divisor real de
+          <b>0.6875</b> reporta 60 kPa como <b>62.24 kPa</b> y sesga <code>k</code> en
+          <b>−2.98 %</b> — con <b>R² = 1.000000</b> y <code>follows_darcy = True</code>.
+          <b>La gráfica se ve perfecta y no delata nada.</b> Ese es el punto: es un error de escala
+          pura, y una recta escalada sigue siendo una recta.
+          <div style="margin-top:10px">
+            Por eso también importa el multímetro de 1 MΩ del callout de arriba: anotarías 0.6828
+            sobre un divisor de 0.6875, el rig reportaría 35 kPa como <b>35.33</b> y
+            <code>k</code> saldría ~1 % bajo, otra vez con el R² intacto. <span class="sub">(Esa
+            última cuenta la hice con la fórmula del driver, no la corrió el arnés de análisis.)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ C ============================ -->
+<div class="blk" style="--c:var(--data)">
+  <div class="blk-h">
+    <div class="blk-n">C</div>
+    <div class="blk-t">ADS1115 — la tira de 10 pines</div>
+    <span class="pill p-ciego">hoy · a ciegas</span>
+    <span class="pill p-pi">0x48 diferido</span>
+  </div>
+
+  <div class="cols23">
+    <div>
+      <div class="tira" style="margin-bottom:6px">
+        <div class="pin"><div class="pinbar" style="background:var(--pwr)"></div><div class="pinlab" style="color:var(--pwr)">VDD</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--gnd)"></div><div class="pinlab">GND</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--data)"></div><div class="pinlab" style="color:var(--data)">SCL</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--data)"></div><div class="pinlab" style="color:var(--data)">SDA</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--gnd)"></div><div class="pinlab">ADDR</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--grey)"></div><div class="pinlab" style="color:var(--grey)">ALRT</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--sig)"></div><div class="pinlab" style="color:var(--sig)">A0</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--grey)"></div><div class="pinlab" style="color:var(--grey)">A1</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--grey)"></div><div class="pinlab" style="color:var(--grey)">A2</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--grey)"></div><div class="pinlab" style="color:var(--grey)">A3</div></div>
+      </div>
+      <p class="why" style="margin:22px 0 12px">
+        Tu módulo es esta tira de <b>10 pines</b> (HiLetgo). Va plantado en <b>f1–f10</b>, un pin por
+        fila, y su cuerpo solo <i>tapa</i> el canal central: nada lo cruza.
+        <b>Compara el orden contra la serigrafía antes de plantarlo</b> — si tu placa lo trae al
+        revés, VDD cae en la fila 10 y toda esta tabla se invierte.
+      </p>
+
+      <div class="fila"><div class="chip" style="background:var(--pwr)"></div>
+        <div class="nom" style="color:var(--pwr)">VDD · fila 1</div>
+        <div><div class="dst">→ riel + (3.3 V, Pi pin 1)</div>
+          <div class="why">el divisor está calculado para un ADC de 3.3 V; a 5 V la cuenta se rompe</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--gnd)"></div>
+        <div class="nom">GND · fila 2</div>
+        <div><div class="dst">→ riel −</div>
+          <div class="why">no mide voltajes absolutos: mide A0 <b>contra este pin</b></div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--data)"></div>
+        <div class="nom" style="color:var(--data)">SCL · fila 3</div>
+        <div><div class="dst">→ Pi pin 5 · GPIO3</div>
+          <div class="why">reloj I²C. No agregues pull-ups: GPIO2/3 traen 1.8 kΩ de fábrica</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--data)"></div>
+        <div class="nom" style="color:var(--data)">SDA · fila 4</div>
+        <div><div class="dst">→ Pi pin 3 · GPIO2</div>
+          <div class="why">datos I²C</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--gnd)"></div>
+        <div class="nom">ADDR · fila 5</div>
+        <div><div class="dst">→ riel −</div>
+          <div class="why">a tierra el módulo responde en <b>0x48</b>, que es la única dirección que el driver busca</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--grey)"></div>
+        <div class="nom" style="color:var(--grey)">ALRT · fila 6</div>
+        <div><div class="dst">sin conectar</div>
+          <div class="why">salida de alarma del comparador; este rig no la usa</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--sig)"></div>
+        <div class="nom" style="color:var(--sig)">A0 · fila 7</div>
+        <div><div class="dst">→ fila 18, punto medio del divisor</div>
+          <div class="why">la única entrada que se lee (<code>sensor.ads_channel: 0</code>)</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--grey)"></div>
+        <div class="nom" style="color:var(--grey)">A1·A2·A3 · 8–10</div>
+        <div><div class="dst">sin conectar</div>
+          <div class="why">A1 está libre y sirve para medir el divisor con el propio ADC — pero eso pide la Pi, y con multímetro no hace falta</div></div></div>
+    </div>
+
+    <div>
+      <div class="co co-blue">
+        <div class="co-t">«Si el ADC llega a ±4.096 V, ¿por qué el divisor?»</div>
+        <div class="co-b">
+          Porque son dos límites distintos y el que manda es el otro. <code>ads_gain: 1</code> fija
+          el <b>fondo de escala</b> en ±4.096 V: eso es hasta dónde <i>numera</i>. Pero el
+          <b>máximo absoluto de la entrada</b> es VDD + 0.3 V, y alimentado a 3.3 V eso son
+          <b>3.6 V</b>. El fondo de escala no es permiso para meterle 4 V.
+          <div style="margin-top:10px">
+            El transductor entrega hasta <b>4.5 V</b>. Directo al A0 lo estás metiendo 900 mV por
+            encima del máximo absoluto: entran en conducción los diodos de protección y el módulo se
+            va. Con el divisor el tope es <b>3.094 V</b> ✓ — bajo el riel, y con margen.
+          </div>
+        </div>
+      </div>
+      <div class="co co-green" style="margin-top:14px">
+        <div class="co-t">«¿Cómo alimento las resistencias?»</div>
+        <div class="co-b">
+          No se alimentan. Una resistencia es <b>pasiva</b>: dos patas, sin polaridad, sin pin de
+          corriente. El divisor no tiene alimentación propia — su “entrada” es la señal del sensor y
+          su “salida” es el punto medio. Lo único que necesita para funcionar es que R2 llegue a
+          tierra, que es lo que cierra el circuito.
+          <div style="margin-top:10px">
+            Cuánta corriente circula por él: 4.5 V ÷ 32 kΩ = <b>141 µA</b> a fondo de escala,
+            <b>16 µA</b> a atmósfera. Nada que caliente nada, y frente a los ~6 MΩ de entrada del
+            ADS1115 los 6.875 kΩ de impedancia de salida del divisor son irrelevantes.
+          </div>
+        </div>
+      </div>
+      <div class="difi" style="margin-top:14px">
+        <b>Diferido a la Pi:</b> <code>i2cdetect -y 1</code> → <b>0x48</b>. Hoy no se puede: el
+        comando no existe hasta que corra <code>install.sh</code>. Plantado y cableado, este bloque
+        queda esperando ese único check.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ D ============================ -->
+<div class="blk" style="--c:var(--sig)">
+  <div class="blk-h">
+    <div class="blk-n">D</div>
+    <div class="blk-t">Transductor a 5 V — la cadena eléctrica completa, en la mesa</div>
+    <span class="pill p-hoy">hoy · se mide</span>
+  </div>
+
+  <div class="cols23">
+    <div>
+      <div class="tira" style="margin-bottom:6px">
+        <div class="pin"><div class="pinbar" style="background:var(--pwr)"></div><div class="pinlab" style="color:var(--pwr)">V+ rojo</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--sig)"></div><div class="pinlab" style="color:var(--sig)">SEÑAL ?</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--gnd)"></div><div class="pinlab">GND negro</div></div>
+      </div>
+      <p class="why" style="margin:26px 0 12px">
+        Tres hilos. El color de la señal no lo fija el repo — <b>confírmalo en la etiqueta</b>.
+      </p>
+
+      <div class="fila"><div class="chip" style="background:var(--pwr)"></div>
+        <div class="nom" style="color:var(--pwr)">V+ · fila 12</div>
+        <div><div class="dst">→ Pi pin 2 (5 V), directo</div>
+          <div class="why">único nodo de 5 V del protoboard. <b>NO lo lleves al riel +</b>, que es de 3.3 V</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--gnd)"></div>
+        <div class="nom">GND · fila 13</div>
+        <div><div class="dst">→ riel −</div>
+          <div class="why">el sensor es ratiométrico: su señal se mide contra <b>esta misma</b> tierra</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--sig)"></div>
+        <div class="nom" style="color:var(--sig)">SEÑAL · fila 14</div>
+        <div><div class="dst">→ pata libre de R1 (h14)</div>
+          <div class="why">0.5–4.5 V. Es lo único que “alimenta” al divisor</div></div></div>
+
+      <div class="mide">
+        <b>Mide hoy — el cero de la cadena, en dos puntos:</b>
+        <table style="margin-top:6px">
+          <tr><th>Punto</th><th>Esperado a atmósfera</th></tr>
+          <tr><td>fila 14 — salida del transductor</td><td class="num">0.500 V</td></tr>
+          <tr><td>fila 18 / A0 — tras el divisor</td><td class="num">0.3438 V</td></tr>
+        </table>
+        <p style="margin:8px 0 0">
+          Si salen esos dos números, quedan validados <b>sensor, divisor y cableado</b> de una vez, y
+          cualquier cosa que falle después es mecánica. Esa separación es exactamente lo que hace
+          valioso probarlo en la mesa antes de plomear.
+        </p>
+      </div>
+      <div class="difi">
+        <b>Diferido a la Pi:</b> que el <b>driver</b> reporte <b class="num">0.000 kPa</b>. Los dos
+        voltajes de arriba son la mitad eléctrica del check; la otra mitad es la conversión, y esa
+        corre en la Pi.
+      </div>
+    </div>
+
+    <div>
+      <div class="co co-blue">
+        <div class="co-t">«¿El 0.500 V vale con cualquier fuente de 5 V?»</div>
+        <div class="co-b">
+          <b>No</b>, y esto es lo contrario del caso del ratio. El sensor es <b>ratiométrico</b>: su
+          salida es una fracción de su propia alimentación. El cero son <b>0.1 × V<sub>supply</sub></b>
+          y el punto en A0 es <b>0.06875 × V<sub>supply</sub></b>.
+          <table style="margin-top:10px">
+            <tr><th>V+ real</th><th>Cero esperado</th><th>En A0</th></tr>
+            <tr><td class="num">5.00 V</td><td class="num">0.500 V</td><td class="num">0.3438 V</td></tr>
+            <tr><td class="num">4.90 V</td><td class="num">0.490 V</td><td class="num">0.3369 V</td></tr>
+            <tr><td class="num">5.10 V</td><td class="num">0.510 V</td><td class="num">0.3506 V</td></tr>
+          </table>
+          <div style="margin-top:10px">
+            Por eso el Paso 0.5 te pide <b>anotar</b> el voltaje del pin 2. Si tu lectura no da
+            0.500 V, primero revisa si es que tu riel no da 5.00 V — no salgas corriendo a culpar al
+            sensor. <span class="sub">El repo afirma que es ratiométrico; que esta pieza en concreto
+            lo sea no lo verifiqué.</span>
+          </div>
+        </div>
+      </div>
+      <div class="co co-red" style="margin-top:14px">
+        <div class="co-t">«¿Y si confundo R1 con R2?»</div>
+        <div class="co-b">
+          Invertidas (22k en serie, 10k a tierra) el ratio se vuelve <b>0.3125</b>, A0 se queda en
+          <b>0.156 V</b> a atmósfera y el driver reporta <b>−7.1 kPa</b> — por debajo de
+          <code>safety.min_plausible = −5.0</code>, así que dispara <b>SENSOR_FAULT</b>. Es decir:
+          <b>el error se delata solo y no quema nada</b>, al contrario del ratio mal anotado, que no
+          se delata nunca. Mide las resistencias con el ohmmetro y ya.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h4>El esquemático de la cadena, con los voltajes de cada tramo</h4>
+  <div class="caja" style="padding:12px 14px">
+  <svg viewBox="0 0 1040 300" role="img"
+    aria-label="Cadena de sensado: 5 V del Pi alimenta el transductor, su señal pasa por R1 de 10k al punto medio, R2 de 22k baja a tierra, y el punto medio entra a A0 del ADS1115 alimentado a 3.3 V">
+    <!-- Pi -->
+    <rect x="14" y="52" width="112" height="150" rx="7" fill="none" stroke="var(--pwr)" stroke-width="1.6"/>
+    <text x="70" y="76" text-anchor="middle" font-size="13" font-weight="500" fill="var(--pwr)">Raspberry Pi</text>
+    <text x="70" y="94" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".65">header J8</text>
+    <text x="26" y="124" font-size="12" fill="var(--pwr)">pin 2 · 5 V</text>
+    <text x="26" y="152" font-size="12" fill="var(--pwr)">pin 1 · 3.3 V</text>
+    <text x="26" y="180" font-size="12" fill="currentColor">pin 6 · GND</text>
+
+    <!-- 5V run to transducer -->
+    <path d="M126 119 H 196" stroke="var(--pwr)" stroke-width="1.8" fill="none"/>
+    <text x="161" y="110" text-anchor="middle" font-size="11.5" fill="var(--pwr)">5.00 V</text>
+
+    <!-- transducer -->
+    <rect x="196" y="80" width="128" height="78" rx="7" fill="none" stroke="var(--sig)" stroke-width="1.8"/>
+    <text x="260" y="106" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--sig)">Transductor</text>
+    <text x="260" y="124" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".7">0–15 PSI · G1/4</text>
+    <text x="260" y="141" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".7">0.5–4.5 V ratiom.</text>
+
+    <!-- transducer GND down to the shared ground node -->
+    <path d="M240 158 V 250 H 536" stroke="var(--gnd)" stroke-width="1.6" fill="none"/>
+    <!-- Pi GND joins the same node -->
+    <path d="M126 175 H 176 V 250 H 240" stroke="var(--gnd)" stroke-width="1.6" fill="none"/>
+    <circle cx="240" cy="250" r="4.5" fill="var(--gnd)"/>
+
+    <!-- signal to R1 -->
+    <path d="M324 119 H 404" stroke="var(--sig)" stroke-width="1.8" fill="none"/>
+    <text x="364" y="104" text-anchor="middle" font-size="11.5" fill="var(--sig)">0.500 V atm</text>
+    <text x="364" y="90" text-anchor="middle" font-size="11" fill="currentColor" opacity=".6">4.500 V a 103.4 kPa</text>
+    <text x="364" y="137" text-anchor="middle" font-size="11" fill="currentColor" opacity=".55">fila 14</text>
+
+    <!-- R1 (IEC rectangle, horizontal) -->
+    <rect x="404" y="107" width="66" height="24" fill="none" stroke="var(--sig)" stroke-width="1.8"/>
+    <text x="437" y="123" text-anchor="middle" font-size="12" font-weight="500" fill="var(--sig)">R1 10k</text>
+
+    <!-- mid node -->
+    <path d="M470 119 H 594" stroke="var(--sig)" stroke-width="1.8" fill="none"/>
+    <circle cx="536" cy="119" r="5" fill="var(--sig)"/>
+    <text x="536" y="100" text-anchor="middle" font-size="11" fill="currentColor" opacity=".55">fila 18 · punto medio</text>
+
+    <!-- R2 down to ground -->
+    <path d="M536 119 V 176" stroke="var(--sig)" stroke-width="1.8" fill="none"/>
+    <rect x="524" y="176" width="24" height="60" fill="none" stroke="var(--sig)" stroke-width="1.8"/>
+    <text x="566" y="200" font-size="12" font-weight="500" fill="var(--sig)">R2 22k</text>
+    <text x="566" y="216" font-size="11" fill="currentColor" opacity=".6">a tierra: sin esto</text>
+    <text x="566" y="230" font-size="11" fill="currentColor" opacity=".6">no hay división</text>
+    <path d="M536 236 V 258" stroke="var(--gnd)" stroke-width="1.6" fill="none"/>
+    <!-- ground symbol -->
+    <path d="M518 258 H 554" stroke="var(--gnd)" stroke-width="2"/>
+    <path d="M524 265 H 548" stroke="var(--gnd)" stroke-width="2"/>
+    <path d="M530 272 H 542" stroke="var(--gnd)" stroke-width="2"/>
+
+    <!-- to A0 -->
+    <path d="M594 119 H 700" stroke="var(--sig)" stroke-width="1.8" fill="none"/>
+    <text x="647" y="104" text-anchor="middle" font-size="12" font-weight="500" fill="var(--sig)">0.3438 V ✓</text>
+    <text x="647" y="137" text-anchor="middle" font-size="11" fill="currentColor" opacity=".6">tope 3.094 V ✓ &lt; 3.3 V</text>
+
+    <!-- ADS1115 -->
+    <rect x="700" y="60" width="176" height="122" rx="7" fill="none" stroke="var(--good)" stroke-width="2"/>
+    <text x="788" y="86" text-anchor="middle" font-size="13" font-weight="500" fill="var(--good)">ADS1115</text>
+    <text x="712" y="112" font-size="11.5" fill="var(--sig)">A0</text>
+    <text x="712" y="136" font-size="11.5" fill="var(--pwr)">VDD ← riel + · 3.3 V · pin 1</text>
+    <text x="712" y="160" font-size="11.5" fill="currentColor">GND</text>
+    <text x="788" y="176" text-anchor="middle" font-size="11" fill="currentColor" opacity=".6">gain 1 · ADDR→GND = 0x48</text>
+
+    <!-- ADS GND to the SAME ground node as R2 -->
+    <path d="M700 156 H 660 V 250 H 536" stroke="var(--gnd)" stroke-width="1.6" fill="none"/>
+    <circle cx="536" cy="250" r="5" fill="var(--gnd)"/>
+    <text x="536" y="292" text-anchor="middle" font-size="11" fill="currentColor" opacity=".7">un solo nodo de tierra: R2 · ADS1115 · transductor · Pi pin 6</text>
+
+    <!-- I2C out -->
+    <path d="M876 100 H 946" stroke="var(--data)" stroke-width="1.8" fill="none"/>
+    <path d="M876 124 H 946" stroke="var(--data)" stroke-width="1.8" fill="none"/>
+    <text x="952" y="104" font-size="11.5" fill="var(--data)">SDA → pin 3</text>
+    <text x="952" y="128" font-size="11.5" fill="var(--data)">SCL → pin 5</text>
+
+    <!-- resolution note -->
+    <text x="700" y="212" font-size="11" fill="currentColor" opacity=".6">1 LSB = 125 µV = 0.0047 kPa &nbsp;·&nbsp; 1 mV en A0 = 0.0376 kPa</text>
+  </svg>
+  </div>
+  <p class="why" style="margin:10px 0 0">
+    Los puntos rellenos son <b>nodos</b> (tres o más cables unidos), no cruces. Los cuatro retornos
+    caen en <b>un solo</b> símbolo de tierra a propósito: el del ADS1115 y el de R2 <b>tienen</b> que
+    ser el mismo punto, o A0 se mide contra una referencia distinta de la que produjo la división.
+    Los 3.3 V del VDD van como etiqueta y no como cable dibujado — su ruta completa está en la tabla
+    del bloque C.
+  </p>
+</div>
+
+<!-- ============================ E ============================ -->
+<div class="blk" style="--c:var(--data)">
+  <div class="blk-h">
+    <div class="blk-n">E</div>
+    <div class="blk-t">Sonda DS18B20 + pull-up de 4.7 kΩ</div>
+    <span class="pill p-hoy">hoy · se mide</span>
+    <span class="pill p-pi">enumerar diferido</span>
+  </div>
+  <div class="cols23">
+    <div>
+      <div class="fila"><div class="chip" style="background:var(--pwr)"></div>
+        <div class="nom" style="color:var(--pwr)">VDD rojo · fila 25</div>
+        <div><div class="dst">→ riel + (3.3 V)</div>
+          <div class="why">la sonda se alimenta a 3.3 V, no a 5 V</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--data)"></div>
+        <div class="nom" style="color:var(--data)">DQ amarillo · fila 26</div>
+        <div><div class="dst">→ Pi pin 7 · GPIO4</div>
+          <div class="why">pin por defecto de 1-Wire; el repo no lo cambia</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--data)"></div>
+        <div class="nom" style="color:var(--data)">pull-up 4.7 kΩ</div>
+        <div><div class="dst">fila 26 (i26) → riel +</div>
+          <div class="why">1-Wire es <b>open-drain</b>: los dispositivos solo saben jalar la línea hacia abajo. Sin el pull-up nunca vuelve a subir y la sonda no contesta nada</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--gnd)"></div>
+        <div class="nom">GND negro · fila 27</div>
+        <div><div class="dst">→ riel −</div>
+          <div class="why">cierra el bus</div></div></div>
+      <div class="mide">
+        <b>Mide hoy:</b> con la Pi <b>apagada</b>, continuidad de la fila 26 al pin 7, y
+        <b>4.7 kΩ</b> entre la fila 26 y el riel +. Es un ohmmetro sobre el pull-up, y descarta la
+        confusión 470 Ω / 4.7 kΩ que es la más fácil de cometer en todo el banco.
+      </div>
+      <div class="difi">
+        <b>Diferido a la Pi:</b> <code>ls /sys/bus/w1/devices/</code> → un <code>28-…</code>.
+        Necesita 1-Wire habilitado <b>y un reboot</b> la primera vez.
+      </div>
+    </div>
+    <div>
+      <div class="co co-blue">
+        <div class="co-t">«La sonda ya quedó cableada, ¿ya mide temperatura?»</div>
+        <div class="co-b">
+          Todavía no, por dos razones que no tienen nada que ver con el cable.
+          <ul style="margin:10px 0 0">
+            <li><code>temperature.source</code> sigue en <b><code>manual</code></b>. En modo hardware
+              <code>build_hal()</code> construye <b><code>MockTemperature</code></b>, que reporta
+              <code>manual_c</code> ± 0.02 °C de ruido gaussiano. Ese wobble bonito en la UI
+              <b>no es una medición</b>. Hay que cambiarlo a <code>probe</code>.</li>
+            <li><code>Ds18b20Sensor</code> resuelve la ruta <code>28-*</code> <b>una sola vez al
+              construirse</b>: conectar la sonda con la app corriendo no sirve, hay que reiniciar
+              la app.</li>
+          </ul>
+          <div style="margin-top:10px">
+            Y una trampa silenciosa para después: si la sonda muere,
+            <code>read_c()</code> devuelve NaN, el hilo de temperatura <b>descarta el NaN sin decir
+            nada</b> y la pantalla se queda con el último valor bueno — que se va derecho a
+            <code>k = b·μ·L/A</code>. <b>Si la temperatura no se mueve en toda una corrida,
+            sospecha de la sonda.</b>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ F ============================ -->
+<div class="blk" style="--c:var(--ctrl)">
+  <div class="blk-h">
+    <div class="blk-n">F</div>
+    <div class="blk-t">Diverter — solo el lado de compuerta</div>
+    <span class="pill p-ciego">hoy · a ciegas</span>
+    <span class="pill p-falta">bobina y diodo bloqueados</span>
+  </div>
+  <div class="cols23">
+    <div>
+      <div class="tira" style="margin-bottom:6px">
+        <div class="pin"><div class="pinbar" style="background:var(--ctrl)"></div><div class="pinlab" style="color:var(--ctrl)">G</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--grey)"></div><div class="pinlab" style="color:var(--grey)">D · hoy no</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--grey)"></div><div class="pinlab" style="color:var(--grey)">S · hoy no</div></div>
+      </div>
+      <p class="why" style="margin:30px 0 12px">
+        IRLZ44N en TO-220, <b>parado y con el texto hacia ti</b>: G · D · S de izquierda a derecha.
+        La aleta metálica está unida al drain — no la recargues contra nada conductor.
+      </p>
+
+      <div class="fila"><div class="chip" style="background:var(--ctrl)"></div>
+        <div class="nom" style="color:var(--ctrl)">GPIO23 · fila 33</div>
+        <div><div class="dst">→ Pi pin 16, a la pata libre de la resistencia serie</div>
+          <div class="why"><code>diverter.pin: 23</code></div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--ctrl)"></div>
+        <div class="nom" style="color:var(--ctrl)">470 Ω serie</div>
+        <div><div class="dst">fila 33 (h33) ↔ fila 37 (h37)</div>
+          <div class="why">limita el pico al cargar la capacitancia de compuerta: 3.3 V / 470 Ω = <b>7 mA</b>, dentro de los <b>8 mA</b> del BCM2711 del Pi 4</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--ctrl)"></div>
+        <div class="nom" style="color:var(--ctrl)">G · fila 37</div>
+        <div><div class="dst">f37, con la 470 Ω y la 10 kΩ en la misma fila</div>
+          <div class="why">es la única pata del MOSFET que usa el protoboard, y mueve microamperios</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--gnd)"></div>
+        <div class="nom">10 kΩ pull-down</div>
+        <div><div class="dst">fila 37 (i37) → riel −</div>
+          <div class="why">sin él la compuerta <b>flota</b> mientras el Pi arranca y el diverter puede energizarse solo: permeado al recipiente medido desde el boot</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--grey)"></div>
+        <div class="nom" style="color:var(--grey)">D · fila 38</div>
+        <div><div class="dst">nada hoy</div>
+          <div class="why">irá con <b>22AWG soldado a la pata</b>, no por el clip: la bobina jala 1.08 A y un contacto de protoboard aguanta ~1 A</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--grey)"></div>
+        <div class="nom" style="color:var(--grey)">S · fila 39</div>
+        <div><div class="dst">nada hoy</div>
+          <div class="why">irá con su propio 22AWG al <b>punto estrella</b>, que hoy no existe</div></div></div>
+    </div>
+
+    <div>
+      <div class="stop" style="margin-top:0">
+        <b>No pongas el source en el riel − “mientras tanto”.</b> Es la tentación obvia y es el bug
+        permanente: el día que llegue la bobina, esa tierra compartida mete la caída IR de ~1 A en
+        la misma referencia contra la que el ADC mide A0 — <b>0.75–1.9 kPa de presión fantasma</b>
+        justo al entrar en COLLECTING, que es donde arranca el promedio que va a la regresión de
+        Darcy. Los arreglos temporales que funcionan no se vuelven a tocar. Déjalo al aire.
+      </div>
+      <div class="co co-red" style="margin-top:14px">
+        <div class="co-t">Ojo: <code>wiring_protoboard.html</code> dice 220 Ω en estas mismas filas</div>
+        <div class="co-b">
+          <b>El valor correcto es 470 Ω.</b> <code>docs/ASSEMBLY.md</code> y
+          <code>tools/gen_wiring.py</code> —que se declara la fuente única del dibujo— lo fijaron en
+          470 Ω con la cuenta explícita: el pin del Pi 4 entrega <b>8 mA</b> y 220 Ω le pediría
+          <b>15 mA</b>. La hoja del protoboard quedó con el valor viejo en cuatro lugares.
+          <div style="margin-top:10px">
+            No destruye un pad —la salida se autolimita y el transitorio es de menos de un
+            microsegundo— pero es fuera de especificación gratis, y a este diverter la velocidad de
+            flanco no le sirve de nada: conmuta unas seis veces por corrida.
+            <b>Planta 470 Ω.</b>
+          </div>
+        </div>
+      </div>
+      <div class="co co-green" style="margin-top:14px">
+        <div class="co-t">«¿Qué hace el diverter al arrancar y al perder corriente?»</div>
+        <div class="co-b">
+          Manda a <b>desecho</b> en los dos casos, y eso es a propósito.
+          <code>GpioDiverter</code> abre el pin con <code>initial_value=False</code> → al arrancar la
+          bobina está apagada. Sin corriente, igual: una bobina desenergizada es la posición de
+          reposo de la válvula de 3 vías. Invertir <code>active_high</code> sin recablear el MOSFET
+          <b>invierte el failsafe</b> y el rig empieza colectando desde el boot.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Tierra común — a qué fila exacta va cada una</h2>
+
+<div class="cols23">
+  <div class="caja" style="padding:12px 14px">
+  <svg viewBox="0 0 1040 330" role="img"
+    aria-label="Cuatro tierras del protoboard convergen en el riel negativo, que hoy va al pin 6 del Pi; el punto estrella en el negativo de la fuente de 12 V está dibujado en punteado porque falta el fusible y el adaptador de barrel jack">
+    <!-- rail -->
+    <rect x="60" y="150" width="620" height="24" rx="4" fill="none" stroke="var(--gnd)" stroke-width="2"/>
+    <text x="370" y="167" text-anchor="middle" font-size="12.5" font-weight="500" fill="currentColor">RIEL −  ·  GND lógico  ·  cero corriente de potencia</text>
+
+    <!-- four arrivals -->
+    <g font-size="11.5" fill="currentColor">
+      <path d="M120 60 V 150" stroke="var(--gnd)" stroke-width="1.6"/>
+      <circle cx="120" cy="150" r="4.5" fill="var(--gnd)"/>
+      <text x="120" y="44" text-anchor="middle" font-weight="500">ADS1115 GND</text>
+      <text x="120" y="30" text-anchor="middle" opacity=".6">fila 2 · g2</text>
+
+      <path d="M280 60 V 150" stroke="var(--sig)" stroke-width="1.6"/>
+      <circle cx="280" cy="150" r="4.5" fill="var(--gnd)"/>
+      <text x="280" y="44" text-anchor="middle" font-weight="500" fill="var(--sig)">R2 del divisor</text>
+      <text x="280" y="30" text-anchor="middle" opacity=".6">fila 18 · i18</text>
+
+      <path d="M440 60 V 150" stroke="var(--gnd)" stroke-width="1.6"/>
+      <circle cx="440" cy="150" r="4.5" fill="var(--gnd)"/>
+      <text x="440" y="44" text-anchor="middle" font-weight="500">Transductor GND</text>
+      <text x="440" y="30" text-anchor="middle" opacity=".6">fila 13 · h13</text>
+
+      <path d="M600 60 V 150" stroke="var(--gnd)" stroke-width="1.6"/>
+      <circle cx="600" cy="150" r="4.5" fill="var(--gnd)"/>
+      <text x="600" y="44" text-anchor="middle" font-weight="500">Sonda GND</text>
+      <text x="600" y="30" text-anchor="middle" opacity=".6">fila 27 · h27</text>
+    </g>
+
+    <!-- 10k pulldown, dashed-ish but real today -->
+    <path d="M200 218 V 174" stroke="var(--ctrl)" stroke-width="1.6"/>
+    <circle cx="200" cy="174" r="4.5" fill="var(--gnd)"/>
+    <text x="200" y="236" text-anchor="middle" font-size="11.5" font-weight="500" fill="var(--ctrl)">10 kΩ pull-down</text>
+    <text x="200" y="250" text-anchor="middle" font-size="11" fill="currentColor" opacity=".6">fila 37 · i37</text>
+
+    <!-- to Pi pin 6 -->
+    <path d="M680 162 H 780" stroke="var(--gnd)" stroke-width="2"/>
+    <rect x="780" y="132" width="118" height="60" rx="6" fill="none" stroke="var(--pwr)" stroke-width="1.6"/>
+    <text x="839" y="157" text-anchor="middle" font-size="12" font-weight="500" fill="var(--pwr)">Pi pin 6</text>
+    <text x="839" y="175" text-anchor="middle" font-size="11" fill="currentColor" opacity=".65">un solo cable</text>
+    <text x="730" y="152" text-anchor="middle" font-size="11" fill="currentColor" opacity=".6">HOY: la referencia</text>
+
+    <!-- star, dashed -->
+    <path d="M420 174 V 262 H 770" stroke="var(--bad)" stroke-width="1.6" stroke-dasharray="5 4" fill="none"/>
+    <circle cx="420" cy="174" r="4.5" fill="var(--gnd)"/>
+    <rect x="770" y="220" width="118" height="66" rx="6" fill="none" stroke="var(--bad)" stroke-width="1.8" stroke-dasharray="5 4"/>
+    <text x="829" y="244" text-anchor="middle" font-size="12" font-weight="500" fill="var(--bad)">★ estrella</text>
+    <text x="829" y="261" text-anchor="middle" font-size="11" fill="var(--bad)">negativo de 12 V</text>
+    <text x="829" y="277" text-anchor="middle" font-size="11" fill="var(--bad)">NO EXISTE HOY</text>
+
+    <path d="M888 253 H 930" stroke="var(--bad)" stroke-width="1.4" stroke-dasharray="5 4"/>
+    <text x="936" y="242" font-size="11" fill="var(--bad)">source del MOSFET</text>
+    <text x="936" y="258" font-size="11" fill="var(--bad)">y el − del UBEC</text>
+
+    <text x="600" y="300" font-size="11.5" fill="var(--bad)">punteado = falta pieza · hoy no se cablea</text>
+  </svg>
+  </div>
+
+  <div>
+    <div class="caja">
+      <h3>Cinco tierras, y por qué esa fila</h3>
+      <table>
+        <tr><th style="width:96px">Fila</th><th>Quién</th></tr>
+        <tr><td><b>2</b> · g2</td><td>GND del ADS1115 — es la referencia física del ADC: A0 se mide <b>contra este pin</b></td></tr>
+        <tr><td><b>18</b> · i18</td><td>R2 del divisor — <b>tiene</b> que ser la misma tierra que la de arriba, o la división y la medición no comparten cero</td></tr>
+        <tr><td><b>13</b> · h13</td><td>GND del transductor — el sensor es ratiométrico y su salida se define contra su propio GND</td></tr>
+        <tr><td><b>27</b> · h27</td><td>GND de la sonda — cierra el bus 1-Wire</td></tr>
+        <tr><td><b>37</b> · i37</td><td>10 kΩ de la compuerta — mantiene V<sub>GS</sub> ≈ 0 mientras el Pi arranca</td></tr>
+      </table>
+      <p class="why" style="margin:12px 0 0">
+        Las cinco al <b>riel −</b>, y el riel − al <b>pin 6</b> con un solo cable. Los otros siete GND
+        del header (9, 14, 20, 25, 30, 34, 39) se quedan libres.
+      </p>
+    </div>
+
+    <div class="banda banda-bad" style="margin:14px 0 0">
+      <h3>Dónde queda el punto estrella “por ahora”</h3>
+      <p style="margin:0 0 8px">
+        La regla del rig no cambia: <b>el protoboard es solo lógica</b>, el retorno de potencia va por
+        el V1738 y cable 22AWG, y todo se une en <b>un solo punto</b> en el negativo de la fuente de
+        12 V.
+      </p>
+      <p style="margin:0 0 8px">
+        <b>Ese punto no existe hoy</b>, y no por descuido: falta el <b>fusible de 3 A</b> (#7) y falta
+        el <b>adaptador barrel jack → terminal de tornillo</b> (#6), así que literalmente no hay un
+        tornillo donde aterrizar los 12 V.
+      </p>
+      <p style="margin:0">
+        <b>Por ahora la referencia del banco es el pin 6 de la Pi</b>, y es válida precisamente porque
+        hoy no hay potencia: sin 12 V, sin bobina y sin servo, por el riel − no circula más que los
+        141 µA del divisor y los microamperios de la compuerta — <b>3–7 µV</b> de caída, unas
+        7000× menos que un LSB. El día que llegue el #6 y el #7 nacen dos cables nuevos: uno del
+        riel − al tornillo estrella y otro del source del MOSFET al mismo tornillo.
+        <b>Nunca uno a través del otro.</b>
+      </p>
+    </div>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Dónde se detiene el banco, y por qué</h2>
+<p class="bajada" style="margin-bottom:16px">
+  Cuatro fronteras. Ninguna es una nota al pie: son las cuatro veces que hoy vas a querer seguir
+  y no se puede.
+</p>
+
+<div class="cols">
+  <div class="banda banda-bad" style="margin:0">
+    <h3>1 · Riel de 12 V — doble bloqueo</h3>
+    <p style="margin:0 0 8px">
+      <b>Falta el fusible de 3 A</b> (item&nbsp;#7, portafusibles inline <code>B088FNTJDV</code>).
+      Y <b>falta el adaptador barrel jack 5.5×2.1 → terminal de tornillo</b> (item&nbsp;#6,
+      <code>B077QD4G3Q</code>).
+    </p>
+    <p style="margin:0 0 8px">
+      Son dos bloqueos independientes, y el segundo es el que a veces se olvida: <b>aunque llegara
+      el fusible, hoy no hay forma de aterrizar los 12 V en un tornillo</b>. La fuente termina en un
+      barrel macho y no hay hembra que lo convierta.
+    </p>
+    <p style="margin:0">
+      Consecuencia en cadena: <b>los capacitores no se pueden colocar</b> aunque ya estén en la mesa
+      (el nodo +12 V no existe), y <b>el punto estrella tampoco</b>. La fuente de 12 V se queda
+      desconectada de todo.
+    </p>
+  </div>
+
+  <div class="banda banda-bad" style="margin:0">
+    <h3>2 · Diverter — solo la compuerta</h3>
+    <p style="margin:0 0 8px">
+      Faltan el <b>diodo 1N5819</b> (flyback) y el <b>solenoide de 3 vías</b> (item #2, ESValves
+      231Y-6-12VDC, ~$53).
+    </p>
+    <p style="margin:0 0 8px">
+      Hoy se planta el IRLZ44N y se cablea <b>gate, 470 Ω y 10 kΩ</b>. Drain y source al aire.
+      Cuando llegue: el 1N5819 va <b>pegado a la bobina</b>, banda (cátodo) a bobina+ y ánodo a
+      bobina− = drain. En la bobina, no en la placa: el lazo de la corriente de recirculación tiene
+      que ser corto o el pico se pasea por todo el cableado.
+    </p>
+    <p style="margin:0">
+      Sin ese diodo, al cortar la bobina el pico inverso <b>mata el IRLZ44N</b>. Es la razón por la
+      que este bloqueo no se negocia ni “para una prueba rápida”.
+    </p>
+  </div>
+
+  <div class="banda banda-bad" style="margin:0">
+    <h3>3 · Servo — no energizar, no acoplar</h3>
+    <p style="margin:0 0 8px">
+      <code>servo_close_us</code> sigue en <b>0</b> (sin calibrar), y
+      <code>ServoValve.__init__</code> llama <code>to_safe()</code> <b>al construirse</b>: en cuanto
+      arranques <code>mode: hardware</code> el servo salta a <b>700 µs</b> sin que nadie se lo pida.
+    </p>
+    <p style="margin:0 0 8px">
+      Con la válvula acoplada, ese salto es par contra el vástago con un acople impreso sin verificar
+      y sin haber medido el <b>par de arranque</b>. La calibración de extremos va con la válvula
+      <b>DESACOPLADA</b>.
+    </p>
+    <p style="margin:0">
+      En esta hoja el servo <b>no aparece</b>: ni su señal en la fila 44, ni el UBEC. Su hoja es
+      <code>docs/wiring_ubec.html</code>. Un detalle que sí te toca hoy: cuando corras
+      <code>mode: hardware</code> para leer el sensor, <b>el UBEC tiene que estar sin energía y el
+      servo desconectado de GPIO18</b> — el pulso sale igual.
+    </p>
+  </div>
+
+  <div class="banda banda-warn" style="margin:0">
+    <h3>4 · Transductor — “en la mesa” ≠ “en la línea”</h3>
+    <table style="margin:0 0 8px">
+      <tr><th style="width:132px">Qué</th><th>Estado</th></tr>
+      <tr><td><b>Conectado en la mesa</b><br><span class="why">V+ a 5 V, señal al divisor, leer el cero</span></td>
+          <td><span class="pill p-hoy">se puede hoy</span><br><span class="why">no necesita ni un fitting: se alimenta y se lee</span></td></tr>
+      <tr><td><b>Montado en la línea</b><br><span class="why">sellado contra la presión del rig</span></td>
+          <td><span class="pill p-falta">bloqueado</span><br><span class="why">falta el adaptador <b>G1/4 → Swagelok</b>, <b>estado desconocido</b> (orden de McMaster puesta por Roxanne, sin confirmar que llegó)</span></td></tr>
+    </table>
+    <p style="margin:0 0 8px">
+      Son dos cosas distintas y las dos importan. El <b>punto de cero</b> no necesita fitting. El
+      <b>segundo punto</b> de calibración sí necesita sellar contra la rosca G1/4 — sea contra la
+      columna de agua o contra el patrón. Sin el adaptador, hoy solo hay punto de cero.
+    </p>
+    <p style="margin:0">
+      <b>No improvises un sello con manguera a presión.</b> Y la calibración formal de 2 puntos es
+      contra el <b>Keller LEX1</b> (−1…2 bar, <code>303030.0026</code>), no contra la carátula ni
+      contra la columna: la columna es un patrón gratis y trazable para ganar confianza, no el
+      estándar del rig.
+    </p>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Checklist de verificación diferida — el día que la Pi responda</h2>
+
+<div class="banda banda-data">
+  <h3>Requisito común: <code>install.sh</code> tiene que haber corrido</h3>
+  <p style="margin:0">
+    Instala <code>i2c-tools</code>, habilita I²C y 1-Wire (<code>do_i2c 0</code>,
+    <code>do_onewire 0</code>) y levanta <code>pigpiod</code>. <b>Nada de esta tabla funciona antes
+    de eso</b>, y el 1-Wire además pide un <b>reboot</b> la primera vez. Es trabajo de General.
+  </p>
+</div>
+
+<table>
+  <tr><th style="width:36%">Check</th><th style="width:26%">Número esperado</th><th>Qué valida / qué hacer si falla</th></tr>
+
+  <tr><td><code>i2cdetect -y 1</code></td>
+      <td><b class="num">0x48</b></td>
+      <td>módulo + cableado I²C + ADDR a tierra. Si sale <code>0x49</code>…<code>0x4B</code>, ADDR no
+        está en el riel −. Si no sale nada, revisa VDD, GND y que I²C esté habilitado.</td></tr>
+
+  <tr><td><code>ls /sys/bus/w1/devices/</code></td>
+      <td>un <b><code>28-…</code></b></td>
+      <td>la sonda enumera. Pide 1-Wire habilitado <b>y reboot</b>. Si aparecen dos sondas, el driver
+        toma <code>matches[0]</code> arbitrariamente → fija <code>temperature.w1_id</code>.</td></tr>
+
+  <tr><td>driver a atmósfera</td>
+      <td><b class="num">0.000 kPa</b></td>
+      <td>con 0.500 V del sensor y 0.3438 V en A0 (ya medidos con el multímetro en los bloques B y D),
+        este check cierra la <b>conversión</b>. Ojo: en <code>mode: hardware</code> se construyen
+        <b>todos</b> los drivers — hace falta <code>pigpiod</code> arriba, y el servo recibe su pulso
+        de 700 µs. Servo desconectado y UBEC sin energía.</td></tr>
+
+  <tr><td><code>raw</code> en reposo, un minuto</td>
+      <td>debe moverse <b>&gt; 1 LSB</b> entre muestras<br>
+          <span class="why">1 LSB = 125 µV en A0 = <b>182 µV</b> en <code>raw</code> = <b>0.0047 kPa</b></span></td>
+      <td>valida el <b>detector de señal congelada</b>: <code>safety.py</code> declara falla si
+        <code>raw</code> sale bit-idéntico <b>10 veces</b> seguidas, apostando a que una cadena
+        analógica viva siempre tiembla. Ese número nadie lo ha medido.
+        <b>Si NO se mueve, se SUBE <code>safety.frozen_raw_reads</code> — nunca se quita el check.</b>
+        Un detector que aborta corridas buenas termina apagado, y ese es el peor resultado.</td></tr>
+
+  <tr><td><b>Kill test</b> — desconecta el sensor a media corrida</td>
+      <td>el rig <b>ventea y aborta</b><br><span class="why">lectura de <b>−12.93 kPa</b></span></td>
+      <td>con el pin del sensor en 0 V, <code>frac = −0.125</code> → −12.93 kPa, bajo
+        <code>min_plausible = −5.0</code> → <code>SENSOR_FAULT</code> tras
+        <code>fault_grace_reads: 3</code> (~150 ms a 20 Hz). Un sensor caído <b>nunca</b> se
+        interpreta como “presión baja”. Inmune al ratio del divisor: 0 ÷ cualquier ratio sigue
+        siendo 0.</td></tr>
+
+  <tr><td><b>Glitch test</b> — un solo NaN aislado</td>
+      <td><b>sin excursión</b> de presión, la válvula <b>no se pega</b> abierta</td>
+      <td>falla <b>distinta</b> del kill test, y se corren las dos. Menos lecturas malas que
+        <code>fault_grace_reads</code> → no se declara falla: el lazo sostiene su último comando
+        bueno y retoma. Guardado en <code>pid.py</code>; antes de ese guard un hipo de I²C
+        envenenaba el integrador y clavaba la válvula al 100 %.</td></tr>
+
+  <tr><td><code>temperature.source</code></td>
+      <td><code>manual</code> → <b><code>probe</code></b></td>
+      <td>hasta que se cambie, en modo hardware corre <code>MockTemperature</code>: ruido simulado,
+        no medición. Se cambia cuando la sonda quede en el chorro de permeado.</td></tr>
+</table>
+
+<p class="why" style="margin:14px 0 0">
+  Detalle de procedimiento de los dos últimos: <code>docs/ASSEMBLY.md</code>, sección
+  <b>“First safety checks”</b> — ahí también está el dry-fit del V1738 (continuidad del polo 1 al
+  +12 V fusible, polo 2 al drain, polo 3 a nada, y meter el plug al revés a propósito una vez).
+</p>
+
+<div class="banda banda-warn" style="margin-top:18px">
+  <h3>El check de <code>raw</code> no tiene hoy dónde escribirse — encontrado al armar esta hoja</h3>
+  <p style="margin:0 0 8px">
+    <code>docs/ASSEMBLY.md</code> manda “loguea <code>raw</code> en reposo por un minuto”, pero
+    <b><code>src/logging_csv.py</code> no tiene columna <code>raw</code></b> y el valor no se expone
+    en ninguna parte: solo lo consume <code>safety.py</code>. El prerrequisito documentado para
+    bajar <code>frozen_raw_reads</code> <b>no se puede ejecutar con lo que hay instalado</b>.
+  </p>
+  <p style="margin:0">
+    Dos salidas. <b>(a)</b> un script corto que construya <code>Ads1115Sensor</code> solo —de paso
+    evita <code>ServoValve</code> y <code>pigpio</code>— e imprima <code>reading.raw</code> a 20 Hz.
+    <b>(b)</b> usar <code>pressure_kpa</code> del CSV de corrida como proxy: es una función afín de
+    <code>raw</code>, el CSV redondea a 0.0001 kPa y un LSB son 0.0047 kPa — <b>47× más fino</b>, así
+    que dos filas con el mismo <code>pressure_kpa</code> implican el mismo <code>raw</code>.
+    <span class="sub">El proxy es razonamiento sobre el código, no algo verificado en hardware.</span>
+  </p>
+</div>
+
+<hr class="rule">
+
+<h2>Lo que esta hoja NO verificó</h2>
+<div class="cols">
+  <div>
+    <ul>
+      <li><b>Nada de esto se ha armado.</b> El rig no tiene ni un cable conectado. Las filas son la
+        propuesta de <code>wiring_protoboard.html</code>, no un registro de lo que existe.</li>
+      <li><b>Que las puntas del transductor sean trenzadas</b> — es lo más probable y ningún archivo
+        del repo lo dice. El color de su hilo de señal tampoco está fijado.</li>
+      <li><b>Que los jumpers del kit terminen en pin rígido.</b> De eso depende toda la receta del
+        Paso 0, y el BOM solo dice “Flexible” en el título del producto.</li>
+      <li><b>Que la Pi entregue 5 V con el SoC caído.</b> El razonamiento es que el pin 2 cuelga del
+        riel de entrada USB-C, pero no lo medí en esta placa. Por eso el Paso 0.5 lo mide.</li>
+      <li><b>Que el transductor sea realmente ratiométrico.</b> Lo afirma el repo; la pieza no se
+        ha probado. Si fuera de salida regulada, el cero se queda en 0.500 V sin importar el riel.</li>
+      <li><b>La banda 0.683–0.692 del ratio</b> la calculé de la tolerancia del 1 %; no es una
+        medición ni un dato del repo.</li>
+    </ul>
+  </div>
+  <div>
+    <ul>
+      <li><b>El orden de pines del ADS1115</b> viene de <code>tools/gen_wiring.py</code>, no de una
+        foto de tu módulo. Si la serigrafía va al revés, toda la tabla del bloque C se invierte.</li>
+      <li><b>La corriente de la bobina (1.08 A)</b> es la cifra del listado de ESValves, no medida.
+        De ella dependen el margen del fusible de 3 A y la decisión de sacar D y S del protoboard.</li>
+      <li><b>El paso del V1738</b> sigue sin medirse (5.08 mm entra al protoboard; 3.81/3.5 mm no).
+        No afecta lo de hoy; bloquea el diverter.</li>
+      <li><b>El par de arranque del vástago</b> no se ha medido, y es lo que decide si el servo va
+        pelón o con reducción 2:1.</li>
+      <li><b>El estado del adaptador G1/4 → Swagelok</b> es literalmente desconocido en el repo.</li>
+      <li><b>Ningún número de presión de este banco es una medición.</b> Todo lo publicado sale de
+        simulación, y sigue así hasta que estos checks corran en la Pi.</li>
+      <li>Si al medir el ratio cambias <code>divider_ratio</code>, <b>barre los valores derivados</b>
+        que no contienen el número: empieza por el <b>3.094 V</b> y el <b>0.3438 V</b> de esta hoja.</li>
+    </ul>
+  </div>
+</div>
+
+<hr class="rule">
+
+<p class="tiny sub" style="margin:0">
+  <b>Derivado de</b> <code>.claude/roles/hardware.md</code> · <code>config.yaml</code> ·
+  <code>docs/ASSEMBLY.md</code> · <code>BOM.csv</code> · <code>tools/gen_wiring.py</code> ·
+  <code>INVENTORY.md</code> (2026-07-27) · <code>install.sh</code> ·
+  <code>src/hal/{ads1115_sensor,ds18b20,gpio_diverter,servo_valve,__init__}.py</code> ·
+  <code>src/safety.py</code> · <code>src/logging_csv.py</code>.
+  <br>
+  <b>Hojas hermanas — esta no las reemplaza:</b> topología fila por fila en
+  <code>docs/wiring_protoboard.html</code> (con el 220 Ω viejo: usa 470 Ω) · subsistema servo/UBEC en
+  <code>docs/wiring_ubec.html</code> · plomería en <code>docs/wiring_fluidos.html</code> ·
+  PNG del taller en <code>docs/wiring_diagram.png</code>, <code>wiring_divider.png</code>,
+  <code>wiring_ads1115.png</code>.
+  <br>
+  <b>Estado de la Pi al 2026-07-29:</b> <code>membrane-rig.local</code> y
+  <code>raspberrypi.local</code> no resuelven, <code>100.117.23.112</code> no contesta ping, y el
+  software del rig no está instalado. Si cambia, la única sección que se mueve es la checklist
+  diferida.
+</p>
+</div>

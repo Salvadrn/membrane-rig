@@ -25,6 +25,13 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 | Sonda DS18B20 waterproof | llegó 2026-07-27; era el item #4 del pedido. Desbloquea la cadena de temperatura completa |
 | **Transductor 0–15 PSI, 0.5–4.5 V, G1/4** | llegó 2026-07-27; item #1, el prioritario. **Cierra la cadena de sensado completa**: transductor → divisor 10k/22k → ADS1115 → Pi. Para MONTARLO en el rig falta el adaptador G1/4 → Swagelok (estado desconocido) |
 | Kit de capacitores electrolíticos (470 / 1000 µF) | llegó 2026-07-27; item #8. **No desbloquea nada todavía**: van al riel de 12 V, que sigue trabado por el fusible |
+| **Multímetro** | confirmado por Adrián 2026-07-29. Desbloquea medir `divider_ratio`, los rieles del header y el cero del transductor **sin la Pi** |
+| **Cautín + soldadura** | confirmado por Adrián 2026-07-29. Desbloquea el Paso 0: colas de conductor sólido en las puntas trenzadas (sonda, 22AWG y —confirmar— transductor) |
+
+> **`BOM.csv` no lista ni una herramienta** — ni multímetro, ni cautín, ni soldadura, ni pinzas de
+> corte, ni pelacables. Tampoco hay **alambre sólido** en el BOM (la única línea de cable es 22AWG
+> *stranded*), así que las colas del Paso 0 salen de sacrificar jumpers del kit. Ver
+> `docs/wiring_banco.html`.
 
 ## Se puede hacer HOY — sin que falte nada
 
@@ -98,13 +105,21 @@ bloquean ni el fusible ni el diodo. Con lo que ya hay en la mano:
    La calibración formal de 2 puntos sigue siendo contra el **Keller LEX1**, no
    contra la columna (ver `docs/ASSEMBLY.md`).
 
-Los pasos 1, 2 y 4 no necesitan multímetro. El 3 sí — **pero hay una alternativa
-sin multímetro**: `sensor.ads_channel` es 0, así que **A1 del ADS1115 está libre**.
+**Actualización 2026-07-29: el multímetro SÍ está en la mesa**, así que el paso 3 se
+puede hacer directo y la alternativa de abajo dejó de ser necesaria. Al revés de lo
+que decía esta sección, hoy el cuello de botella es la **Pi** (no responde y
+`install.sh` nunca corrió, así que `i2cdetect` no existe todavía): los pasos 2 y 4 y
+la parte de "lo que reporta el driver" del 5 quedan **diferidos**, y los que sí se
+pueden cerrar hoy son justo los que usan multímetro. Secuencia completa de armado con
+esa frontera marcada: `docs/wiring_banco.html`.
+
+Se conserva la alternativa **sin multímetro** por si sirve de contra-verificación:
+`sensor.ads_channel` es 0, así que **A1 del ADS1115 está libre**.
 Metiendo la entrada del divisor también a A1, el ratio sale como `A0/A1` leído por
 el mismo ADC, y los errores de ganancia y de referencia **se cancelan en el
 cociente** — sale mejor que con un multímetro barato. Requiere un script corto con
-`adafruit_ads1x15` (el rig solo lee A0). Propuesta sin verificar; ver
-`docs/wiring_protoboard.html`.
+`adafruit_ads1x15` (el rig solo lee A0) y, por lo tanto, la Pi viva. Propuesta sin
+verificar; ver `docs/wiring_protoboard.html`.
 
 ## Pendiente de compra
 
@@ -132,7 +147,7 @@ prioridad.
 | Abrazaderas de manguera | cada junta barb-silicón |
 | Fittings Swagelok / McMaster | orden de McMaster ya colocada por Roxanne — ¿llegó? |
 | Enclosure + coupling servo | impresión 3D propia |
-| Multímetro | necesario para medir `divider_ratio` y para la calibración de 2 puntos |
+| Cinta de aislar | el termorretráctil es el item #9 y no ha llegado; la cinta **no está en `BOM.csv`** y es la única forma de aislar los empalmes del Paso 0 mientras tanto |
 
 ## Bloqueos activos
 
@@ -143,6 +158,13 @@ prioridad.
 - **No energizar ni acoplar el servo.** `ServoValve` lo manda a 700 µs solo al
   arrancar en modo hardware y `servo_close_us` sigue en 0 (sin calibrar). La
   calibración de extremos va con la válvula DESACOPLADA del vástago.
+- **La Pi no responde (2026-07-29)** y el software del rig nunca se instaló ahí.
+  `install.sh` es el que habilita I²C/1-Wire e instala `i2c-tools`, así que
+  `i2cdetect` **no existe todavía**: toda verificación que dependa de la Pi está
+  diferida. General lo está resolviendo. Además falta el **adaptador barrel jack →
+  terminal de tornillo (item #6)**, que es un segundo bloqueo del riel de 12 V
+  independiente del fusible: hoy no hay dónde aterrizar los 12 V en un tornillo, así
+  que el **punto estrella no existe** y los capacitores no se pueden colocar.
 
 ## Presión de ensayo: 35 kPa — confirmado (2026-07-27)
 
