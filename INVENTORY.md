@@ -23,6 +23,8 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 | ADS1115 ADC (HiLetgo) | confirmado por Adrián. El "hilego" del chat era esta pieza |
 | Kit de resistencias 1 % | confirmado por Adrián; verificado que trae 22 kΩ (por eso el divisor es 10k/22k y no 10k/20k) |
 | Sonda DS18B20 waterproof | llegó 2026-07-27; era el item #4 del pedido. Desbloquea la cadena de temperatura completa |
+| **Transductor 0–15 PSI, 0.5–4.5 V, G1/4** | llegó 2026-07-27; item #1, el prioritario. **Cierra la cadena de sensado completa**: transductor → divisor 10k/22k → ADS1115 → Pi. Para MONTARLO en el rig falta el adaptador G1/4 → Swagelok (estado desconocido) |
+| Kit de capacitores electrolíticos (470 / 1000 µF) | llegó 2026-07-27; item #8. **No desbloquea nada todavía**: van al riel de 12 V, que sigue trabado por el fusible |
 
 ## Se puede hacer HOY — sin que falte nada
 
@@ -60,6 +62,42 @@ bloquean ni el fusible ni el diodo. Con lo que ya hay en la mano:
    de permeato hay que cambiar `temperature.source` de `manual` a `probe` en
    `config.yaml`; hoy sigue en `manual`, que reporta ruido simulado, no medición.
 
+5. **Verificar el transductor EN LA MESA, sin montarlo en el rig.** Es lo mejor que
+   habilitó su llegada, porque separa la cadena eléctrica del montaje mecánico.
+
+   Aliméntalo con los **5 V del Pi** (pin 2) — es ratiométrico, así que su salida
+   depende de esa alimentación y no de otra — y mete su señal al divisor. A
+   presión atmosférica la cadena debe dar exactamente esto:
+
+   | Punto | Valor esperado |
+   |---|---|
+   | Salida del transductor | 0.500 V |
+   | A0 del ADS1115 (tras el divisor ×0.6875) | **0.3438 V** |
+   | Lo que reporta el driver | **0.000 kPa** |
+
+   Si sale ese número, quedan validados **de una vez sensor, divisor, ADC y
+   conversión**. Si sale distinto, el problema está en la cadena eléctrica y no en
+   el montaje — que es justo lo que conviene separar antes de meter presión.
+
+   **Segundo punto en la mesa: columna de agua.** `P = ρ·g·h`, con agua a 9.81 kPa
+   por metro. Es el único patrón de presión gratis, seguro y trazable que hay sin
+   el rig montado:
+
+   | Altura | Presión |
+   |---|---|
+   | 0.5 m | 4.91 kPa |
+   | 1.0 m | 9.81 kPa |
+   | 2.0 m | 19.62 kPa |
+   | 3.57 m | 35.02 kPa (el punto de trabajo) |
+
+   **Pero ojo con el alcance real de esto:** el punto de atmósfera no necesita
+   ningún fitting — se alimenta y se lee. El segundo punto **sí necesita sellar
+   contra la rosca G1/4**, y ese adaptador no está confirmado. Sin él, hoy solo se
+   puede hacer el punto de cero. No improvises un sello con manguera a presión.
+
+   La calibración formal de 2 puntos sigue siendo contra el **Keller LEX1**, no
+   contra la columna (ver `docs/ASSEMBLY.md`).
+
 Los pasos 1, 2 y 4 no necesitan multímetro. El 3 sí — **pero hay una alternativa
 sin multímetro**: `sensor.ads_channel` es 0, así que **A1 del ADS1115 está libre**.
 Metiendo la entrada del divisor también a A1, el ratio sale como `A0/A1` leído por
@@ -75,13 +113,11 @@ prioridad.
 
 | # | Pieza | Link |
 |---|---|---|
-| 1 | Transductor de presión 0–15 PSI, 0.5–4.5 V, G1/4 | B0BG39KF3N |
 | 2 | Solenoide 3 vías 12 V para agua (231Y-6-12VDC) | ESValves |
 | 3 | Válvula de alivio ajustable 0–20 PSI | B01KO7NVYK |
 | 5 | Adaptador 1/4" NPT-M × barb (×3) | B07VJK7KML |
 | 6 | Barrel jack 5.5×2.1 → terminal de tornillo | B077QD4G3Q |
 | 7 | Portafusibles inline + fusible 3 A | B088FNTJDV |
-| 8 | Kit de capacitores electrolíticos | B0DZ2DNSG7 |
 | 9 | Termorretráctil 650 pzas 2:1 | B07WWWPR2X |
 | 10 | Kit de tornillos M4 | B0FGV8F6G7 |
 

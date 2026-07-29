@@ -201,8 +201,23 @@ Before soldering:
 1. **Electronics first, on the bench** (no valves): 12 V → fuse → rail, UBEC,
    MOSFET, ADS1115 + divider, DS18B20. Run `mode: hardware`; check the sensor
    reads ~0 kPa at atmosphere and the probe reads a glass of water.
-2. **Transducer** onto the manometer port (adapter). Two-point calibration
-   against the dial gauge (atmosphere + one pressurised point).
+2. **Transducer** onto the manometer port (adapter). Two-point calibration —
+   atmosphere plus one pressurised point.
+
+   **Calibrate against the Keller LEX1, not the dial gauge.** The bench already
+   has one (`−1…2 bar rel`, part `303030.0026`): a calibration-grade digital
+   instrument that covers the 35–40 kPa working range with 5× headroom and reads
+   without parallax. It is a better standard than anything in the BOM. Its output
+   is RS-485 (pins 1 GND / 3 +Supply / 4 A / 5 B), not 4–20 mA, so it cannot
+   serve as the loop sensor — but for calibration you read its display, which is
+   all this step needs. Fall back to the dial gauge only if the LEX1 is
+   unavailable.
+
+   Before this step, verify the electrical chain on the bench with nothing
+   plumbed: powered from the Pi's 5 V, at atmosphere the transducer gives 0.500 V,
+   the divider puts **0.3438 V** on A0, and the driver must report **0.000 kPa**.
+   That clears sensor, divider, ADC and conversion in one shot, so anything wrong
+   afterwards is mechanical.
 3. **Print & fit coupling + mount**; servo onto the ball valve. Run the
    **static valve-authority sweep** (servo 0→100 %, log pressure) — this maps
    the useful travel; set `servo_min_us`/`servo_max_us` to that sub-range.
