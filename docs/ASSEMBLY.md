@@ -249,11 +249,21 @@ Before soldering:
   That rests on a number nobody has measured yet: the sim assumes 0.15 kPa of
   sensor noise against 0.0047 kPa per ADC count, i.e. **~32 counts of movement
   between samples**, which makes bit-identical readings impossible when healthy.
-  Once the ADS1115 is wired, log `raw` at rest for a minute and confirm it
-  actually moves by more than one LSB sample-to-sample. **The risk runs the
-  quiet way:** if the real front end is quieter than modelled, a healthy sensor
-  can repeat a value and trip a spurious fault. If that happens, raise N rather
-  than removing the check.
+  Once the ADS1115 is wired, run this on the Pi with the rig at rest:
+
+  ```
+  ./.venv/bin/python tools/noise_floor.py
+  ```
+
+  It builds only the sensor (never the full HAL, so it does not construct
+  ServoValve and never drives the servo to 700 µs), samples `raw` for a minute,
+  and reports the number safety actually uses: **the longest run of
+  bit-identical values**, against `safety.frozen_raw_reads`. The CSV logger has
+  no `raw` column, so this script is the only way to run this step.
+  **The risk runs the quiet way:** if the real front end is quieter than
+  modelled, a healthy sensor can repeat a value and trip a spurious fault. If
+  that happens, **raise N** — the script tells you to what — rather than
+  removing the check.
 - Servo power loss: valve holds position — confirm the relief covers that case.
 - V1738 dry-fit, rail de-energised: meter continuity from header pole 1 to the
   fused +12 V and pole 2 to the MOSFET drain, and confirm pole 3 reaches nothing.
