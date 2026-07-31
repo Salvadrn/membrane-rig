@@ -56,7 +56,12 @@ Para pasar trabajo entre sesiones, usa la herramienta de mensajes entre sesiones
   dejándolos en el index — el historial ahora atribuye el error estándar de `k` a
   un commit sobre válvulas de alivio. Usa siempre la forma con rutas
   (`git commit CLAUDE.md -m "…"`), **nunca `-a` ni el index completo**, y corre
-  `git status` antes de commitear. Lo que vuelve esto difícil de detectar: por la
+  `git status` antes de commitear. Con **archivos nuevos** esa forma falla
+  (`pathspec did not match`) porque git aún no los conoce: hay que
+  `git add <rutas>` primero y luego commitear **con esas mismas rutas** — el
+  `git add` es lo de menos, lo que acota el commit es la lista de rutas del
+  `git commit`. No caigas en `git add -A` para salir del paso, que es
+  exactamente lo que esta regla evita. Lo que vuelve esto difícil de detectar: por la
   regla de arriba **todas las sesiones firmamos igual**, así que el autor no
   distingue a nadie — para saber quién hizo qué hay que mirar los archivos
   tocados, no el `Author`. Si ya
