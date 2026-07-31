@@ -55,7 +55,11 @@ Para pasar trabajo entre sesiones, usa la herramienta de mensajes entre sesiones
   valve") arrastró tres archivos de `src/` de Datos, cuyo commit había fallado
   dejándolos en el index — el historial ahora atribuye el error estándar de `k` a
   un commit sobre válvulas de alivio. Usa siempre la forma con rutas
-  (`git commit CLAUDE.md -m "…"`) y corre `git status` antes de commitear. Si ya
+  (`git commit CLAUDE.md -m "…"`), **nunca `-a` ni el index completo**, y corre
+  `git status` antes de commitear. Lo que vuelve esto difícil de detectar: por la
+  regla de arriba **todas las sesiones firmamos igual**, así que el autor no
+  distingue a nadie — para saber quién hizo qué hay que mirar los archivos
+  tocados, no el `Author`. Si ya
   se pusheó, **no se reescribe historia**: todos trabajan sobre main; se anota y
   se sigue.
 - **La seguridad de presión no se negocia.** El rig presuriza una celda con una
