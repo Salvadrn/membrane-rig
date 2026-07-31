@@ -15,7 +15,7 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 | Válvula de bola de aire (SS, verde) | ya se tenía; es la que va a mover el servo |
 | IRLZ44N MOSFET (pack de 10) | llegó 2026-07-27 |
 | V1738 bloque de terminales enchufable (3 polos) | llegó 2026-07-27; ya está en `BOM.csv` a $0.00 (compra propia de Adrián, fuera del pedido de Roxanne). Precio y link **pendientes**. Uso recomendado: bobina del diverter en polos 1–2, polo 3 muerto = llave anti-inversión (ver `docs/ASSEMBLY.md`) |
-| Fuente 12 V 3 A | llegó 2026-07-27; asumido barrel 5.5×2.1 (B013OVYRZU) |
+| Fuente 12 V 3 A | llegó 2026-07-27. **⚠ Su barril NUNCA se midió y los archivos no coinciden**: este inventario decía "asumido 5.5×2.1 (`B013OVYRZU`)" pero `BOM.csv` compró **`B01C010YJI`** — son dos piezas distintas. Ver el bloqueo abajo |
 | Protoboard 830 + jumpers | confirmado por Adrián 2026-07-27 |
 | Cable 22AWG stranded | confirmado por Adrián 2026-07-27 |
 | UBEC 12 V→6 V 3 A | confirmado por Adrián. Ojo: el BOM dice 6 V y `ASSEMBLY.md` menciona 6.8 V en el criterio de par — ver "Discrepancias abiertas" |
@@ -32,6 +32,12 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 > corte, ni pelacables. Tampoco hay **alambre sólido** en el BOM (la única línea de cable es 22AWG
 > *stranded*), así que las colas del Paso 0 salen de sacrificar jumpers del kit. Ver
 > `docs/wiring_banco.html`.
+>
+> **Ni con qué AISLAR.** No hay cinta de aislar en el BOM y el termorretráctil es el item #9, que no
+> ha llegado. Eso muerde en el lado de potencia: las soldaduras de **drain y source** del IRLZ44N
+> quedan a 2.54 mm una de otra, **una a +12 V y la otra a tierra**. Hoy no hay con qué separarlas.
+> Conseguir cinta antes de soldar esa parte, o escalonar los empalmes ~1 cm para que no puedan
+> tocarse.
 
 ## Se puede hacer HOY — sin que falte nada
 
@@ -150,6 +156,19 @@ prioridad.
 | Cinta de aislar | el termorretráctil es el item #9 y no ha llegado; la cinta **no está en `BOM.csv`** y es la única forma de aislar los empalmes del Paso 0 mientras tanto |
 
 ## Bloqueos activos
+
+- **⚠ TERCER bloqueo del riel de 12 V que nadie había escrito: el barril de la
+  fuente no se ha medido.** El item #6 que se va a comprar es específicamente un
+  adaptador **5.5×2.1**. Este inventario registraba ese tamaño como *asumido*,
+  con un ASIN (`B013OVYRZU`) que además **no es el que compró `BOM.csv`**
+  (`B01C010YJI`). Si el plug real no es 5.5×2.1, **el #6 no entra aunque
+  llegue** y el riel sigue bloqueado.
+
+  **Medible HOY con calibrador**, sin energizar nada: diámetro exterior e
+  interior del barril. Y **la polaridad tampoco está fijada en ningún archivo** —
+  hay que confirmar **centro positivo** con el multímetro antes de conectar. Con
+  el riel invertido, el diodo de cuerpo del IRLZ44N y el 1N5819 quedan **los dos
+  en directa**: corto franco desde el primer instante.
 
 - **No energizar el riel de 12 V sin el fusible de 3 A** (item #7, no ha llegado).
   La fuente ya está en la mano y el protoboard también, así que la tentación es
