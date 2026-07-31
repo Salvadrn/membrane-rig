@@ -432,6 +432,8 @@ PAGE = r"""<!doctype html>
   .limitbox b{color:var(--ink)}
   .gate{background:#0d1e33;border:1px solid var(--acc);border-radius:9px;padding:14px;margin-bottom:14px;display:none}
   .gate h3{margin:0 0 6px;font-size:14px}
+  .raisedtag{display:inline-block;padding:2px 7px;border-radius:999px;font-size:11px;
+             font-weight:600;background:#3a2d00;color:var(--warn);border:1px solid var(--warn)}
   .queue td{vertical-align:middle}
   .queue tr.next td{background:#131c26}
   details summary{cursor:pointer;color:var(--muted);font-size:12px;margin-top:14px}
@@ -772,6 +774,7 @@ $("hRaise").onclick=async()=>{
 async function loadPlaylist(force){
   let d; try{ d=await (await fetch("/playlist")).json(); }catch(e){ return; }
   const sig=JSON.stringify(d.items.map(i=>[i.id,i.status,i.setpoints,i.collection_s,i.label,
+                                            i.ceiling_raised,
                                             (i.results||[]).map(r=>r.volume_ml)]))+d.limit;
   if(!force && sig===plSig) return;
   plSig=sig;
@@ -798,6 +801,11 @@ async function loadPlaylist(force){
       `<td>${it.setpoints.join(", ")} ${U}</td>`+
       `<td>${it.collection_s}s</td>`+
       `<td><span class="pill st-${it.status}">${it.status}</span>`+
+        // A raised-ceiling run is left out of the combined fit, so the queue has
+        // to say which rows those are — otherwise the fit silently has fewer
+        // points than the table shows and nobody can tell which ones went.
+        (it.ceiling_raised?` <span class="raisedtag" title="Ran above the declared `+
+          `ceiling — excluded from the combined fit">▲ raised</span>`:"")+
         (it.note?` <span style="color:var(--bad);font-size:11px">${it.note}</span>`:"")+`</td>`+
       `<td>${r0.mean_kpa!=null?fmt(toDisp(r0.mean_kpa)):"–"}</td>`+
       `<td>${r0.volume_ml?fmt(r0.volume_ml,0)+" mL":"–"}</td>`+
