@@ -46,7 +46,9 @@ The #1 failure mode of DIY servo-valve actuators is the printed part twisting.
   high, use a higher-torque servo (e.g. DS3240MG ~40 kg·cm ≈ 3.9 N·m) instead.
 
 ### 3. Pi / electronics enclosure
-- Fits: Pi 4 + half breadboard + UBEC + fuse holder. Mount on M3 standoffs.
+- Fits: Pi 4 + half breadboard + UBEC + fuse holder. Mount the Pi on **M2.5**
+  standoffs — its mounting holes are ~2.7 mm, so M3 does not pass through them.
+  M3/M4 are for the baseplate and the servo bracket, not the Pi.
 - Ventilation slots (Pi 4 runs warm); cable entry through bottom/side notches or
   glands so splashes can't run down wires into the box; splash lid on top.
 

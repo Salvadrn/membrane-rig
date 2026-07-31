@@ -26,6 +26,8 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 | **Transductor 0–15 PSI, 0.5–4.5 V, G1/4** | llegó 2026-07-27; item #1, el prioritario. **Cierra la cadena de sensado completa**: transductor → divisor 10k/22k → ADS1115 → Pi. Para MONTARLO en el rig falta el adaptador G1/4 → Swagelok (estado desconocido) |
 | Kit de capacitores electrolíticos (470 / 1000 µF) | llegó 2026-07-27; item #8. **No desbloquea nada todavía**: van al riel de 12 V, que sigue trabado por el fusible |
 | **Solenoide 3 vías 231Y-6-12VDC** | llegó; item #2. **⚠ Orificio de 1.5 mm, Cv 0.09–0.21 — puede estrangular la medición.** Ver "El diverter puede invalidar la medición" abajo. No energizar: falta el 1N5819 |
+| Termorretráctil 650 pzas 2:1 | llegó; item #9. **Cierra el hueco de "no hay con qué aislar"** — ver la nota de herramientas |
+| Kit de tornillos M4 | llegó; item #10. Sirve para baseplate, marco y bracket del servo. **NO sirve para montar el Pi** — ver abajo |
 | **Multímetro** | confirmado por Adrián 2026-07-29. Desbloquea medir `divider_ratio`, los rieles del header y el cero del transductor **sin la Pi** |
 | **Cautín + soldadura** | confirmado por Adrián 2026-07-29. Desbloquea el Paso 0: colas de conductor sólido en las puntas trenzadas (sonda, 22AWG y —confirmar— transductor) |
 
@@ -34,11 +36,12 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 > *stranded*), así que las colas del Paso 0 salen de sacrificar jumpers del kit. Ver
 > `docs/wiring_banco.html`.
 >
-> **Ni con qué AISLAR.** No hay cinta de aislar en el BOM y el termorretráctil es el item #9, que no
-> ha llegado. Eso muerde en el lado de potencia: las soldaduras de **drain y source** del IRLZ44N
-> quedan a 2.54 mm una de otra, **una a +12 V y la otra a tierra**. Hoy no hay con qué separarlas.
-> Conseguir cinta antes de soldar esa parte, o escalonar los empalmes ~1 cm para que no puedan
-> tocarse.
+> **Aislar: RESUELTO** — llegó el termorretráctil (#9). Cubre los empalmes del Paso 0 y las
+> soldaduras de drain/source del IRLZ44N, que quedan a 2.54 mm una de otra con +12 V y tierra.
+> **Gotcha clásico: el termorretráctil se ENSARTA ANTES de soldar.** Si sueldas primero, no hay
+> forma de meterlo y hay que desoldar. Ensarta un tramo en cada cable antes de acercar el cautín, y
+> déjalo lejos de la punta mientras sueldas para que no se encoja antes de tiempo. Cinta de aislar
+> sigue sin estar en el BOM; ya no bloquea nada, pero vale como consumible de taller.
 
 ## Se puede hacer HOY — sin que falte nada
 
@@ -254,6 +257,28 @@ Y uno que no es de banco pero destraba más que ninguno:
       ver, y hoy gatea: presurizar con seguridad, el tope de la recuperación de
       techo, si hace falta un solenoide de corte, dimensionar el servo, y medir
       el par de arranque.
+
+## ⚠ La tornillería del Pi: ni M4 ni M3 — es M2.5
+
+Llegó el kit **M4** (item #10) para lo que `BOM.csv:24` describe como *"M3
+screws/standoffs — Mount Pi/ADS/servo bracket"*. Pero **los barrenos de montaje
+del Raspberry Pi son de ~2.7 mm**, así que:
+
+| | ¿Entra en el Pi? |
+|---|---|
+| M4 (4.0 mm) | no, ni de cerca |
+| **M3 (3.0 mm)** — lo que pide el BOM | **no, se pasa por 0.3 mm** |
+| **M2.5** — el estándar del Pi | sí |
+
+O sea que el BOM estaba mal desde el principio, no solo el kit que llegó. **Falta
+M2.5** (tornillos y separadores) y no está en ninguna lista.
+
+El **M4 sí sirve** para lo que no es el Pi: baseplate, marco metálico que reacciona
+el par del servo, y bracket. Guárdalo para eso.
+
+**Verificable hoy en 10 segundos:** mide un barreno del Pi con el calibrador que
+ya vas a sacar para el barril de la fuente. Si mide 2.7, es M2.5 y punto. Para el
+módulo ADS1115 los barrenos suelen ser de ~3 mm, así que ahí sí entra M2.5 o M3.
 
 ## ⚠ El diverter puede invalidar la medición — verificar ANTES de tomar datos
 
