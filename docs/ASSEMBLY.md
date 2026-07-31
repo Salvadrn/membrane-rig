@@ -60,9 +60,21 @@ One board (printed or plywood) carrying enclosure + strain reliefs, so the
 assembly moves as a unit.
 
 ## Measure before designing/buying (caliper on the bench)
-1. **Valve stem breakaway torque** — the make-or-break number. Handle off, ~0.5–1
-   bar in the vessel, turn the stem with a torque wrench (or a luggage scale on a
-   known lever arm: torque = force × arm). Read the peak to *start* moving:
+1. **Valve stem breakaway torque** — the make-or-break number. Handle off, turn
+   the stem with a torque wrench (or a luggage scale on a known lever arm:
+   torque = force × arm). Read the peak to *start* moving.
+
+   **Do NOT do this at "0.5–1 bar in the vessel", as this document used to say.**
+   That is 50–100 kPa: above the 65 kPa specimen limit, at or above the 80 kPa
+   global cutoff, on a vessel whose pressure rating is written nowhere in this
+   repo, with **no relief valve** and no software running to abort. It also
+   measured the wrong thing. What loads the ball is the **ΔP across it**, which
+   the regulator sets — not the pressure sitting in the vessel.
+
+   Instead: measure at **the regulator's own setting**, and record which ΔP the
+   number was taken at, because the torque only means something paired with it.
+   Start dry (0 kPa) to get a floor; seal friction adds on top of that, so a dry
+   reading already tells you whether you are near a threshold.
    Thresholds are stated **at 6 V**, the rig's actual servo supply (see §2).
    The DS3218 datasheet gives stall torque 19 kg·cm at 5.0 V and 21.5 kg·cm at
    6.8 V; stall torque tracks supply voltage (I_stall = V/R_winding), so 6 V
@@ -301,11 +313,45 @@ Before soldering:
 5. Tune the PID (see README), then run a full sequence end-to-end.
 
 ## First safety checks
-- Relief valve set below the vessel's limit and above your max test point.
-  **Check the part before ordering:** a relief that cracks below the working
-  point does not merely fail to protect — it stops you pressurising at all,
-  which is what gets it removed. Tests run at 35–40 kPa, so a fixed 5 psi
-  (34.5 kPa) unit is useless here; it must be adjustable.
+
+> **These checks live in sequence in [`COMMISSIONING.md`](COMMISSIONING.md)** —
+> twelve staged energy boundaries, each closed before the next supply is
+> connected, with the expected number at every step. Use that to actually
+> commission; this section is the reference for what each check means.
+>
+> The two calibrations it depends on now have runnable procedures:
+> `tools/valve_calib.py --sweep` for the authority sweep and `--close` for
+> `servo_close_us`. Read that script's safety notes before either.
+
+> ### ⚠ There is no mechanical relief valve on this rig
+>
+> Adrián decided not to buy it. Several documents in this repo — `README.md`,
+> `CLAUDE.md`, `.claude/roles/hardware.md`, the talk slides — still describe a
+> relief valve at ~90 kPa as the hardware failsafe, and `BOM.csv` still quotes
+> one. **Those are stale.** Treat this note as the current state until they are
+> corrected.
+>
+> What that removes is the only layer that acts with **no software and no
+> power**. The remaining protections all depend on something working:
+>
+> | Layer | Fails if |
+> |---|---|
+> | Global cutoff 80 kPa + sensor faults | the Pi is hung or unpowered |
+> | Frozen-signal + plant watchdog | same |
+> | **Air-line regulator** | — it is passive, but its setting is **unknown** |
+>
+> So the regulator's setting is not a nice-to-have: with no relief, **the supply
+> pressure is the only thing that bounds a runaway**, exactly as `config.yaml`
+> says. Find that number before pressurising, and keep the panel valve within
+> reach — with the ball valve's handle removed, that panel valve is the only
+> thing a human can shut.
+>
+> If a relief is ever bought: set it below the vessel's limit and above the max
+> test point, and **check the part first** — a relief that cracks below the
+> working point does not merely fail to protect, it stops you pressurising at
+> all, which is what gets it removed. Tests run at 35–40 kPa, so a fixed 5 psi
+> (34.5 kPa) unit is useless here; it must be adjustable.
+
 - **Kill test** (sustained fault): unplug the sensor mid-run → the rig must
   vent/abort. With the sensor pin at 0 V the front end reads **−12.93 kPa**,
   below `safety.min_plausible` (−5.0), so `SENSOR_FAULT` fires after
@@ -338,7 +384,10 @@ Before soldering:
   modelled, a healthy sensor can repeat a value and trip a spurious fault. If
   that happens, **raise N** — the script tells you to what — rather than
   removing the check.
-- Servo power loss: valve holds position — confirm the relief covers that case.
+- Servo power loss: the valve **holds position**, it does not spring shut. With
+  no relief valve, nothing covers this case automatically — the bound is the
+  regulator setting, and the remedy is shutting the panel valve by hand. This is
+  also what `close_warning` is telling you when it fires.
 - V1738 dry-fit, rail de-energised: meter continuity from header pole 1 to the
   fused +12 V and pole 2 to the MOSFET drain, and confirm pole 3 reaches nothing.
   Then plug it in backwards on purpose once and confirm the coil stays silent.
