@@ -2,7 +2,7 @@
 
 **Audience:** undergraduate summer-research program, mixed background (area mentors + peers from other disciplines). Assume no one knows membranes; Darcy and the slope must land on their own.
 **Total:** 8:00, 10 slides. Times are cumulative — if you pass the mark, cut a sentence, don't rush the next slide.
-**Gamma deck:** _(URL filled in after generation — see docs/talk/README.md)_
+**Gamma deck:** https://gamma.app/docs/o8btp682u3sjeqn
 **The one rule:** say "in simulation" out loud on the title and again on slide 7. Never let a number be heard without it. It's a strength, not an apology.
 
 **Figures to insert in the Gamma editor** (Gamma can't pull the local PNGs): slide 5 → `fig5_fit.png`, slide 7 → `fig1_system.png`, slide 8 → `fig4_sequence.png`. All in `docs/paper/`.

@@ -12,8 +12,8 @@ background. The material is all from `docs/paper/`; the job was to **cut**, not 
   cut/expand lists and figure cues. **This is the part to rehearse from.**
 - **The Gamma deck** — generated from `slides.md`. Direction "Pizarra" (dark, high-contrast,
   one idea per slide), theme `default-dark`.
-  - Live link: https://gamma.app/generations/nKbgI9hu2E9skaoUZjjmZ
-  - _(Once it finishes it becomes an editable `gamma.app/docs/…` deck; the link above resolves to it.)_
+  - Deck: https://gamma.app/docs/o8btp682u3sjeqn
+  - Open it in the Gamma editor to insert the figures below and make any tweaks.
 
 ## Insert the paper figures in the Gamma editor
 
