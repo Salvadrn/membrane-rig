@@ -507,8 +507,13 @@ class RigController:
             # error is UNKNOWN, and rendering it as "+/- 0" would claim a precision
             # that was never measured.
             "k_stderr_m2": result.k_stderr_m2 if result.n >= 3 else None,
+            # `> 0`, not just truthy: k CAN come out negative (a leak that opens up
+            # with pressure gives Q falling with dP -> negative slope). k_stderr_m2
+            # is always >= 0, so se/k would report a negative standard error —
+            # nonsense to render. The absolute error still stands; only the
+            # percentage loses meaning. Same k > 0 guard pore_size_m already uses.
             "k_stderr_pct": (result.k_stderr_m2 / result.k_darcy_m2 * 100.0
-                             if result.n >= 3 and result.k_darcy_m2 else None),
+                             if result.n >= 3 and result.k_darcy_m2 > 0 else None),
             "pore_size_um": result.pore_size_m * 1e6,
             "follows_darcy": result.follows_darcy,
             "label": result.label,
@@ -595,8 +600,13 @@ class RigController:
             # error is UNKNOWN, and rendering it as "+/- 0" would claim a precision
             # that was never measured.
             "k_stderr_m2": result.k_stderr_m2 if result.n >= 3 else None,
+            # `> 0`, not just truthy: k CAN come out negative (a leak that opens up
+            # with pressure gives Q falling with dP -> negative slope). k_stderr_m2
+            # is always >= 0, so se/k would report a negative standard error —
+            # nonsense to render. The absolute error still stands; only the
+            # percentage loses meaning. Same k > 0 guard pore_size_m already uses.
             "k_stderr_pct": (result.k_stderr_m2 / result.k_darcy_m2 * 100.0
-                             if result.n >= 3 and result.k_darcy_m2 else None),
+                             if result.n >= 3 and result.k_darcy_m2 > 0 else None),
             "pore_size_um": result.pore_size_m * 1e6,
             "follows_darcy": result.follows_darcy,
             "label": result.label,
