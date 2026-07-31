@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "membrane-rig-status",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-30",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Created with:  npx wrangler kv namespace create RIG_STATUS
+  // Paste the id it prints here — it is not a secret.
+  "kv_namespaces": [{ "binding": "RIG_STATUS", "id": "PENDIENTE" }],
+
+  // INGEST_SECRET is NOT here on purpose. Set it with:
+  //   npx wrangler secret put INGEST_SECRET
+  // Anything in this file is committed to a git repo.
+
+  "observability": {
+    "enabled": true,
+    "logs": { "head_sampling_rate": 1 }
+  }
+}
