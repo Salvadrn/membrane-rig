@@ -46,7 +46,7 @@ Slides 1–3 and 8–10 are text only — delete their placeholders. Regenerate 
 
 ### 7 · The system — 4:45–5:45
 > _FIGURE: talk_system.png_
-"Here's the build. The existing vessel is left untouched — everything attaches around it. A hobby servo turns the air-inlet ball valve, driven by a PID loop at 20 Hz. Pressure goes through a divider into a 16-bit ADC; a digital probe reads water temperature for the viscosity correction. A three-way solenoid is the diverter that times collection. And notice the relief valve — **deliberately outside** the control system, a pure-mechanical backstop that vents even if all the software is dead. About three hundred dollars in parts."
+"Here's the build. The existing vessel is left untouched — everything attaches around it. A hobby servo turns the air-inlet ball valve, driven by a PID loop at 20 Hz. Pressure goes through a divider into a 16-bit ADC; a digital probe reads water temperature for the viscosity correction. A three-way solenoid is the diverter that times collection. About three hundred dollars in parts, and the vessel itself is never modified."
 
 ### 8 · Validation, in simulation — 5:45–6:55
 "Now the results — and these are all from **simulation**, running the exact production code against a modeled plant. Against a ±8 kPa oscillating supply — worse than the real bench should be — the loop held each setpoint to **two-tenths to seven-tenths of a kPa**. Across a 15 °C sweep the derived k held constant to **five significant figures** while the raw slope moved **39%** — the cancellation you just saw, proven end to end. And it reproduced a real, hand-taken dataset: k of 1.44e-12, pore size 6.8 microns, R-squared 0.994."
@@ -64,6 +64,9 @@ Slides 1–3 and 8–10 are text only — delete their placeholders. Regenerate 
 2. Slide 6 — leave the figure up and say only: "k comes out independent of temperature — which is also how the rig proves itself." The picture does the rest in two seconds.
 3. Slide 9 — compress the discipline points, but **never** the "nothing has run on hardware yet" line.
 **Never cut slide 4.** It's the idea a mentor will remember.
+
+## If you're asked about safety
+Answer straight — the honest version is the strong one: "There are four software layers: a per-run ceiling, a global cutoff, a stuck-sensor detector and a plant watchdog. The mechanical relief valve that would back all of that up **wasn't purchased**, so every layer needs the controller alive — which is why the supply gets closed by hand at the end of a session, and why fitting that valve is the first hardware change I'd make." Don't oversell the ladder; the paper states this limitation too (Sec. 8 and 10).
 
 ## If you're short
 - Slide 5 — walk the fit: point at one dot, "each dot is one 60-second collection."

@@ -87,7 +87,7 @@ Transducer → divider → **ADS1115** · **DS18B20** for temperature.
 
 Solenoid **diverter** times collection.
 
-Mechanical relief **outside the control system**.
+**~US$300**, and the vessel is never modified.
 
 ---
 

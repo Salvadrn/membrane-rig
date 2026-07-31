@@ -39,10 +39,12 @@ ax.set_xlim(0, 100)
 ax.set_ylim(0, 72)
 ax.axis("off")
 
-# --- relief valve (vents upward, above the air line) ---
-box(ax, 17, 64, 16, 6.5, "relief valve  ~90 kPa", fc="#fdecec", ec="#a33", fs=8)
-ax.text(34.5, 67.2, "mechanical — vents regardless of software",
-        fontsize=7.5, color="#a33", va="center")
+# --- relief valve: SPECIFIED BUT NOT FITTED ---
+# Drawn greyed out rather than deleted: a reader looking for the hardware-only
+# layer has to SEE that there isn't one, not merely fail to find it.
+box(ax, 17, 64, 16, 6.5, "relief valve\nNOT FITTED", fc="#f4f4f4", ec="#9a9a9a", fs=7.5)
+ax.text(34.5, 67.2, "no mechanical layer — nothing protects a dead controller",
+        fontsize=7.5, color="#9a9a9a", va="center")
 
 # --- process row ---
 box(ax, 1, 52, 13, 7, "compressed\nair supply", fc="#eef3fb", ec=FLUID)
@@ -58,7 +60,7 @@ arrow(ax, (33, 55.5), (37, 55.5), FLUID)
 arrow(ax, (55, 55), (59, 55), FLUID)
 arrow(ax, (72, 56.5), (76, 58.5), FLUID)
 arrow(ax, (72, 53.5), (76, 49.5), FLUID)
-arrow(ax, (25, 60), (25, 64), "#a33")
+arrow(ax, (25, 60), (25, 64), "#9a9a9a", ls="--")
 
 # --- measurement chain ---
 box(ax, 37, 36, 18, 8, "pressure transducer\n0–103 kPa, 0.5–4.5 V",
