@@ -50,10 +50,36 @@ src/config.py         config.yaml
   cambia el setpoint (`_ramp_for != setpoint_kpa`), no en el setpoint anterior. El
   sequencer sigue usando el setpoint **verdadero** para la banda, el dwell y el log.
   Si `ramp_kpa_s <= 0` la rampa se desactiva y el PID recibe el escalón.
-- **Techo por corrida.** `_begin` llama `safety.arm_for_run(setpoints)` bajo lock:
-  el corte baja a `max(setpoint) + overshoot_margin_kpa` (10 kPa) **solo si queda por
-  debajo** del corte global de 80. `_end_run` llama `disarm()` y regresa a 80. Una
-  prueba de 20 kPa aborta cerca de 30, nunca coasta hasta 80.
+- **Techo por corrida.** `_begin` llama `safety.arm_for_run(setpoints,
+  specimen_limit_kpa=pressure_limit_kpa())` bajo lock: el corte baja a
+  `min(max(setpoint) + overshoot_margin_kpa, límite del espécimen)`, y solo se aplica
+  si queda por debajo del corte global de 80. `limit_name` nombra cuál mandó
+  (`"run ceiling"` / `"specimen limit"`) y sale en `status["run_ceiling_source"]`.
+  `_end_run` llama `disarm()` y regresa a 80. Una prueba de 20 kPa nunca coasta
+  hasta 80: topa cerca de 30.
+- **Topar el techo NO termina la corrida; el corte global SÍ.** Desde la etapa 2,
+  una sobrepresión contra el techo de corrida / límite del espécimen entra a
+  **HELD**: `_enter_held` cierra el feed, publica `status["held"]` +
+  `held_alarm` y **espera al operador** (`recover_retry` / `recover_raise` /
+  `recover_stop`). Esperar indefinidamente es correcto y deliberado —el feed está
+  cerrado— y **nada auto-reintenta ni auto-amplía**: decidir en una frontera de
+  seguridad sin nadie mirando es justo lo que no queremos. Lo que **jamás** es
+  recuperable: el **corte global** y las **fallas de sensor/planta**, que siempre
+  ventean y terminan la corrida. Y siguen **armados mientras está HELD** — llegar
+  a 80 o fallar el sensor ahí aborta duro, porque un runaway no puede esconderse
+  detrás de una pantalla esperando a un humano. Tres topes en el mismo punto
+  (`ceiling_retry_max`) → paro duro. Reintentar **rehace el punto desde cero** y
+  descarta la colecta parcial (lleva la excursión adentro, y ese registro de
+  presión es el que produce `k`), así que un punto reintentado es tan limpio como
+  uno normal.
+- **Ampliar el techo nace apagado.** `safety.operator_raise_max: 0` = **deshabilitado
+  por completo** (no "tope al límite del espécimen": eso habría permitido subir de
+  30 a 65 en una corrida de 20 kPa). Con 0 se reporta `raise_max == ceiling` para
+  que la UI lo muestre disabled. Un valor positivo sigue clampado al límite del
+  espécimen y al corte global. **No lo enciendas hasta conocer la cota de presión
+  del suministro** — sin alivio mecánico, el suministro es lo único que acota un
+  runaway. Una corrida cuyo techo se amplió queda marcada (`ceiling_raised`) y
+  **excluida del fit combinado**.
 - **Sobrepresión es inmediata; falla de sensor tiene gracia.** En `SafetyMonitor.check`
   la sobrepresión gana prioridad y se evalúa solo si `healthy is not False` y no es
   NaN. Lo implausible (`< -5.0` o `> 105.0` kPa) necesita `fault_grace_reads: 3`
