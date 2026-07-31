@@ -799,6 +799,11 @@
           Corolario para el banco: si corres <code>mode: hardware</code> solo para leer el sensor,
           hazlo con el <b>UBEC sin energía y el servo desconectado de GPIO18</b> — el pulso sale igual.
         </div>
+        <div style="margin-top:8px">
+          Cuando toque calibrarlo, <b>no arranques la app</b>: usa
+          <code>tools/valve_calib.py --sweep</code> y <code>--close</code>, que construyen
+          <b>solo la válvula</b> y no disparan el resto del HAL.
+        </div>
       </div>
       <div class="co co-red" style="margin-top:14px">
         <div class="co-t">«Si se va el 12 V a media corrida, ¿el rig se protege solo?»</div>
@@ -817,13 +822,19 @@
             El único freno que queda es mecánico.
           </div>
           <div style="margin-top:10px">
-            <b>Ese freno mecánico todavía no existe.</b> La escalera de seguridad cuenta con un alivio
-            de ~90 kPa que <b>no se ha comprado</b>, y las dos fuentes del repo no describen la misma
-            pieza: <code>BOM.csv</code> pide un <b>CR25-100 ajustable</b>, mientras
-            <code>INVENTORY.md</code> apunta a un ASIN que se rastrea a un <b>CPR-25 de 5 psi fijos =
-            34.5 kPa</b> — que se abriría <i>por debajo</i> del ensayo de 35 kPa. Hasta que eso se
-            resuelva y la pieza esté montada, el failsafe de este escenario es <b>cerrar el
-            suministro a mano</b>.
+            <b>Y ese freno mecánico no va a existir: Adrián decidió no comprar el alivio.</b> No es
+            “todavía no llega”. Varios documentos del repo —<code>README.md</code>,
+            <code>CLAUDE.md</code>, el rol de Hardware, las diapositivas— siguen describiendo un
+            alivio de ~90 kPa como el failsafe de hardware; <b>están viejos</b>. Lo autoritativo es
+            <code>docs/ASSEMBLY.md</code> § “There is no mechanical relief valve on this rig”.
+          </div>
+          <div style="margin-top:10px">
+            Consecuencia directa para esta hoja: <b>ninguna capa de protección actúa sin software y
+            sin corriente</b>. Con el riel de 12 V caído, lo único que acota una fuga hacia arriba es
+            el <b>ajuste del regulador de la línea de aire</b>, que es pasivo pero cuyo valor
+            <b>nadie ha registrado</b>. Y con el maneral de la válvula de bola quitado, <b>la válvula
+            del panel es lo único que un humano puede cerrar</b>: déjala al alcance de la mano antes
+            de presurizar.
           </div>
         </div>
       </div>
@@ -1166,6 +1177,8 @@
 <h2>Antes de energizar — el orden con el multímetro</h2>
 <p class="bajada" style="margin-bottom:16px">
   El día que lleguen el #6 y el #7. Es una secuencia, no una lista: cada paso supone el anterior.
+  Esto es solo la parte que le toca al riel de 12 V — <b>la puesta en marcha completa, por fronteras
+  de energía, vive en <code>docs/COMMISSIONING.md</code></b>. Si las dos difieren, gana esa.
 </p>
 
 <div class="cols">
@@ -1181,8 +1194,10 @@
         y <b>polo 3 → a nada</b>. Después mete el plug al revés a propósito, una vez, y confirma que
         la bobina queda abierta.</li>
       <li><b>Diodo, en modo diodo:</b> banda hacia +12 V. Punta roja en el lado de +12 V y negra en el
-        drain debe dar <b>OL</b> (está en inversa); al revés, <b>~0.2–0.4 V</b> (es Schottky, cae menos
-        que un silicio).</li>
+        drain debe dar <b>OL</b> (está en inversa); al revés conduce. De paso distingue el 1N5819 de
+        un silicio de la misma bolsa: un Schottky cae <b>~0.15–0.35 V</b> contra <b>~0.5–0.6 V</b>
+        — <span class="sub">números orientativos, el repo no los fija; lo que tiene que estar bien es
+        el sentido</span>.</li>
     </ol>
   </div>
   <div class="caja">
@@ -1260,11 +1275,10 @@
         datasheet del IRLZ44N y nadie la ha medido aquí.</li>
       <li><b>El par de arranque del vástago</b> no se ha medido, y es lo que decide si el servo va
         pelón o con reducción 2:1 — y por tanto cuánta corriente pide el UBEC de verdad.</li>
-      <li><b>La válvula de alivio</b> no está comprada y <code>BOM.csv</code> e
-        <code>INVENTORY.md</code> no describen la misma pieza. Es el único failsafe del escenario
-        “se fue el 12 V con la bola abierta”.</li>
+      <li><b>El ajuste del regulador de aire</b> no está registrado en ningún archivo, y sin alivio
+        mecánico es <b>lo único</b> que acota el escenario “se fue el 12 V con la bola abierta”.</li>
       <li><b>El rating de presión del recipiente y su brida</b> no existe escrito en ningún archivo
-        del repo, y es contra lo que hay que ajustar ese alivio.</li>
+        del repo, y es el número contra el que habría que fijar el regulador.</li>
       <li><b>Ningún número de este rig es una medición.</b> Todo lo publicado sale de simulación.</li>
     </ul>
   </div>
@@ -1275,7 +1289,8 @@
 <p class="tiny sub" style="margin:0">
   <b>Derivado de</b> <code>.claude/roles/hardware.md</code> · <code>config.yaml</code>
   (bloques <code>diverter:</code> y <code>valve:</code>) · <code>docs/ASSEMBLY.md</code>
-  (“Why the gate resistor is 470 Ω”, “Coil current does cross the breadboard”, “Pluggable break”) ·
+  (“Why the gate resistor is 470 Ω”, “Coil current does cross the breadboard”, “Pluggable break”,
+  “There is no mechanical relief valve on this rig”) · <code>docs/COMMISSIONING.md</code> ·
   <code>BOM.csv</code> · <code>tools/gen_wiring.py</code> · <code>INVENTORY.md</code> (2026-07-29) ·
   <code>README.md</code> · <code>src/hal/{gpio_diverter,servo_valve,pwm_valve}.py</code>.
   Datasheets: IRLZ44N (PD-9.1346B), 1N5819, ANNIMOS DS3218MG, Hobbywing UBEC-3A.
