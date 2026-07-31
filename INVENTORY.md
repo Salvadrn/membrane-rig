@@ -10,7 +10,7 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 | Pieza | Notas |
 |---|---|
 | Raspberry Pi 4 + microSD | ya se tenía |
-| Probeta graduada | ya se tenía |
+| Probeta graduada **1000 mL** | ya se tenía; capacidad confirmada por Adrián 2026-07-30. División menor **por confirmar** (típicamente 10 mL en esta capacidad). **⚠ Con el caudal del sim se llena en 17–35 s, no en los 60 s de `test.collection_s`** — ver abajo |
 | Manómetro de carátula | ya se tenía; sirve de referencia para calibrar el transductor |
 | Válvula de bola de aire (SS, verde) | ya se tenía; es la que va a mover el servo |
 | IRLZ44N MOSFET (pack de 10) | llegó 2026-07-27 |
@@ -227,6 +227,29 @@ consigna de ~90 kPa (13 psi), por debajo del límite del recipiente.
 **El rating de presión del recipiente y su brida.** `ASSEMBLY.md` manda fijar el
 alivio "below the vessel's limit" y ese límite no existe escrito en ningún archivo
 del repo. A 35 kPa el margen es cómodo, pero el número debería estar registrado.
+
+## La probeta se desborda antes de que termine la ventana de colecta
+
+Con el caudal del **sim** y `test.collection_s: 60`:
+
+| Setpoint | Caudal | En 60 s | La probeta de 1000 mL se llena en |
+|---|---|---|---|
+| 20 kPa | 28.8 mL/s | 1728 mL | **34.7 s** |
+| 40 kPa | 44.5 mL/s | 2671 mL | **22.5 s** |
+| 60 kPa | 60.2 mL/s | 3614 mL | **16.6 s** |
+
+O sea: el procedimiento tal como está **no es operable** con esta probeta. Y no
+se arregla comprando una más grande — una de 2000 mL se llenaría en 33–69 s,
+igual de al filo.
+
+**Lo que sí lo arregla es acortar la ventana**, y sale barato: Datos cuantificó
+que a 10 s la incertidumbre en `k` por lectura a ojo sigue siendo ~2.2 % con una
+probeta gruesa (±5 mL), contra 0.4 % a 60 s. `test.collection_s` es de **Control**.
+
+**Pero antes de mover nada: esto es caudal de SIMULACIÓN.** El caudal real es de
+las primeras cosas que el rig dirá al conectarse, y puede no parecerse. La acción
+correcta es medir el caudal real primero y dimensionar la ventana contra la
+probeta que existe, no rediseñar sobre un número simulado.
 
 ## Discrepancias abiertas
 
