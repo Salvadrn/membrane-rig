@@ -325,34 +325,37 @@ Before soldering:
 > `tools/valve_calib.py --sweep` for the authority sweep and `--close` for
 > `servo_close_us`. Read that script's safety notes before either.
 
-> ### ⚠ There is no mechanical relief valve on this rig
+> ### ⚠ The relief valve is on order — which is not the same as fitted
 >
-> Adrián decided not to buy it. Several documents in this repo — `README.md`,
-> `CLAUDE.md`, `.claude/roles/hardware.md`, the talk slides — still describe a
-> relief valve at ~90 kPa as the hardware failsafe, and `BOM.csv` still quotes
-> one. **Those are stale.** Treat this note as the current state until they are
-> corrected.
+> It was dropped, then **reinstated** when the rig became something operated
+> remotely: with nobody standing in front of it, "shut the supply by hand" stops
+> being a procedure and becomes a sentence with no one to execute it. It is on
+> the order to Roxanne, status being confirmed.
 >
-> What that removes is the only layer that acts with **no software and no
-> power**. The remaining protections all depend on something working:
+> **Until it is physically mounted and set, everything below is still true.**
+> Ordered is not installed. Do not let the line item on a purchase order read as
+> a layer of protection.
+>
+> Today the rig has **no layer that acts with no software and no power**:
 >
 > | Layer | Fails if |
 > |---|---|
 > | Global cutoff 80 kPa + sensor faults | the Pi is hung or unpowered |
 > | Frozen-signal + plant watchdog | same |
-> | **Air-line regulator** | — it is passive, but its setting is **unknown** |
+> | **Air-line regulator** | — passive, but its setting is **still unrecorded** |
 >
-> So the regulator's setting is not a nice-to-have: with no relief, **the supply
-> pressure is the only thing that bounds a runaway**, exactly as `config.yaml`
-> says. Find that number before pressurising, and keep the panel valve within
-> reach — with the ball valve's handle removed, that panel valve is the only
-> thing a human can shut.
+> So the regulator's setting is not a nice-to-have: until the relief is fitted,
+> **the supply pressure is the only thing that bounds a runaway**, exactly as
+> `config.yaml` says. Find that number before pressurising, and keep the panel
+> valve within reach — with the ball valve's handle removed, that panel valve is
+> the only thing a human can shut.
 >
-> If a relief is ever bought: set it below the vessel's limit and above the max
-> test point, and **check the part first** — a relief that cracks below the
+> **When it arrives:** set it below the vessel's limit and above the max test
+> point, and **check the part before fitting** — a relief that cracks below the
 > working point does not merely fail to protect, it stops you pressurising at
 > all, which is what gets it removed. Tests run at 35–40 kPa, so a fixed 5 psi
-> (34.5 kPa) unit is useless here; it must be adjustable.
+> (34.5 kPa) unit is useless here; it must be adjustable. Record the setting;
+> it is one of the numbers `COMMISSIONING.md` asks for.
 
 - **Kill test** (sustained fault): unplug the sensor mid-run → the rig must
   vent/abort. With the sensor pin at 0 V the front end reads **−12.93 kPa**,

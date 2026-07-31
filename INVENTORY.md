@@ -27,6 +27,8 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 | Kit de capacitores electrolíticos (470 / 1000 µF) | llegó 2026-07-27; item #8. **No desbloquea nada todavía**: van al riel de 12 V, que sigue trabado por el fusible |
 | **Solenoide 3 vías 231Y-6-12VDC** | llegó; item #2. **⚠ Orificio de 1.5 mm, Cv 0.09–0.21 — puede estrangular la medición.** Ver "El diverter puede invalidar la medición" abajo. No energizar: falta el 1N5819 |
 | Termorretráctil 650 pzas 2:1 | llegó; item #9. **Cierra el hueco de "no hay con qué aislar"** — ver la nota de herramientas |
+| Fittings Swagelok / McMaster | **LLEGARON** (confirmado por Adrián). ⚠ **Falta verificar QUÉ llegó exactamente** — si incluye el adaptador G1/4→Swagelok del transductor y la tee, la cadena de sensado se puede montar en el rig y el cuello de botella mecánico desaparece. Pedir foto o lista de empaque |
+| **Pin headers macho 2.54 mm** (110 pzas, `B0FFSRKF7W`) | **ORDENADO, sin llegar.** No estaba en `BOM.csv`. Es la solución limpia al Paso 0: soldar un pin a cada punta trenzada, en vez de sacrificar jumpers del kit |
 | Kit de tornillos M4 | llegó; item #10. Sirve para baseplate, marco y bracket del servo. **NO sirve para montar el Pi** — ver abajo |
 | **Multímetro** | confirmado por Adrián 2026-07-29. Desbloquea medir `divider_ratio`, los rieles del header y el cero del transductor **sin la Pi** |
 | **Cautín + soldadura** | confirmado por Adrián 2026-07-29. Desbloquea el Paso 0: colas de conductor sólido en las puntas trenzadas (sonda, 22AWG y —confirmar— transductor) |
@@ -210,7 +212,7 @@ Exactitud ±1 % FS = ±1.03 kPa = **±3.0 %** en el punto de 35 kPa.
 
 **El transductor 0–15 PSI del pedido (item #1) es el correcto. No se cambia.**
 
-### Lo que SÍ sigue mal: el alivio (item #3)
+### El alivio (item #3): REINSTAURADO, pero pedido ≠ instalado
 
 Único punto vivo, y ahora está **más apretado** que antes:
 
