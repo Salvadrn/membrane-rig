@@ -120,18 +120,22 @@
 </div>
 
 <div class="banda banda-warn">
-  <h3>Y antes de comprar el alivio: hay un cambio de requisito abierto que lo invalidaría</h3>
+  <h3>⚠ Dos correcciones — léelas antes que nada de esta hoja</h3>
+  <p style="margin:0 0 10px" class="tiny">
+    <strong>1. La válvula de alivio NO se va a instalar.</strong> Fue decisión de Adrián. Esta hoja la sigue
+    dibujando, la ubica en su tee y explica su familia de rosca — todo eso queda como <em>guía de contingencia
+    por si la decisión se revierte</em>, no como parte del armado. Lo que hay que leer de aquí en adelante es:
+    donde diga «el alivio hace X», hoy <strong>nadie hace X</strong>. La escalera perdió su única capa que actúa
+    sin software y sin energía, así que la <strong>tarada del regulador de la línea de aire es la única cota
+    física</strong> sobre lo que la celda puede ver — y ese número todavía no se ha registrado.
+    Ver <code>docs/ASSEMBLY.md</code> § First safety checks.
+  </p>
   <p style="margin:0" class="tiny">
-    <code>INVENTORY.md</code> registra que Adrián reporta <strong>ensayos de hasta 40 PSI (275.8 kPa)</strong>, con objetivo
-    de diseño ~50 PSI. Toda esta hoja está escrita contra la escalera que hoy está <strong>commiteada en
-    <code>config.yaml</code></strong> — pruebas ≤60 kPa, corte global 80 kPa — y esos límites
-    <strong>no se han tocado</strong>, a propósito: subirlos es aflojar una protección sobre un recipiente cuyo rating no
-    está documentado. Pero si el requisito de 40 PSI se confirma, <strong>dos piezas de esta hoja cambian</strong>:
-    el alivio dejaría de ir en 13.05 psi y el transductor de 0–15 PSI saturaría al 37 % de la prueba.
-    <strong>No compres el alivio ni el transductor hasta que eso se resuelva</strong>, porque son justo las dos piezas que
-    se eligen por rango. Lo que <em>no</em> cambia en ningún escenario es el resto de esta hoja: las roscas, el mapa de
-    puertos del solenoide, de qué lado de la bola van las tees, y el failsafe.
-    <span class="pend">requisito sin resolver</span>
+    <strong>2. El susto de los «ensayos a 40 PSI» era falsa alarma.</strong> Fue confusión de unidades: los ensayos
+    de Adrián son de <strong>35 kPa (5.08 PSI)</strong>, y también corre puntos a 40 kPa. Eso cabe cómodo en la
+    escalera actual y <strong>nada se rediseña</strong>: el transductor de 0–15 PSI del pedido es el correcto y usa
+    el 34 % de su span. Resuelto en <code>INVENTORY.md</code> el 2026-07-27. Ignora cualquier párrafo de esta hoja
+    que trate ese requisito como abierto.
   </p>
 </div>
 
@@ -655,8 +659,8 @@
   </p>
   <p class="tiny sub" style="margin:10px 0 0">
     Esta tabla es la escalera <strong>commiteada hoy</strong> en <code>config.yaml</code>, que es la que el software
-    realmente aplica. Hay un cambio de requisito abierto (ensayos a 40 PSI) que la reescribiría entera —
-    ver la banda amarilla al inicio de la hoja.
+    realmente aplica. El susto de «ensayos a 40 PSI» fue falsa alarma (confusión de unidades: son 35 kPa),
+    así que esta escalera NO se reescribe — ver la banda al inicio de la hoja.
   </p>
 </div>
 
