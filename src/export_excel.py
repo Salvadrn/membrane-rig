@@ -141,10 +141,15 @@ def export_permeability_xlsx(result, out_path, *, title: str = "Q vs ΔP",
     # rather than shown as zero when n < 3, where it is unknown, not zero.
     se = getattr(result, "k_stderr_m2", 0.0)
     if se > 0:
+        # The relative error is only meaningful against a physically meaningful
+        # k. A negative slope (a leak that opens with pressure, a torn mesh)
+        # gives k < 0, and se/k would render a NEGATIVE standard error — the
+        # absolute one still describes the scatter, the percentage does not.
+        # Same k > 0 guard pore_size_m already uses.
         rows[4:4] = [
             ("k standard error (m²)", se, SCI),
             ("k standard error (%)", round(se / result.k_darcy_m2 * 100, 2)
-             if result.k_darcy_m2 else None, None),
+             if result.k_darcy_m2 > 0 else None, None),
         ]
     for i, (label, val, fmt) in enumerate(rows):
         ws.cell(row=r + i, column=1, value=label).font = bold

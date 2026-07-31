@@ -95,6 +95,19 @@ paper. Nadie más toca la matemática: si `k` sale mal, es tuyo. Lee primero
   `n >= 2`; `export_permeability_xlsx` requiere `n >= 1`. Respétalas.
 - **`pore_size_m` solo si `k > 0`**, si no queda 0.0 (evita `sqrt` de negativo
   cuando la pendiente sale negativa por datos basura).
+- **LIMITACIÓN CONOCIDA, decidida por Adrián el 30-jul: `follows_darcy` no mira
+  el signo de k.** Una fuga que se abre al subir la presión da Q decreciente con
+  ΔP: pendiente negativa, `k < 0`, y sin embargo R² altísimo (caso medido:
+  k = −1.5e-12 m² con R² = 0.9997 → `follows_darcy = True`, verdict "follows
+  Darcy's law" sobre una permeabilidad negativa). R² mide linealidad, no signo,
+  así que el criterio del lab no lo atrapa. **No se cambió a propósito**: el
+  criterio 0.98 es del laboratorio y se decide con Kwangsoo antes de la puesta
+  en marcha, no en una sesión de código. Si en hardware aparece un k negativo,
+  no es una membrana rara — es fuga, bypass del diverter o la membrana rota.
+  Lo que SÍ está protegido: `pore_size_m` (queda 0.0) y el "k standard error
+  (%)" del Excel (queda vacío, porque `se/k` con k<0 rendería un error estándar
+  negativo, que es un sinsentido; el error absoluto en m² sí se sigue
+  reportando porque describe la dispersión igual).
 
 ## Qué NO haces
 - No tocas `src/control/`, `sequencer.py`, `safety.py` ni `config.py` más allá de
