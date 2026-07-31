@@ -68,7 +68,8 @@ def xlsx_available() -> bool:
 
 def export_permeability_xlsx(result, out_path, *, title: str = "Q vs ΔP",
                              units: str = "kPa", points_detail=None) -> Optional[str]:
-    if result.n < 1:
+    if result.n < 1 or not out_path:
+        # see plot_permeability: str(None) would write a workbook named "None"
         return None
     from openpyxl import Workbook
     from openpyxl.chart import Reference, ScatterChart, Series
@@ -136,6 +137,15 @@ def export_permeability_xlsx(result, out_path, *, title: str = "Q vs ΔP",
         ("Mean hydraulic pore size (µm)", round(result.pore_size_m * 1e6, 4), None),
         ("verdict", verdict, None),
     ]
+    # How well the slope is pinned down, which R² alone does not say. Omitted
+    # rather than shown as zero when n < 3, where it is unknown, not zero.
+    se = getattr(result, "k_stderr_m2", 0.0)
+    if se > 0:
+        rows[4:4] = [
+            ("k standard error (m²)", se, SCI),
+            ("k standard error (%)", round(se / result.k_darcy_m2 * 100, 2)
+             if result.k_darcy_m2 else None, None),
+        ]
     for i, (label, val, fmt) in enumerate(rows):
         ws.cell(row=r + i, column=1, value=label).font = bold
         cell = ws.cell(row=r + i, column=2, value=val)

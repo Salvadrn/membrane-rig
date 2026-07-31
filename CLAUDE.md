@@ -57,10 +57,19 @@ Para pasar trabajo entre sesiones, usa la herramienta de mensajes entre sesiones
   | Límite del espécimen | 65 kPa (editable) | No se puede ni encolar más |
   | Techo por corrida | min(max(setpoint) + 10 kPa, límite del espécimen) | Detiene en seguro + alarma (reintenta/para) |
   | Corte global | 80 kPa | Aborta |
-  | Alivio mecánico | ~90 kPa | Ventea sin software |
+  | Alivio mecánico | ~90 kPa | **NO SE VA A INSTALAR** — ver nota abajo |
   | Saturación del sensor | 103 kPa | — |
 
   Nadie afloja estos límites sin decírselo a Adrián. La UI solo puede apretar.
+
+  **El alivio mecánico quedó fuera del pedido** (decisión de Adrián, 2026-07-29:
+  "es muy poca presión"). Eso quita **la única capa que actúa sin software y sin
+  energía**, así que hoy nada protege contra Pi colgada, pérdida de corriente con
+  el servo abierto (no sella: sostiene por fricción) ni válvula que no cierra. La
+  sustituta natural es un **regulador de aire tarado bajo**, que acota en la
+  fuente — pero su tarada **sigue sin documentarse**, y de ese número dependen ya
+  cinco decisiones. Mientras tanto: cerrar el suministro a mano al terminar no es
+  buena práctica, es obligatorio.
 - **Verificar antes de decir "listo".** Corre el sim, corre el test, mira la
   salida. Nada de "debería funcionar".
 - **Al cambiar una constante O UN COMPORTAMIENTO, barre lo DERIVADO.** Un

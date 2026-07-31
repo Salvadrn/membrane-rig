@@ -37,7 +37,10 @@ def plot_permeability(result, out_path, *, title: str = "Q vs ΔP",
 
     Both default to None, which renders exactly the plain plot.
     """
-    if result.n < 2:
+    if result.n < 2 or not out_path:
+        # No path means no run is open (RunLogger.plot_path() -> None). Bail
+        # instead of str(None), which silently writes a file called "None.png"
+        # into the cwd and returns it as if it were a real artefact.
         return None
     import matplotlib
     matplotlib.use("Agg")
