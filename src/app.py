@@ -449,6 +449,12 @@ class RigController:
         mu = water_viscosity_pa_s(run_temp_c)
         membrane = dataclasses.replace(self.cfg.membrane, viscosity_pa_s=mu, water_temp_c=run_temp_c)
         points = [(r.mean_kpa, r.flow_m3s) for r in results if r.success and r.flow_m3s > 0]
+        # Single-run provenance: this fit does NOT drop raised-ceiling points (it
+        # never consults the queue), so any that exist are INSIDE the published k —
+        # the worst case. Flag them so the plot says so. Same float objects as
+        # `points` above, never recomputed: the export derives in/out by membership.
+        flagged = [(r.mean_kpa, r.flow_m3s) for r in results
+                   if r.success and r.flow_m3s > 0 and r.collected_under_raised_ceiling]
         result = fit_permeability(points, membrane)
         self.analysis_result = result
         json_path = self.logger.save_analysis(result.as_dict())
@@ -456,7 +462,8 @@ class RigController:
         if self.cfg.analysis.auto_plot and plot_available() and result.n >= 2:
             try:
                 plot_path = plot_permeability(result, self.logger.plot_path(),
-                                              title=title, units="kPa")
+                                              title=title, units="kPa",
+                                              flagged_points=flagged or None)
             except Exception:
                 plot_path = None
         xlsx_path = None
@@ -506,6 +513,11 @@ class RigController:
         is the deliverable. Points come from items marked done that have a
         measured volume."""
         points = self.playlist.collected_points()
+        # The pairs the fit dropped, so the plot can DRAW them greyed instead of
+        # letting them vanish silently. Built from the same Experiment.points() the
+        # fit uses, so the values are identical floats.
+        excluded = [p for i in self.playlist.items
+                    if i.status == DONE and i.ceiling_raised for p in i.points()]
         with self._lock:
             run_temp_c = (self._temp_sum / self._temp_n) if self._temp_n else self._water_temp_c
         mu = water_viscosity_pa_s(run_temp_c)
@@ -525,7 +537,8 @@ class RigController:
             try:
                 files["plot_file"] = Path(plot_permeability(
                     result, base.with_name("playlist_latest_plot.png"),
-                    title=self.cfg.analysis.title, units="kPa")).name
+                    title=self.cfg.analysis.title, units="kPa",
+                    excluded_points=excluded or None)).name
             except Exception:
                 pass
         if xlsx_available() and result.n >= 1:
