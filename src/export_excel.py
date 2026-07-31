@@ -15,6 +15,48 @@ from typing import Optional
 
 SCI = "0.000E+00"
 
+# Provenance columns appended (in this order) to the "Per point" sheet when the
+# caller stamps them on the rows. They go at the END: old sheets and any script
+# reading by position keep working. Absent from every row -> not written at all,
+# so a caller that doesn't stamp them gets exactly the previous workbook.
+PROVENANCE_COLS = ["experiment_id", "experiment_label", "ceiling_raised",
+                   "collected_under_raised_ceiling"]
+
+RAISED_FILL = "FFF2CC"      # soft amber: this row's run ran above its declared ceiling
+
+
+def _split_raised(result, points_detail):
+    """Partition the raised-ceiling rows into (excluded, kept) with respect to
+    THIS fit. Which one applies depends on the caller, and the honest answer is
+    whatever actually happened rather than which code path we assume:
+
+      * playlist fit -> Playlist.collected_points() drops raised runs, so those
+        rows are absent from result.points_kpa_m3s  -> excluded.
+      * single-run fit -> nothing is dropped (it never consults the queue), so
+        the rows ARE in the fit -> kept, and the k being reported is derived
+        from a run that exceeded its declared envelope. That has to be loud.
+
+    Membership is an exact float compare on purpose: both the fit points and
+    these rows are the same values copied from the same TestResult, never
+    recomputed. If a future change rounds one side, this silently reports
+    everything as excluded -- match it back up rather than loosening to a
+    tolerance, so the sheet can't quietly claim a point was dropped.
+    """
+    rows = [d for d in (points_detail or []) if d.get("ceiling_raised")]
+    # only rows that could contribute a point at all
+    rows = [d for d in rows if d.get("success") and (d.get("flow_m3s") or 0.0) > 0]
+    fit_pts = {(p, q) for p, q in result.points_kpa_m3s}
+    excluded, kept = [], []
+    for d in rows:
+        pt = (d.get("mean_kpa"), d.get("flow_m3s"))
+        (kept if pt in fit_pts else excluded).append(d)
+    return excluded, kept
+
+
+def _run_count(rows) -> int:
+    """How many distinct runs these rows came from (blank id = one unnamed run)."""
+    return len({d.get("experiment_id") or "" for d in rows}) if rows else 0
+
 
 def xlsx_available() -> bool:
     try:
@@ -100,22 +142,50 @@ def export_permeability_xlsx(result, out_path, *, title: str = "Q vs ΔP",
         if fmt:
             cell.number_format = fmt
 
+    # --- ceiling-raised provenance -------------------------------------------
+    # A k derived from (or missing points because of) a run that raised its
+    # ceiling must be visible right here next to the number, not only in the
+    # raw CSV. Silent on a clean dataset: no raised rows -> no lines added.
+    excluded, kept = _split_raised(result, points_detail)
+    notes = []
+    if excluded:
+        notes.append((
+            "excluded from this fit",
+            f"{len(excluded)} point(s) from {_run_count(excluded)} run(s) — ceiling raised mid-run"))
+    if kept:
+        notes.append((
+            "⚠ ceiling raised — in this fit",
+            f"{len(kept)} point(s) of this k came from a run whose ceiling was raised"))
+    nr = r + len(rows) + 1
+    for i, (label, text) in enumerate(notes):
+        ws.cell(row=nr + i, column=1, value=label).font = bold
+        ws.cell(row=nr + i, column=2, value=text)
+
     ws.column_dimensions["A"].width = 34
     ws.column_dimensions["B"].width = 16
     ws.column_dimensions["C"].width = 16
 
     # --- optional per-point summary sheet ------------------------------------
     if points_detail:
+        from openpyxl.styles import PatternFill
+
         ps = wb.create_sheet("Per point")
         cols = ["setpoint_kpa", "mean_kpa", "std_kpa", "min_kpa", "max_kpa",
                 "in_band_fraction", "n_samples", "collection_s", "volume_ml", "flow_m3s"]
+        # This sheet mixes rows from several runs, so provenance has to be
+        # per-row; a scalar couldn't label it. Only append the columns the
+        # caller actually stamped.
+        cols += [c for c in PROVENANCE_COLS if any(c in d for d in points_detail)]
         for c, name in enumerate(cols, start=1):
             ps.cell(row=1, column=c, value=name).font = bold
+        amber = PatternFill("solid", fgColor=RAISED_FILL)
         for ri, d in enumerate(points_detail, start=2):
             for c, name in enumerate(cols, start=1):
                 cell = ps.cell(row=ri, column=c, value=d.get(name))
                 if name == "flow_m3s":
                     cell.number_format = SCI
+                if d.get("ceiling_raised"):
+                    cell.fill = amber      # findable by eye, not just by column
 
     out_path = str(out_path)
     wb.save(out_path)

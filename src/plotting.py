@@ -20,9 +20,23 @@ def plot_available() -> bool:
 
 
 def plot_permeability(result, out_path, *, title: str = "Q vs ΔP",
-                      units: str = "kPa") -> Optional[str]:
+                      units: str = "kPa", excluded_points=None,
+                      flagged_points=None) -> Optional[str]:
     """Write a PNG for a PermeabilityResult. Returns the path, or None if
-    matplotlib is missing or there aren't enough points."""
+    matplotlib is missing or there aren't enough points.
+
+    excluded_points / flagged_points are (ΔP kPa, Q m³/s) pairs from runs whose
+    ceiling was raised mid-test — the two ways that can land:
+
+      * excluded_points: dropped from the fit (the playlist path drops them).
+        Drawn hollow grey so they are visibly absent-on-purpose. A point that
+        just vanishes looks like it was never measured.
+      * flagged_points: still IN the fit (the single-run path excludes nothing),
+        so this k is partly derived from them. Ringed amber — the loudest case,
+        because the number on the chart depends on those points.
+
+    Both default to None, which renders exactly the plain plot.
+    """
     if result.n < 2:
         return None
     import matplotlib
@@ -31,7 +45,12 @@ def plot_permeability(result, out_path, *, title: str = "Q vs ΔP",
 
     xs = [p for p, _ in result.points_kpa_m3s]
     ys = [q for _, q in result.points_kpa_m3s]
-    xmax = max(xs) * 1.15
+    excluded = list(excluded_points or [])
+    flagged = list(flagged_points or [])
+    # excluded points are outside the fit, so they don't constrain the axes —
+    # scale to them anyway or they'd be drawn off-canvas and silently lost
+    xmax = max(xs + [p for p, _ in excluded]) * 1.15
+    ymax = max(ys + [q for _, q in excluded]) * 1.15
     x0, x1 = 0.0, xmax
     b, a = result.slope_per_kpa, result.intercept_m3s
 
@@ -39,10 +58,21 @@ def plot_permeability(result, out_path, *, title: str = "Q vs ΔP",
     ax.plot([x0, x1], [a + b * x0, a + b * x1], ":", color="#2f6fdb",
             linewidth=1.6, zorder=1)
     ax.scatter(xs, ys, s=42, color="#2f6fdb", alpha=0.75,
-               edgecolors="#173a70", linewidths=0.5, zorder=2)
+               edgecolors="#173a70", linewidths=0.5, zorder=2,
+               label="Q (in fit)" if (excluded or flagged) else None)
+    if flagged:
+        ax.scatter([p for p, _ in flagged], [q for _, q in flagged], s=132,
+                   facecolors="none", edgecolors="#c77700", linewidths=1.8,
+                   zorder=3, label="ceiling raised — in fit")
+    if excluded:
+        ax.scatter([p for p, _ in excluded], [q for _, q in excluded], s=42,
+                   facecolors="none", edgecolors="#8a929a", linewidths=1.2,
+                   zorder=2, label="ceiling raised — excluded")
+    if excluded or flagged:
+        ax.legend(loc="upper left", fontsize=8.5, framealpha=0.9)
 
     ax.set_xlim(0, xmax)
-    ax.set_ylim(0, max(ys) * 1.15)
+    ax.set_ylim(0, ymax)
     ax.set_xlabel(f"ΔP ({units})")
     ax.set_ylabel("flow rate  Q  (m³/s)")
     ttl = f"{title} — {result.label}" if result.label else title
