@@ -209,7 +209,7 @@ so it buys exactly one break. Ranked by what a plug pushed in backwards costs:
 | 3-way diverter coil | 2 (+1 spare pole) | destroys parts — see the warning — **unless** the spare pole is used as a key | **best use** |
 | DS18B20 probe | 3 (GND · VDD · DQ) | swaps GND↔DQ, both legs current-limited by the 4.7k pull-up → probe reads nothing, nothing dies | good second |
 | Pressure transducer | 3 (V+ · sig · GND) | sensor return goes through the 10k/22k divider: A0 sits ≈3.4 V (abs max is VDD+0.3 = 3.6 V) and the rig reads >100 kPa → aborts | detectable, not free |
-| Servo DS3218 | 3 (GND · V+ · sig) | the servo's return current (~2 A peaks) flows through **GPIO18**, rated 16 mA → dead GPIO, likely dead Pi | do NOT, unless keyed |
+| Servo DS3218 | 3 (GND · V+ · sig) | the servo's return current (~2 A peaks) flows through **GPIO18**, rated 8 mA on the Pi 4 → dead GPIO, likely dead Pi | do NOT, unless keyed |
 
 **Recommended: coil on poles 1 and 2, pole 3 left dead on the header.** A 3-pole
 plug flipped 180° maps 1→3, 2→2, 3→1. With the coil on poles 1–2 and *nothing*
