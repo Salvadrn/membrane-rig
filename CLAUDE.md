@@ -86,23 +86,27 @@ Para pasar trabajo entre sesiones, usa la herramienta de mensajes entre sesiones
   buena práctica, es obligatorio.
 - **Verificar antes de decir "listo".** Corre el sim, corre el test, mira la
   salida. Nada de "debería funcionar".
-- **Al cambiar una constante O UN COMPORTAMIENTO, barre lo DERIVADO.** Un
-  find/replace del literal no basta, y hay dos clases:
-  - **Numéricos:** cifras calculadas con el valor viejo, que no contienen ni el
-    número ni el nombre de la pieza. Caso real (divisor 10k/20k → 10k/22k): el
-    paper traía un `1.366 V` que era `2.047 × 0.667` y no contenía "0.667" ni
-    "20k" — habría quedado contradiciendo su propia ecuación.
-  - **En prosa:** descripciones de comportamiento, **sin un solo número**, que
-    quedan mintiendo. Caso real (clamp del techo + estado HELD): `CLAUDE.md`,
-    `README.md` y tres roles decían *"una prueba de 20 kPa aborta cerca de 30"* y
-    *"max(setpoint)+10"*. No cambió ningún número: cambió lo que el sistema HACE.
+- **Al cambiar una constante, un COMPORTAMIENTO o una DECISIÓN, barre lo
+  DERIVADO.** Un find/replace del literal no basta. Tres clases, y solo la
+  primera se caza con grep:
+  - **Cifras** calculadas con el valor viejo, sin el número ni el nombre de la
+    pieza. Caso real (divisor 10k/20k → 10k/22k): el paper traía `1.366 V` que
+    era `2.047 × 0.667` y no contenía "0.667" ni "20k".
+  - **Afirmaciones** que dependían del hecho viejo. Caso real (etapa 2 + clamp):
+    cinco documentos decían *"una prueba de 20 kPa aborta cerca de 30"*. No
+    cambió ningún número: cambió lo que el sistema HACE.
+  - **Recomendaciones** que solo tenían sentido con la pieza vieja. Caso real
+    (alivio fuera del pedido): `docs/wiring_fluidos.html` advertía que la tee
+    Swagelok quedaba corta *"porque el alivio y el transductor son dos tomas"* —
+    sin alivio hay una sola, y la advertencia se invirtió en un consejo de
+    comprar un fitting para una pieza que nunca va a llegar. **Ese derivado
+    cuesta dinero.**
 
-  Los numéricos se cazan preguntando *"¿qué cifras se calcularon con el viejo?"*.
-  **Los de prosa no se cazan con grep** — hay que releer lo que cada documento
-  *afirma* sobre el comportamiento y contrastarlo contra el código. Las seis de
-  ese caso salieron releyendo, no buscando. Si cambiaste **qué hace** el sistema y
-  no solo con qué número, abre `CLAUDE.md`, `README.md`, `.claude/roles/*` y
-  `docs/paper/` y léelos contra el código.
+  Las cifras se cazan preguntando *"¿qué se calculó con el viejo?"*. Las otras dos
+  **no se cazan con grep** — hay que releer lo que cada documento *afirma* y
+  *recomienda*, contra el código y contra las decisiones vigentes. Si cambiaste
+  **qué hace** el sistema o **qué se va a comprar**, abre `CLAUDE.md`,
+  `README.md`, `.claude/roles/*`, `docs/` y `docs/paper/` y léelos.
 - **Simulación ≠ hardware.** Cualquier afirmación sobre el comportamiento físico
   va marcada como pendiente de validar en el rig.
 - **Un sensor caído nunca se interpreta como "presión baja"** — se trata como
