@@ -559,6 +559,67 @@ housekeeping. Each check forces a real fault and demands the documented response
 
 ---
 
+## Stage 10.5 — Does the diverter throttle the measurement? (blocking)
+
+**Run this before Stage 11. If it fails, every number from a real run is wrong
+and the fit will not tell you.**
+
+The diverter sits on the permeate outlet, downstream of the membrane. Every
+permeability number assumes that side is at atmosphere, so that the transducer's
+reading *is* the transmembrane ΔP. A restricting valve puts backpressure there,
+and the real ΔP is smaller than the measured one.
+
+What makes this dangerous rather than merely inaccurate: orifice pressure drop
+goes as **Q²**, and Q rises with ΔP. The error therefore grows with pressure, so
+it does not shift the Darcy line — **it bends it**. The bias in `k` is a
+deformation, not a scale factor.
+
+The valve on order is a **231Y-6, 1.5 mm orifice, Cv 0.09–0.21** (the vendor's
+own page states both; an independent orifice calculation, Cd 0.6, gives ~0.062,
+which supports the pessimistic figure). That makes it transparent only up to
+roughly **2–5 mL/s**:
+
+| Permeate flow | Backpressure @ Cv 0.09 | @ Cv 0.21 |
+|---|---|---|
+| 5 mL/s | 5.3 kPa | 1.0 kPa |
+| 10 mL/s | 21.4 kPa | 3.9 kPa |
+| 15 mL/s | 48.1 kPa | 8.8 kPa |
+| 30 mL/s | 192 kPa | 35.4 kPa |
+
+Against a 35 kPa working pressure. At 30 mL/s with the *optimistic* Cv the valve
+eats the entire test pressure — the membrane would see nothing.
+
+- [ ] **10.5.1 Measure the free flow rate first.** With the valve bypassed —
+      permeate straight into the cylinder — hold a setpoint and time a known
+      volume. This single number decides everything via the table above, and it
+      also closes the flow-rate unknown that Datos needs for the collection
+      window. **Expected: unknown.** `flow_per_kpa_m3s` in `config.yaml` was
+      chosen to produce a clean Darcy line in simulation; it was never measured.
+
+- [ ] **10.5.2 If free flow ≤ 5 mL/s** — the valve is transparent, nothing to do.
+      Record the number and move on.
+
+- [ ] **10.5.3 If free flow is higher, run the comparison.** Same membrane, same
+      setpoint, two runs: once through the diverter, once bypassing it and timing
+      by hand. Compute `k` both ways. **They must agree within the run-to-run
+      scatter.** If the diverter run gives a lower `k`, the valve is throttling
+      and the diverted number is invalid.
+
+- [ ] **10.5.4 Do NOT accept `R² ≥ 0.98` as evidence that this is fine.**
+      Simulated against the real fit: a valve bending the line badly enough to
+      put `k` **49.5 % low** still returns **R² = 0.9969** and
+      `follows_darcy = True`. With three setpoints a smooth curvature is
+      invisible to the criterion. The R² check catches noise and leaks; it does
+      not catch this.
+
+**If it does throttle**, the options in order — see the analysis handed to
+General: a valve with a much larger Cv (~1.25 to pass 30 mL/s cleanly, which is
+a substantially bigger part, not an upgrade); a scale replacing the diverter in
+the flow path entirely; or a second transducer downstream. Note that the last
+one **rescues the arithmetic but not the experiment** — if the valve is eating
+the test pressure, the membrane never saw the ΔP that was commanded, and no
+correction recovers a measurement that did not happen.
+
 ## Stage 11 — First real run
 
 - [ ] **11.1** `config.yaml`: `mode: hardware`, `temperature.source: probe`,

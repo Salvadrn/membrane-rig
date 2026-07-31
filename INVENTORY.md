@@ -25,6 +25,7 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 | Sonda DS18B20 waterproof | llegó 2026-07-27; era el item #4 del pedido. Desbloquea la cadena de temperatura completa |
 | **Transductor 0–15 PSI, 0.5–4.5 V, G1/4** | llegó 2026-07-27; item #1, el prioritario. **Cierra la cadena de sensado completa**: transductor → divisor 10k/22k → ADS1115 → Pi. Para MONTARLO en el rig falta el adaptador G1/4 → Swagelok (estado desconocido) |
 | Kit de capacitores electrolíticos (470 / 1000 µF) | llegó 2026-07-27; item #8. **No desbloquea nada todavía**: van al riel de 12 V, que sigue trabado por el fusible |
+| **Solenoide 3 vías 231Y-6-12VDC** | llegó; item #2. **⚠ Orificio de 1.5 mm, Cv 0.09–0.21 — puede estrangular la medición.** Ver "El diverter puede invalidar la medición" abajo. No energizar: falta el 1N5819 |
 | **Multímetro** | confirmado por Adrián 2026-07-29. Desbloquea medir `divider_ratio`, los rieles del header y el cero del transductor **sin la Pi** |
 | **Cautín + soldadura** | confirmado por Adrián 2026-07-29. Desbloquea el Paso 0: colas de conductor sólido en las puntas trenzadas (sonda, 22AWG y —confirmar— transductor) |
 
@@ -253,6 +254,37 @@ Y uno que no es de banco pero destraba más que ninguno:
       ver, y hoy gatea: presurizar con seguridad, el tope de la recuperación de
       techo, si hace falta un solenoide de corte, dimensionar el servo, y medir
       el par de arranque.
+
+## ⚠ El diverter puede invalidar la medición — verificar ANTES de tomar datos
+
+Adrián vio el orificio y le pareció muy chico. Tenía razón: **1.5 mm, Cv 0.09–0.21**
+(la propia página del fabricante da los dos números; el cálculo de orificio con
+Cd 0.6 da ~0.062, lo que respalda el pesimista).
+
+El diverter está **aguas abajo de la membrana**, y todo el cálculo supone que ese
+lado está a atmósfera — o sea que lo que lee el transductor *es* la ΔP
+transmembrana. Si el orificio restringe, hay contrapresión y la ΔP real es menor.
+
+**Y lo grave no es el sesgo: la caída va con Q², y Q crece con ΔP.** El error
+crece con la presión, así que no desplaza la recta de Darcy — **la dobla**.
+
+| Caudal | Contrapresión @Cv 0.09 | @Cv 0.21 |
+|---|---|---|
+| 5 mL/s | 5.3 kPa | 1.0 kPa |
+| 10 mL/s | 21.4 kPa | 3.9 kPa |
+| 15 mL/s | 48.1 kPa | 8.8 kPa |
+| 30 mL/s | 192 kPa | **35.4 kPa** |
+
+Contra 35 kPa de presión de trabajo. A 30 mL/s con el Cv **optimista** la válvula
+se come la prueba entera. Transparente solo hasta **2–5 mL/s**; el sim asume 28–60.
+
+**El R² no lo caza.** Simulado contra el ajuste real: una recta doblada lo
+suficiente para dejar `k` **49.5 % baja** sigue dando **R² = 0.9969** y
+`follows_darcy = True`. Con tres setpoints una curvatura suave es invisible.
+
+**Todo depende de un número que nunca se ha medido: el caudal real.** Es el mismo
+pendiente que ya tenía Datos por el desbordamiento de la probeta — dos problemas,
+una sola medición. Prueba de aceptación en `docs/COMMISSIONING.md` § Stage 10.5.
 
 ## La probeta se desborda antes de que termine la ventana de colecta
 
