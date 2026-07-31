@@ -66,7 +66,7 @@ Slides 1–3 and 8–10 are text only — delete their placeholders. Regenerate 
 **Never cut slide 4.** It's the idea a mentor will remember.
 
 ## If you're asked about safety
-Answer straight — the honest version is the strong one: "There are four software layers: a per-run ceiling, a global cutoff, a stuck-sensor detector and a plant watchdog. The mechanical relief valve that would back all of that up **wasn't purchased**, so every layer needs the controller alive — which is why the supply gets closed by hand at the end of a session, and why fitting that valve is the first hardware change I'd make." Don't oversell the ladder; the paper states this limitation too (Sec. 8 and 10).
+Answer straight — the honest version is the strong one: "There are four software layers: a per-run ceiling, a global cutoff, a stuck-sensor detector and a plant watchdog. The mechanical relief valve that would back all of that up **is on order but not yet mounted**, so today every layer needs the controller alive — which is why the supply gets closed by hand at the end of a session, and why fitting that valve is the first hardware change I'd make." Don't oversell the ladder; the paper states this limitation too (Sec. 8 and 10).
 
 ## If you're short
 - Slide 5 — walk the fit: point at one dot, "each dot is one 60-second collection."

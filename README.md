@@ -235,7 +235,7 @@ servo horn ──[coupler/bracket]── valve stem
 pigpio sends clean servo pulses; `servo_min_us`/`servo_max_us` calibrate the
 endpoints. command 0% → lowest pressure (inline throttle: valve CLOSED), 100% →
 highest (open). **A servo holds position on power loss** (no spring-return), and the
-mechanical relief valve that would cover that case **is not fitted** — so if the Pi
+mechanical relief valve that would cover that case is **on order, not fitted** — so if the Pi
 dies with the valve open, nothing closes it. Close the supply by hand. Mechanical note: a hobby servo
 only turns ~180°, so pair it with a **quarter-turn (90°) metering/ball valve** so
 the servo's travel spans the valve's full range (a multi-turn needle valve gives
@@ -351,7 +351,7 @@ your accumulated dataset, all in one place.
 | 2× logic-level N-MOSFET | IRLZ44N (or a 2-channel MOSFET driver module) |
 | 2× flyback diode | 1N5819 / SB560 (skip if the driver module has them) |
 | 12 V power supply | sized for both valves' inrush current |
-| ~~Mechanical pressure-relief valve~~ | **NOT BEING BOUGHT** (Adrián's call). It was the only layer that needed no software or power — see the safety note at the end. |
+| Mechanical pressure-relief valve | **ON ORDER — not fitted.** It is the only layer that needs no software or power, so it protects nothing until it is mounted and set. See the safety note at the end. |
 | Wiring, 470 Ω gate resistors, fittings, tubing, graduated cylinder | — |
 
 ---
@@ -505,7 +505,8 @@ e.g. `test.setpoints: [15, 15, 20, 20, 30, 30]`.
 - Ctrl+C, unhandled exceptions and process shutdown all drive the valves to the
   safe state (valve vented, diverter to waste).
 - **There is no hardware-only protection on this rig.** The mechanical relief
-  valve was specified and then not purchased, so **every** limit above — run
+  valve is on order but **not yet fitted**, so until it is mounted and set
+  **every** limit above — run
   ceiling, 80 kPa cutoff, sensor and plant fault detectors — needs the Pi alive.
   If it hangs or loses power with the air valve open, nothing in the rig closes
   it and the pressure is bounded only by what the panel regulator can deliver.
