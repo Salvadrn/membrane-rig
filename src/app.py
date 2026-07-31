@@ -86,6 +86,20 @@ class RigController:
         self._wd_ticks = 0
         self._wd_rose = False
 
+        # Ceiling recovery (HELD). Hitting a RUN ceiling stops to safe and waits
+        # for the operator instead of ending the run; the global cutoff and sensor
+        # faults are never recoverable. See _enter_held.
+        self._held = False
+        self._held_alarm: Optional[dict] = None
+        self._hold_count = 0             # consecutive holds on the current point
+        self._hold_point_idx: Optional[int] = None
+        self._retry_max = cfg.safety.ceiling_retry_max
+        self._ceiling_raised = False     # provenance: was this run's ceiling raised?
+        self._raise_note = ""
+        # filtered dP/dt, used to tell a normal overshoot from a runaway
+        self._prev_p: Optional[float] = None
+        self._p_rate = 0.0
+
         # water temperature (a test variable): polled slowly off the fast loop.
         # mu is derived from it; the run-mean temp feeds the permeability calc.
         self._water_temp_c = cfg.temperature.manual_c
@@ -124,6 +138,12 @@ class RigController:
             "run_ceiling_disp": round(cfg.disp(cfg.safety.max_pressure_kpa), 2),
             "run_ceiling_source": "safety cutoff",
             "close_warning": "",
+            # Ceiling recovery: `held` = stopped at the ceiling, feed shut, waiting
+            # for the operator. `held_alarm` carries everything the UI needs (all
+            # pressures in DISPLAY units) including the machine-readable severity /
+            # retry_advised the Retry button keys off — never parse the prose.
+            "held": False,
+            "held_alarm": None,
         }
         # rolling history for the live chart: (elapsed_s, pressure_disp, setpoint_disp)
         self.history = deque(maxlen=4000)
@@ -220,6 +240,17 @@ class RigController:
             self._wd_open_p = None
             self._wd_ticks = 0
             self._wd_rose = False
+            self._held = False
+            self._held_alarm = None
+            self._hold_count = 0
+            self._hold_point_idx = None
+            self._ceiling_raised = False
+            self._raise_note = ""
+            self._prev_p = None
+            self._p_rate = 0.0
+            self.status["ceiling_raised"] = False
+            self.status["held"] = False
+            self.status["held_alarm"] = None
             self._temp_sum = 0.0
             self._temp_n = 0
             self._close_check_until = 0.0
@@ -431,7 +462,17 @@ class RigController:
         xlsx_path = None
         if xlsx_available() and result.n >= 1:
             try:
-                detail = [dict(r.__dict__) for r in results]
+                # per-row provenance for the export (single-run path: the flag comes
+                # from runtime state, not the playlist — nothing is excluded here,
+                # the single-run fit doesn't consult the queue)
+                item = self.playlist.get(self._current_item_id) if self._current_item_id else None
+                detail = []
+                for r in results:
+                    row = dict(r.__dict__)
+                    row["ceiling_raised"] = self._ceiling_raised
+                    row["experiment_id"] = item.id if item else ""
+                    row["experiment_label"] = item.label if item else ""
+                    detail.append(row)
                 xlsx_path = export_permeability_xlsx(
                     result, self.logger.xlsx_path(), title=title, units="kPa",
                     points_detail=detail)
@@ -489,8 +530,21 @@ class RigController:
                 pass
         if xlsx_available() and result.n >= 1:
             try:
-                detail = [r for i in self.playlist.items if i.status == DONE
-                          for r in i.results]
+                # Per-ROW provenance: this sheet mixes points from several runs, so
+                # a scalar can't label it. Every row carries its run's
+                # ceiling_raised flag (+ id/label to group by), which is how a k
+                # from a raised-ceiling run stays visible in Excel instead of just
+                # silently missing from the fit.
+                detail = []
+                for i in self.playlist.items:
+                    if i.status != DONE:
+                        continue
+                    for r in i.results:
+                        row = dict(r)
+                        row["ceiling_raised"] = bool(i.ceiling_raised)
+                        row["experiment_id"] = i.id
+                        row["experiment_label"] = i.label
+                        detail.append(row)
                 files["xlsx_file"] = Path(export_permeability_xlsx(
                     result, base.with_name("playlist_latest_results.xlsx"),
                     title=self.cfg.analysis.title, units="kPa",
@@ -543,6 +597,9 @@ class RigController:
                 self._collect_idx = seq.index
                 self._collect_vol_m3 = 0.0
             self._collect_vol_m3 += self._flow_increment()
+        # stamp per-point provenance on every result the moment it is finalised
+        if len(self.sequencer.results) > prev_n:
+            self.sequencer.results[-1].collected_under_raised_ceiling = self._ceiling_raised
         # a result was just finalised AND we were mid-collection -> attach volume
         if len(self.sequencer.results) > prev_n and self._collect_idx is not None:
             r = self.sequencer.results[-1]
@@ -620,6 +677,163 @@ class RigController:
         self._update_status(pressure, None, 0.0, False, Phase.DONE, index, total,
                             now - self._run_start, 0.0, in_band=False)
 
+    # A hit is classified "runaway" (retry is the WRONG move) when pressure is
+    # still climbing while the loop is already commanding the valve (near) shut —
+    # the signature of a stuck valve or a lying sensor. Anything else is a plain
+    # overshoot, where retrying the point is reasonable. Advisory only: it drives
+    # the alarm text and the Retry button, never an abort.
+    _RUNAWAY_RISE_KPA_S = 0.5
+    _RUNAWAY_VALVE_PCT = 20.0
+
+    def _track_rate(self, pressure: float) -> None:
+        """Filtered dP/dt, used only to tell a normal overshoot from a runaway when
+        a ceiling is hit. Same filter constant as the PID's derivative. Lock held."""
+        if pressure != pressure:            # NaN: no information, keep the estimate
+            return
+        if self._prev_p is not None:
+            raw = (pressure - self._prev_p) / self._dt
+            alpha = self._dt / (0.3 + self._dt)
+            self._p_rate += alpha * (raw - self._p_rate)
+        self._prev_p = pressure
+
+    def _raise_cap_kpa(self) -> float:
+        """Highest ceiling the operator may raise to. 0 in config = raising is
+        DISABLED (the born-inert default), signalled by returning the current
+        ceiling: the UI sees raise_max <= ceiling and greys the button out. A
+        positive cap is still clamped to the specimen limit and the global cutoff,
+        so a raise can never exceed what the mesh was declared to tolerate."""
+        configured = self.cfg.safety.operator_raise_max_kpa
+        if not configured or configured <= 0:
+            return self.safety.max_pressure          # no raise possible
+        return min(configured, self.pressure_limit_kpa(), self.cfg.safety.max_pressure_kpa)
+
+    def _enter_held(self, now: float, pressure: float, reason: str) -> None:
+        """Stop to safe at the run ceiling and wait for the operator instead of
+        ending the run. The feed is SHUT here and stays shut every held tick — the
+        rig is safe while it waits, which is why waiting forever is acceptable and
+        why nothing auto-retries or auto-raises: deciding at a safety boundary with
+        nobody watching is exactly what we don't want. Lock held."""
+        self._safe_all()
+        self._held = True
+        runaway = (self._p_rate > self._RUNAWAY_RISE_KPA_S
+                   and self.pid.last_output <= self._RUNAWAY_VALVE_PCT)
+        severity = "runaway" if runaway else "overshoot"
+        if runaway:
+            advice = ("Pressure is still RISING while the valve is being commanded shut. "
+                      "Do NOT retry — that would repeat the excursion. Check the rig "
+                      "physically: a stuck valve, a stuck sensor, or supply that isn't "
+                      "shutting off.")
+        else:
+            advice = ("Normal overshoot past the ceiling. Retrying this point is "
+                      "reasonable; the feed is shut and pressure is bleeding down.")
+        cap = self._raise_cap_kpa()
+        d = self.cfg.disp
+        self._held_alarm = {
+            "setpoint": self.status.get("setpoint_disp"),
+            "ceiling": round(d(self.safety.max_pressure), 2),
+            "ceiling_source": self.safety.limit_name,
+            "pressure_reached": round(d(pressure), 2),
+            "layer": reason,
+            "retry_n": self._hold_count,
+            "retry_max": self._retry_max,
+            "raise_max": round(d(cap), 2),
+            "severity": severity,
+            "retry_advised": not runaway,
+            "recommendation": advice,
+            "units": self.cfg.units,
+        }
+        self.status["held"] = True
+        self.status["held_alarm"] = self._held_alarm
+
+    def _exit_held(self) -> None:
+        """Leave the held state (retry / raise / stop / hard abort). Lock held."""
+        self._held = False
+        self._held_alarm = None
+        self.status["held"] = False
+        self.status["held_alarm"] = None
+
+    def _resume_point(self, now: float) -> None:
+        """Common tail of retry and raise: restart the CURRENT point from scratch.
+        The partial collection is discarded (it carries the excursion, and that
+        pressure record is what produces k), and the PID + ramp are reset so the
+        loop re-approaches from wherever the cell is now instead of resuming with a
+        wound-up integrator. Lock held."""
+        self.sequencer.restart_current_point(now)
+        self.pid.reset()
+        self.safety.reset()
+        self._ramp_sp = None
+        self._ramp_for = None
+        self._wd_open_p = None
+        self._wd_ticks = 0
+        self._wd_rose = False
+        self._collect_idx = None
+        self._collect_vol_m3 = 0.0
+        self._prev_p = None
+        self._p_rate = 0.0
+        self._exit_held()
+
+    # --- operator recovery actions -------------------------------------------
+    def recover_retry(self) -> dict:
+        """Re-run the point that hit the ceiling, same ceiling."""
+        with self._lock:
+            if not self._held:
+                return {"ok": False, "error": "the rig is not waiting at a ceiling"}
+            self._resume_point(time.monotonic())
+            return {"ok": True, "action": "retry"}
+
+    def recover_raise(self, new_ceiling_display: float) -> dict:
+        """Raise this run's ceiling (never above the cap) and re-run the point.
+        Marks the run as ceiling-raised: it saw pressure the mesh was not declared
+        to tolerate, so its k is provenance-tagged and excluded from the combined
+        fit."""
+        with self._lock:
+            if not self._held:
+                return {"ok": False, "error": "the rig is not waiting at a ceiling"}
+            cap = self._raise_cap_kpa()
+            if not self.cfg.safety.operator_raise_max_kpa > 0:
+                return {"ok": False, "error": "raising the ceiling is disabled in config "
+                                              "(safety.operator_raise_max = 0)"}
+            new_kpa = self.cfg.to_internal(float(new_ceiling_display))
+            u = self.cfg.units
+            if new_kpa <= self.safety.max_pressure:
+                return {"ok": False, "error": f"{self.cfg.disp(new_kpa):.1f} {u} is not above "
+                                              f"the current ceiling"}
+            if new_kpa > cap:
+                return {"ok": False, "error": f"{self.cfg.disp(new_kpa):.1f} {u} exceeds the "
+                                              f"maximum allowed raise of {self.cfg.disp(cap):.1f} {u}"}
+            old = self.safety.max_pressure
+            self.safety.max_pressure = new_kpa
+            self.safety.limit_name = "raised ceiling"
+            self._ceiling_raised = True
+            self.status["run_ceiling_kpa"] = round(new_kpa, 2)
+            self.status["run_ceiling_disp"] = round(self.cfg.disp(new_kpa), 2)
+            self.status["run_ceiling_source"] = "raised ceiling"
+            self.status["ceiling_raised"] = True
+            # Provenance, through the channels this module owns: the playlist item
+            # flag (which excludes the run from the combined fit and reaches the
+            # export), plus a note that lands in the run's CSV footer via
+            # _end_run -> logger.finish_run(status_note=...).
+            self._raise_note = (f"ceiling raised by operator {self.cfg.disp(old):.1f} -> "
+                                f"{self.cfg.disp(new_kpa):.1f} {u}")
+            if self._current_item_id:
+                try:
+                    self.playlist.update(self._current_item_id, ceiling_raised=True,
+                                         note=self._raise_note)
+                except Exception:
+                    pass
+            self._resume_point(time.monotonic())
+            return {"ok": True, "action": "raise",
+                    "ceiling": round(self.cfg.disp(new_kpa), 2)}
+
+    def recover_stop(self) -> dict:
+        """End the run from the held state."""
+        with self._lock:
+            if not self._held:
+                return {"ok": False, "error": "the rig is not waiting at a ceiling"}
+            self._exit_held()
+            self._end_run("stopped by operator at the ceiling")
+            return {"ok": True, "action": "stop"}
+
     def _temp_loop(self) -> None:
         """Poll the water-temperature probe slowly (blocking reads are fine here,
         off the fast control loop). Cache the latest good reading + its viscosity."""
@@ -689,9 +903,13 @@ class RigController:
         """Must be called with the lock held."""
         self._safe_all()              # feed fully shut, diverter to waste
         self.safety.disarm()          # idle again: back to the global cutoff
+        self._exit_held()             # a run can't stay 'held' once it has ended
         self._start_close_check(self.status.get("pressure_kpa", 0.0))
+        # Provenance rides along into the run's CSV footer: a k from a run whose
+        # ceiling was raised must be traceable in the artefacts, not just in RAM.
+        note = f"{reason}; {self._raise_note}" if self._raise_note else reason
         try:
-            self.logger.finish_run(self.sequencer.results, status_note=reason)
+            self.logger.finish_run(self.sequencer.results, status_note=note)
         except Exception:
             pass
         self.logger.close()
@@ -702,10 +920,15 @@ class RigController:
         # advances by itself — the operator has a cylinder to read and empty.
         if self._current_item_id:
             try:
+                # keep the raise note even on a clean finish — it is provenance,
+                # not an error message, so "completed" must not erase it.
+                item_note = "" if reason == "completed" else reason
+                if self._raise_note:
+                    item_note = f"{item_note}; {self._raise_note}" if item_note else self._raise_note
                 self.playlist.update(
                     self._current_item_id,
                     status=DONE if reason == "completed" else FAILED,
-                    note="" if reason == "completed" else reason,
+                    note=item_note,
                     results=[dict(r) for r in results],
                 )
             except Exception:
@@ -744,8 +967,53 @@ class RigController:
 
         with self._lock:
             pressure = reading.pressure_kpa
+            self._track_rate(pressure)
+
+            # --- held at a ceiling: feed already shut, waiting for the operator ---
+            if self._held:
+                self._safe_all()      # keep it shut for as long as we wait
+                # A runaway must NEVER hide behind a screen waiting for a human:
+                # while held we still watch the layers that are not recoverable —
+                # the GLOBAL cutoff and sensor faults. Reaching either here is a
+                # hard vent-abort with no recovery offered. (The run-ceiling
+                # OVERPRESSURE that put us here keeps repeating as pressure bleeds
+                # down; that one is already answered, so it is ignored.)
+                if state == SafetyState.SENSOR_FAULT:
+                    self._exit_held()
+                    self._abort_fault(f"{state.value}: {reason}", now, pressure)
+                elif pressure >= self.safety.hard_max:
+                    self._exit_held()
+                    self._abort_fault(
+                        f"overpressure: {pressure:.1f} kPa reached the global cutoff "
+                        f"{self.safety.hard_max:.1f} kPa while held", now, pressure)
+                else:
+                    self._update_status(pressure, None, 0.0, False,
+                                        self.sequencer.phase, self._final_index,
+                                        self._final_total, now - self._run_start, 0.0,
+                                        in_band=False)
+                if self.plant is not None:
+                    self.plant.step(self._dt)
+                return
 
             if state != SafetyState.OK:
+                # A RUN-ceiling overpressure is recoverable: stop to safe, alarm,
+                # and let the operator decide. The global cutoff and sensor faults
+                # are not — those always vent and end the run.
+                ceiling_bound = self.safety.max_pressure < self.safety.hard_max
+                if (self._active and state == SafetyState.OVERPRESSURE
+                        and ceiling_bound and pressure < self.safety.hard_max):
+                    self._hold_count += 1
+                    if self._hold_count < self._retry_max:
+                        self._enter_held(now, pressure, reason)
+                        self._update_status(pressure, None, 0.0, False,
+                                            self.sequencer.phase, 0, 0,
+                                            now - self._run_start, 0.0, in_band=False)
+                        if self.plant is not None:
+                            self.plant.step(self._dt)
+                        return
+                    # repeated hits on the same point: something physical is wrong
+                    reason = (f"{reason} — hit {self._hold_count} times on this point; "
+                              f"stopping instead of retrying. Check the rig.")
                 self._fault_reason = f"{state.value}: {reason}"
                 self._safe_all()
                 if self._active:
@@ -762,6 +1030,11 @@ class RigController:
             if self._active:
                 prev_n = len(self.sequencer.results)
                 seq = self.sequencer.update(now, pressure)
+                # The retry budget is per POINT: moving on to a new setpoint gets a
+                # fresh count (a retry restarts the same point, so it does not).
+                if seq.index != self._hold_point_idx:
+                    self._hold_point_idx = seq.index
+                    self._hold_count = 0
                 self._accumulate_volume(seq, prev_n)
                 if seq.phase == Phase.DONE:
                     self._final_elapsed = now - self._run_start

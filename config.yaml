@@ -147,15 +147,20 @@ safety:
   close_check_s: 20.0
   close_check_min: 1.0
   # Operator ceiling-raise cap (recovery flow). When a run hits its ceiling the
-  # rig stops-to-safe and alarms; the operator can retry, or — only up to this
-  # cap — raise the ceiling and continue. 0 = INERT: the cap falls back to the
-  # specimen limit, so "raise" can't go above where the ceiling already is (the
-  # operator gets stop + alarm + retry, never a higher ceiling). It NEVER exceeds
-  # max_pressure. KEEP 0 until the air-supply upper bound (panel regulator
-  # setting) is known: with no mechanical relief, the supply pressure is the only
-  # thing that bounds a runaway, so raising must stay impossible until that
-  # number exists. Global cutoff + sensor faults are NEVER recoverable/raisable.
+  # rig stops-to-safe and alarms; the operator can retry, stop, or — only if this
+  # cap allows it — raise the ceiling and continue.
+  # 0 = RAISING DISABLED ENTIRELY: the alarm offers only retry and stop. Any
+  # positive value is additionally clamped to the specimen limit and to
+  # max_pressure, so a raise can never exceed what the mesh was declared to
+  # tolerate. KEEP 0 until the air-supply upper bound (panel regulator setting) is
+  # known: with no mechanical relief the supply pressure is the only thing that
+  # bounds a runaway, so raising must stay impossible until that number exists.
+  # Global cutoff + sensor faults are NEVER recoverable or raisable.
   operator_raise_max: 0.0
+  # Consecutive ceiling hits on the SAME point before the rig stops hard instead
+  # of offering recovery again — repeated hits mean something physical is wrong
+  # and retrying forever would just repeat the excursion.
+  ceiling_retry_max: 3
   # Frozen-signal detector (the sharpest guard against a stuck sensor). A live
   # electrical signal ALWAYS carries noise (~0.15 kPa here = ~32 ADC counts, so a
   # healthy reading moves >1 LSB every sample), so the raw value being bit-

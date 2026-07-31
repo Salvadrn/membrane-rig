@@ -51,6 +51,10 @@ class TestResult:
     # from the simulated plant; on hardware the operator enters the volume.
     volume_ml: float = 0.0
     flow_m3s: float = 0.0
+    # Provenance: this point was collected after the operator raised the run's
+    # ceiling, i.e. at a pressure envelope the specimen was not declared for.
+    # Stamped by the controller; the run-level flag lives on the playlist item.
+    collected_under_raised_ceiling: bool = False
 
 
 @dataclass

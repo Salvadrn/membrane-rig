@@ -102,13 +102,19 @@ class SafetyConfig:
     close_check_s: float = 20.0
     close_check_min_drop_kpa: float = 1.0
     # Operator ceiling raise (the recovery flow). The highest the operator may
-    # raise a run's ceiling to, mid-run, from the overpressure alarm. 0 = born
-    # INERT: the effective cap falls back to the specimen limit, i.e. the ceiling
-    # cannot be raised above where the clamp already put it, so "raise" does
-    # nothing. It NEVER exceeds the global cutoff. Keep 0 until the air-SUPPLY
-    # upper bound (panel regulator setting) is known: without it there is no
-    # physical ceiling on what the cell can see, so raising must not be possible.
+    # raise a run's ceiling to, mid-run, from the overpressure alarm.
+    # 0 = RAISING DISABLED ENTIRELY (the born-inert default): the alarm offers
+    # only retry or stop. Any positive value is additionally clamped to the
+    # specimen limit and the global cutoff, so raising can never exceed what the
+    # mesh was declared to tolerate. Keep 0 until the air-SUPPLY upper bound
+    # (panel regulator setting) is known: with no mechanical relief, supply
+    # pressure is the only thing bounding a runaway, so raising must stay
+    # impossible until that number exists.
     operator_raise_max_kpa: float = 0.0
+    # Consecutive ceiling hits on the SAME point before the rig stops hard instead
+    # of offering recovery again. Repeated hits mean something physical is wrong,
+    # and retrying forever would just repeat the excursion.
+    ceiling_retry_max: int = 3
     # Frozen-signal detector. A live electrical signal is ALWAYS noisy, so the raw
     # ADC value being bit-identical for this many consecutive reads (while a run is
     # armed) is impossible with a healthy sensor and flags a dead transducer /
@@ -298,6 +304,7 @@ class Config:
             close_check_s=float(sf.get("close_check_s", 20.0)),
             close_check_min_drop_kpa=k(sf.get("close_check_min_drop", 1.0)),
             operator_raise_max_kpa=k(sf.get("operator_raise_max", 0.0)),
+            ceiling_retry_max=int(sf.get("ceiling_retry_max", 3)),
             frozen_raw_reads=int(sf.get("frozen_raw_reads", 10)),
             watchdog_valve_pct=float(sf.get("watchdog_valve_pct", 70.0)),
             watchdog_hold_s=float(sf.get("watchdog_hold_s", 8.0)),
