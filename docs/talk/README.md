@@ -27,18 +27,43 @@ sentences, the type shrinks. Cut instead, and put the detail in `script.md`.
 **Theme `onyx`** was picked over `default-dark` for exactly this: pure b&w, bold, high-contrast,
 minimal — legible from the back of a lecture hall.
 
-## Insert the paper figures in the Gamma editor
+## The figures — talk versions, not the paper's
 
-The deck was generated with **image placeholders** (`imageOptions.source: placeholder`), so the
-layout already reserves the space — no AI-generated art, nothing fabricated. Drop these in:
+**Do not use `docs/paper/fig1–fig5`.** A paper figure is read at 30 cm with time; a talk figure is
+read from the back of the room in the ~8 seconds the audience spares while also listening. And the
+paper's are black-on-white — a white rectangle on a dark slide glares in a darkened room.
 
-| Slide | Figure | What it shows |
+`gen_talk_figs.py` (in this folder) draws four purpose-built ones: transparent background, light
+ink, large type, one idea each. It is **separate from `../paper/gen_figs.py` on purpose** — that one
+feeds the .docx and must keep its white background. Don't merge them.
+
+```bash
+./.venv/bin/python docs/talk/gen_talk_figs.py
+```
+
+The deck was generated with **image placeholders**, so the layout already reserves the space — no
+AI-generated art, nothing fabricated. Drop these into the Gamma editor:
+
+| Slide | Figure | The one idea |
 |---|---|---|
-| 5 · Darcy as a slope | `fig5_fit.png` | the actual Q-vs-ΔP fit the instrument produces |
-| 7 · The system | `fig1_system.png` | the system block diagram |
-| 8 · Validation | `fig4_sequence.png` | the 20/40/60 kPa run: pressure flat, disturbance in the valve |
+| 4 · the core idea | `talk_scatter_vs_bias.png` | scatter the fit survives vs bias it can't undo (schematic) |
+| 5 · Darcy as a slope | `talk_fit.png` | the line, the points, k and R² |
+| 6 · it checks itself | `talk_temperature.png` | raw slope +39%, k dead flat |
+| 7 · the system | `talk_system.png` | just the two loops — pressure, and collection timing |
 
-Delete any placeholder you don't fill.
+Slides 1–3 and 8–10 are text only — delete their placeholders.
+
+**Where the numbers come from:** the fit and temperature figures use `offline_sim.py`'s own stdout
+(the paper's RUN A and temperature sweep), so the talk cannot contradict the paper. The
+scatter-vs-bias one is schematic — it illustrates an argument, it is not data, and it is labelled
+that way in the source. Re-run `offline_sim.py` and update the constants at the top of
+`gen_talk_figs.py` if the control code ever changes.
+
+## On the day: the cue card
+
+`cue-card.html` — one page, printable (⌘P), readable on a phone. The clock, the opening line of
+every slide, and the numbers that can't be improvised. `script.md` is for rehearsing at home; the
+cue card is for standing up in front of people at minute three having lost the thread.
 
 ## Editing
 

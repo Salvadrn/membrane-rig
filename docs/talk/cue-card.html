@@ -1,0 +1,130 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ENLACE talk — cue card</title>
+<style>
+  :root { --ink:#16181a; --dim:#6b7480; --rule:#d8dde3; --hi:#0b5fd0; --warn:#a8560b; --bg:#fff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink:#e8ecef; --dim:#98a0a8; --rule:#2c3238; --hi:#7fd1ff; --warn:#ffb454; --bg:#111213; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:14px 16px; background:var(--bg); color:var(--ink);
+         font:15px/1.4 -apple-system, "SF Pro Text", Segoe UI, Roboto, sans-serif;
+         max-width: 940px; margin-inline:auto; }
+  header { display:flex; justify-content:space-between; align-items:baseline;
+           border-bottom:2px solid var(--ink); padding-bottom:6px; margin-bottom:10px; gap:12px; flex-wrap:wrap; }
+  h1 { font-size:17px; margin:0; letter-spacing:-.01em; }
+  .total { font-variant-numeric:tabular-nums; font-weight:700; font-size:17px; }
+  .rule { border:1px solid var(--rule); border-left:4px solid var(--warn);
+          padding:7px 11px; margin-bottom:12px; font-size:14px; }
+  .rule b { color:var(--warn); }
+  table { width:100%; border-collapse:collapse; }
+  td { border-bottom:1px solid var(--rule); padding:7px 6px; vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  .t { white-space:nowrap; font-variant-numeric:tabular-nums; font-weight:700;
+       font-size:15px; color:var(--hi); width:1%; padding-right:12px; }
+  .n { color:var(--dim); font-size:12px; display:block; font-weight:400; }
+  .what { width:20%; font-weight:700; font-size:14px; padding-right:14px; }
+  .say { font-size:15px; }
+  .say .lead::before { content:"“"; color:var(--dim); }
+  .say .lead::after  { content:"”"; color:var(--dim); }
+  .say .lead { font-weight:600; }
+  .facts { display:block; margin-top:3px; color:var(--dim); font-size:13px;
+           font-variant-numeric:tabular-nums; }
+  .heart { background:color-mix(in srgb, var(--warn) 12%, transparent); }
+  .heart .what::after { content:" ★"; color:var(--warn); }
+  footer { margin-top:12px; border-top:1px solid var(--rule); padding-top:9px;
+           display:flex; gap:26px; font-size:13px; color:var(--dim); flex-wrap:wrap; }
+  footer b { color:var(--ink); }
+  @media print {
+    :root { --ink:#000; --dim:#555; --rule:#bbb; --hi:#000; --warn:#000; --bg:#fff; }
+    body { padding:0; font-size:11.5px; max-width:none; }
+    .heart { background:#f0f0f0; }
+    td { padding:4px 5px; }
+  }
+</style>
+
+<header>
+  <h1>Membrane rig — ENLACE talk</h1>
+  <span class="total">8:00 · 10 slides</span>
+</header>
+
+<div class="rule">
+  <b>Say “in simulation” out loud</b> on slide 1 and again on slide 8. Never let a number be heard
+  without it. It is a strength — verifiable with no hardware attached was the design goal.
+</div>
+
+<table>
+<tr>
+  <td class="t">0:00<span class="n">→0:20</span></td>
+  <td class="what">Title</td>
+  <td class="say"><span class="lead">This summer I built an instrument that automates a membrane-permeability test.</span>
+    <span class="facts">…and everything I show is verified in simulation — I'll come back to why that's deliberate.</span></td>
+</tr>
+<tr>
+  <td class="t">0:20<span class="n">→1:15</span></td>
+  <td class="what">Why it's hard</td>
+  <td class="say"><span class="lead">The lab builds two-phase cooling devices — they boil liquid through a porous mesh wick.</span>
+    <span class="facts">pore size = flow vs capillary pumping · k ≈ 10⁻¹³–10⁻¹² m² · meshes differ &lt;10× → must be repeatable</span></td>
+</tr>
+<tr>
+  <td class="t">1:15<span class="n">→2:10</span></td>
+  <td class="what">Two errors</td>
+  <td class="say"><span class="lead">Today it's done by hand: hold the pressure with a valve, time the collection with a stopwatch.</span>
+    <span class="facts">±3 kPa at 20 kPa = ±15%, and never recorded · hose transfer spills the same way = bias, not noise</span></td>
+</tr>
+<tr class="heart">
+  <td class="t">2:10<span class="n">→3:05</span></td>
+  <td class="what">The core idea</td>
+  <td class="say"><span class="lead">Two different errors need two different fixes.</span>
+    <span class="facts">timing → DELETE it, give the clock to the computer (solenoid on the same 20 Hz loop) ·
+      pressure → make it HONEST, analyze against the measured mean, not the setpoint ·
+      regression averages out scatter, it can never undo bias</span></td>
+</tr>
+<tr>
+  <td class="t">3:05<span class="n">→4:05</span></td>
+  <td class="what">Darcy = slope</td>
+  <td class="say"><span class="lead">You don't need membranes to read this: flow is proportional to pressure.</span>
+    <span class="facts">slope IS the permeability · R² is a free physics check (flag under 0.98) ·
+      slope not per-point average → a constant offset lands in the intercept · each dot = one 60 s collection</span></td>
+</tr>
+<tr>
+  <td class="t">4:05<span class="n">→4:45</span></td>
+  <td class="what">It checks itself</td>
+  <td class="say"><span class="lead">Warm water is thinner, so it flows faster and the raw slope goes up.</span>
+    <span class="facts">but k multiplies the slope by viscosity again → they cancel · k must NOT change with temperature ·
+      if it drifts, the instrument is broken, not the membrane</span></td>
+</tr>
+<tr>
+  <td class="t">4:45<span class="n">→5:45</span></td>
+  <td class="what">The system</td>
+  <td class="say"><span class="lead">The existing vessel is left untouched — everything attaches around it.</span>
+    <span class="facts">servo on the ball valve · PID at 20 Hz · divider → 16-bit ADC · probe for temperature ·
+      3-way solenoid diverter · relief valve DELIBERATELY outside the control system · ~$300</span></td>
+</tr>
+<tr>
+  <td class="t">5:45<span class="n">→6:55</span></td>
+  <td class="what">Validation<br><span class="n">— say “in simulation”</span></td>
+  <td class="say"><span class="lead">These are all from simulation, running the exact production code against a modeled plant.</span>
+    <span class="facts">±8 kPa disturbance → held to 0.21–0.69 kPa · 15 °C sweep → k constant to 5 sig figs while raw slope moved 39% ·
+      reproduced a real hand-taken dataset: k 1.44e-12, pore 6.8 µm, R² 0.994</span></td>
+</tr>
+<tr>
+  <td class="t">6:55<span class="n">→7:45</span></td>
+  <td class="what">Trusted &amp; honest</td>
+  <td class="say"><span class="lead">A word on discipline — being verifiable without hardware was a design goal.</span>
+    <span class="facts">every line ran end-to-end before a part was bought · plainly: NOTHING has run on hardware yet,
+      the Pi boots but no cable is connected · next: commission and retune on the real rig</span></td>
+</tr>
+<tr>
+  <td class="t">7:45<span class="n">→8:00</span></td>
+  <td class="what">Take-away</td>
+  <td class="say"><span class="lead">One error eliminated, the other made honest.</span>
+    <span class="facts">that's the line between real automation and a Raspberry Pi bolted onto an experiment ·
+      thank TEMP Lab, ENLACE, Kwangsoo Cho, Prof. Renkun Chen</span></td>
+</tr>
+</table>
+
+<footer>
+  <span><b>Running long?</b> Cut slide 6 to one sentence, then trim slide 2. <b>Never cut ★.</b></span>
+  <span><b>Running short?</b> Walk a dot on the fit; on validation say “the wobble shows up in the valve, so it doesn't show up in the pressure.”</span>
+  <span><b>Lost?</b> Read the bold line of the next row.</span>
+</footer>
