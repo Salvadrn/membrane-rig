@@ -228,6 +228,29 @@ consigna de ~90 kPa (13 psi), por debajo del límite del recipiente.
 alivio "below the vessel's limit" y ese límite no existe escrito en ningún archivo
 del repo. A 35 kPa el margen es cómodo, pero el número debería estar registrado.
 
+## Mediciones de banco pendientes — calibrador y multímetro, sin energizar
+
+Cuatro números que hoy son supuestos, todos medibles en una sola sesión de banco
+y todos bloqueando decisiones que llevan días abiertas:
+
+- [ ] **Barril de la fuente de 12 V**: diámetro exterior e interior, y **polaridad
+      (centro +)** con el multímetro. Bloquea el riel de 12 V — ver bloqueos.
+- [ ] **Rosca del Keller LEX1**: si es G1/4, el transductor entra donde está el
+      LEX1 y el adaptador deja de hacer falta. Ver `docs/ASSEMBLY.md`.
+- [ ] **Par de arranque del vástago, EN SECO** (ΔP = 0). Da el piso; decide si el
+      DS3218 alcanza pelón. Medir después a la tarada del regulador y registrar
+      **a qué ΔP** corresponde cada número.
+- [ ] **División menor de la probeta** (impresa en el vidrio). No bloquea nada
+      hoy — solo afina el error de `k` que calculó Datos — pero se lee de paso.
+
+Y uno que no es de banco pero destraba más que ninguno:
+
+- [ ] **Tarada del regulador de la línea de aire.** Se lee de su carátula. Sin
+      alivio mecánico es la **única** cota física sobre lo que la celda puede
+      ver, y hoy gatea: presurizar con seguridad, el tope de la recuperación de
+      techo, si hace falta un solenoide de corte, dimensionar el servo, y medir
+      el par de arranque.
+
 ## La probeta se desborda antes de que termine la ventana de colecta
 
 Con el caudal del **sim** y `test.collection_s: 60`:
