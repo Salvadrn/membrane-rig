@@ -26,3 +26,12 @@ env/
 docs/paper/node_modules/
 docs/paper/package.json
 docs/paper/package-lock.json
+
+# Secretos — el archivo real vive FUERA del repo, en ~/.membrane-rig/secrets.env.
+# Estas reglas son defensa en profundidad por si alguna sesión crea uno aquí.
+secrets.env
+*.secrets
+.env
+.env.*
+!.env.example
+.dev.vars

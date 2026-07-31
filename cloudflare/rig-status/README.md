@@ -46,8 +46,16 @@ secret.
 npx wrangler secret put INGEST_SECRET
 ```
 
-Paste a long random string when prompted — generate it with
-`openssl rand -base64 32`. This never goes in a file in this repo.
+Paste the value already generated for this rig. It lives **outside the repo**,
+at `~/.membrane-rig/secrets.env` (mode 600), so no git operation in this shared
+checkout can reach it:
+
+```bash
+grep RIG_INGEST_SECRET ~/.membrane-rig/secrets.env
+```
+
+The Pi reads the same value as `RIG_INGEST_SECRET`. The two sides must match;
+a mismatch shows up as `401` in the beacon's stderr, not as silence.
 
 ```bash
 npx wrangler deploy
