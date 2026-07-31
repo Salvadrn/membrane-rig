@@ -272,7 +272,7 @@ children.push(...bullets([
   "A 20 Hz time-series CSV — timestamp, phase, setpoint, measured pressure, valve command, diverter state, in-band flag, water temperature — sufficient to reconstruct the entire run.",
   "A metadata JSON with the per-window statistics (mean, standard deviation, minimum, maximum, in-band fraction, sample count), the entered volumes, and the configuration that produced them.",
   "An analysis JSON with the fit (slope, intercept, R²), k, pore size, viscosity, and temperature.",
-  "A publication-style chart image (Fig. 5), and a native spreadsheet workbook containing the raw table, the derived quantities, and a genuine embedded scatter chart with a linear trendline — so the spreadsheet recomputes the equation and R² live if a volume is corrected after the fact.",
+  "A publication-style chart image (Fig. 5), and a native spreadsheet workbook containing the raw table, the derived quantities, and a genuine embedded scatter chart with a linear trendline — so the spreadsheet recomputes the equation and R² live if a volume is corrected after the fact. Points taken under a raised ceiling are drawn and labelled rather than silently dropped — a combined fit shows them set aside, while a single-run fit, which does not consult the queue, marks them as having entered the reported k.",
 ]));
 children.push(figure("fig5_fit.png", 540, 355));
 children.push(caption("Figure 5. The chart the instrument itself produces for the simulated run of Fig. 4: flow rate versus measured mean pressure, the fitted line (Eq. 2), and the derived permeability and pore size, annotated with the water temperature and viscosity used."));
