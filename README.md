@@ -141,8 +141,8 @@ Three limits, tightest wins:
 | Limit | Where | What it does |
 |---|---|---|
 | **Specimen limit** | `membrane.max_pressure`, editable in the UI | No setpoint above it can be queued or started. Checked in the browser *and* server-side. |
-| **Run ceiling** | `safety.overshoot_margin` | While a run is active the overpressure cutoff drops to `max(setpoint) + margin`. A 20 kPa test aborts near **30** kPa instead of coasting to 80. |
-| **Safety cutoff** | `safety.max_pressure` | The global hard limit. The UI can only ever tighten below it, never above. |
+| **Run ceiling** | `safety.overshoot_margin` | While a run is active the overpressure cutoff drops to `min(max(setpoint) + margin, specimen limit)` — a 20 kPa test is caught near **30** kPa instead of coasting to 80. Hitting it **holds** the rig at the safe state and alarms; it does not end the run. Retry the point (up to `ceiling_retry_max`) or stop. |
+| **Safety cutoff** | `safety.max_pressure` | The global hard limit. Reaching it always vents and ends the run — unlike the run ceiling, it is never recoverable, and it stays armed while the rig is held. The UI can only ever tighten below it, never above. |
 
 A fault stops the queue: the failed item is marked and nothing else starts until
 you press play again, so a problem never cascades into the next specimen.
