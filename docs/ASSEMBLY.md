@@ -257,6 +257,41 @@ Before soldering:
    the divider puts **0.3438 V** on A0, and the driver must report **0.000 kPa**.
    That clears sensor, divider, ADC and conversion in one shot, so anything wrong
    afterwards is mechanical.
+
+   **Where to mount it — check the LEX1's fitting before buying an adapter.**
+   The transducer is G1/4 male and the rig is Swagelok/compression, which is why
+   the BOM carries a G1/4 → Swagelok adapter. But the LEX1 is *already mounted on
+   this rig*, and Keller's LEX1 commonly ships with a **G1/4 male** process
+   connection too. If that is the case here, whatever fitting is holding the LEX1
+   already accepts G1/4 — and the transducer threads into the same place with no
+   new part at all. **Verify on the bench, not from this note:** back the LEX1 out
+   and read its thread. Two outcomes worth having either way — if they match, the
+   adapter stops being a blocker; if they do not, you now know the real thread
+   instead of guessing, which is item 5 of "Measure before designing".
+
+   Note the trade if you do borrow the LEX1's port: the transducer takes the spot
+   the calibration reference occupies, so calibrate first, or tee it.
+
+   ### Water temperature is not room temperature
+
+   `k = b·µ·L/A`, and µ comes from the water temperature, so a temperature error
+   lands **directly** on k with no dilution. Measured against `water_viscosity_pa_s`:
+   µ changes **−2.39 % per °C** near 20 °C, and falls **28 %** between 20 and
+   35 °C. A raw Q-vs-ΔP slope taken at 35 °C and interpreted as 20 °C is wrong by
+   roughly 39 %; only the viscosity correction cancels it.
+
+   Two separate things, and it is worth keeping them apart:
+   - **The viscosity correction is mandatory.** There is no version of this
+     experiment where it is optional.
+   - **The DS18B20 is the convenient way to obtain it**, not the only way —
+     `temperature.source: manual` exists.
+
+   But if you run `manual`, measure **the water**, not the room. They are not the
+   same, and the gap is not small: the vessel is pressurised with **compressed
+   air, which heats as it compresses**, so the headspace — and eventually the
+   water — sits above ambient by an amount nobody here has measured. A wall
+   thermometer reading 21 °C while the water is at 24 °C is a **7 % error in k**
+   that nothing in the fit will reveal.
 3. **Print & fit coupling + mount**; servo onto the ball valve. Run the
    **static valve-authority sweep** (servo 0→100 %, log pressure) — this maps
    the useful travel; set `servo_min_us`/`servo_max_us` to that sub-range.
