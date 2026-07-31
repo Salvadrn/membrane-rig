@@ -240,8 +240,11 @@ y todos bloqueando decisiones que llevan días abiertas:
 - [ ] **Par de arranque del vástago, EN SECO** (ΔP = 0). Da el piso; decide si el
       DS3218 alcanza pelón. Medir después a la tarada del regulador y registrar
       **a qué ΔP** corresponde cada número.
-- [ ] **División menor de la probeta** (impresa en el vidrio). No bloquea nada
-      hoy — solo afina el error de `k` que calculó Datos — pero se lee de paso.
+- [ ] **Probeta: DOS números, no uno.** La **división menor** (fija δV, el error
+      de lectura) y la **capacidad real hasta la marca superior** (fija
+      `t_max = 0.8·V_max/Q`, cuánto se puede colectar). Son los dos términos
+      independientes de la fórmula de error de Datos — con solo uno no sale.
+      No bloquea nada hoy; se lee de paso mientras el calibrador está afuera.
 
 Y uno que no es de banco pero destraba más que ninguno:
 
