@@ -93,7 +93,13 @@ def plot_permeability(result, out_path, *, title: str = "Q vs ΔP",
 
     verdict = "follows Darcy's law" if result.follows_darcy else "low R² — check linearity"
     tpart = f"{result.water_temp_c:.1f} °C, µ={result.viscosity_pa_s:.2e} · " if result.water_temp_c else ""
-    cap = (f"{tpart}k = {result.k_darcy_m2:.3e} m²   ·   "
+    # k's error bar, kept to a short "± x.xx%" so the caption stays one line.
+    # Omitted when n < 3 (unknown, not zero) and when k <= 0, where a relative
+    # error would come out negative — same guard the workbook uses.
+    kse = getattr(result, "k_stderr_m2", 0.0)
+    kpart = (f" ± {kse / result.k_darcy_m2 * 100:.2f}%"
+             if kse > 0 and result.k_darcy_m2 > 0 else "")
+    cap = (f"{tpart}k = {result.k_darcy_m2:.3e} m²{kpart}   ·   "
            f"pore d = {result.pore_size_m*1e6:.3f} µm   ·   {verdict}")
     fig.subplots_adjust(bottom=0.2)
     fig.text(0.5, 0.035, cap, ha="center", fontsize=10.5, color="#222")
