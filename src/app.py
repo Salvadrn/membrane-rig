@@ -463,7 +463,12 @@ class RigController:
         self.analysis_result = result
         json_path = self.logger.save_analysis(result.as_dict())
         plot_path = None
-        if self.cfg.analysis.auto_plot and plot_available() and result.n >= 2:
+        # logger.plot_path()/xlsx_path() are None when no run is open (reachable on
+        # hardware: set_volumes + analyse after a server restart). Don't ask for an
+        # artefact we have nowhere to put — the callees now refuse too, but the
+        # path that gets here is ours.
+        have_run = self.logger.plot_path() is not None
+        if have_run and self.cfg.analysis.auto_plot and plot_available() and result.n >= 2:
             try:
                 plot_path = plot_permeability(result, self.logger.plot_path(),
                                               title=title, units="kPa",
@@ -471,7 +476,7 @@ class RigController:
             except Exception:
                 plot_path = None
         xlsx_path = None
-        if xlsx_available() and result.n >= 1:
+        if self.logger.xlsx_path() is not None and xlsx_available() and result.n >= 1:
             try:
                 # per-row provenance for the export (single-run path: the flag comes
                 # from runtime state, not the playlist — nothing is excluded here,
@@ -495,6 +500,15 @@ class RigController:
             "intercept_m3s": result.intercept_m3s,
             "r2": result.r2,
             "k_darcy_m2": result.k_darcy_m2,
+            # Uncertainty of k, from the standard error of the fitted slope. R^2
+            # says the points lie on a line; it does NOT say how well pinned that
+            # line's slope is, and k is only worth what the slope is worth.
+            # None (not 0.0) when n < 3: with no residual degrees of freedom the
+            # error is UNKNOWN, and rendering it as "+/- 0" would claim a precision
+            # that was never measured.
+            "k_stderr_m2": result.k_stderr_m2 if result.n >= 3 else None,
+            "k_stderr_pct": (result.k_stderr_m2 / result.k_darcy_m2 * 100.0
+                             if result.n >= 3 and result.k_darcy_m2 else None),
             "pore_size_um": result.pore_size_m * 1e6,
             "follows_darcy": result.follows_darcy,
             "label": result.label,
@@ -574,6 +588,15 @@ class RigController:
             "intercept_m3s": result.intercept_m3s,
             "r2": result.r2,
             "k_darcy_m2": result.k_darcy_m2,
+            # Uncertainty of k, from the standard error of the fitted slope. R^2
+            # says the points lie on a line; it does NOT say how well pinned that
+            # line's slope is, and k is only worth what the slope is worth.
+            # None (not 0.0) when n < 3: with no residual degrees of freedom the
+            # error is UNKNOWN, and rendering it as "+/- 0" would claim a precision
+            # that was never measured.
+            "k_stderr_m2": result.k_stderr_m2 if result.n >= 3 else None,
+            "k_stderr_pct": (result.k_stderr_m2 / result.k_darcy_m2 * 100.0
+                             if result.n >= 3 and result.k_darcy_m2 else None),
             "pore_size_um": result.pore_size_m * 1e6,
             "follows_darcy": result.follows_darcy,
             "label": result.label,
