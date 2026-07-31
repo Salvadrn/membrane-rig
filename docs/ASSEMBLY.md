@@ -148,12 +148,27 @@ is from the BCM283x used on earlier Pis; the Pi 4's BCM2711 is documented at
 too. Rather than adjudicate the datasheets, take the value that is inside both:
 **470 Ω**.
 
-It costs nothing. Edge time is τ = R·Ciss = 0.8 µs at 470 Ω versus 0.37 µs at
-220 Ω, on a diverter that switches about six times per run — the speed is worth
-nothing here, so there is no reason to spend pin current on it. (The unbuilt
-`valve.type: pwm` topology on GPIO18 is the opposite case: it switches
-continuously at 1 kHz against 1 µs duty steps, so it wants the *fast* end. It
-does not exist in this rig.)
+It costs nothing here. The diverter switches about six times per run, so edge
+speed is worth nothing and there is no reason to spend pin current on it.
+
+**Do not carry this value over to the unbuilt `valve.type: pwm` topology, and do
+not carry the reasoning either.** That circuit has the opposite constraint —
+continuous 1 kHz against 1 µs duty steps — and it cannot be fixed with a
+resistor. What sets the edge is not the RC but the **Miller plateau**, and a
+3.3 V GPIO driving a gate whose plateau sits near 2.5 V has only ~0.8 V of
+overdrive, so the plateau current is small whatever R you pick:
+
+| R | plateau current | rough edge |
+|---|---|---|
+| 220 Ω | 3.6 mA | ~3 µs |
+| 470 Ω | 1.7 mA | ~7 µs |
+| 1 kΩ | 0.8 mA | ~15 µs |
+
+Every one of those is longer than the 1 µs duty step, so **no resistor value
+gives that topology usable duty resolution from a bare GPIO** — it would need a
+gate driver. (Edge figures are estimates: Qgd is taken as ~12 nC at 12 V, since
+the datasheet quotes 25 nC at 44 V. The ordering is robust even if the
+microseconds are not.) The rig runs `type: servo`, so none of this is built.
 
 None of this would destroy a pad — the output self-limits and the transient is
 sub-microsecond. It is about staying inside spec when doing so is free.
