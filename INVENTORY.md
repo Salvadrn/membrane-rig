@@ -258,27 +258,27 @@ Y uno que no es de banco pero destraba más que ninguno:
       techo, si hace falta un solenoide de corte, dimensionar el servo, y medir
       el par de arranque.
 
-## ⚠ La tornillería del Pi: ni M4 ni M3 — es M2.5
+## Tornillería: RESUELTO — Adrián ya tiene carcasa para el Pi
 
-Llegó el kit **M4** (item #10) para lo que `BOM.csv:24` describe como *"M3
-screws/standoffs — Mount Pi/ADS/servo bracket"*. Pero **los barrenos de montaje
-del Raspberry Pi son de ~2.7 mm**, así que:
+El Pi va montado en una **carcasa que Adrián ya tenía**, así que no hace falta
+tornillería para él. Eso cierra el hueco de M2.5 que se había abierto.
 
-| | ¿Entra en el Pi? |
-|---|---|
-| M4 (4.0 mm) | no, ni de cerca |
-| **M3 (3.0 mm)** — lo que pide el BOM | **no, se pasa por 0.3 mm** |
-| **M2.5** — el estándar del Pi | sí |
+Queda registrado el hecho subyacente por si alguien vuelve a montar el Pi a
+tornillo: **sus barrenos son de ~2.7 mm = M2.5**, así que ni el M4 que llegó ni
+el M3 que pedía el BOM entran. `BOM.csv` y `docs/ASSEMBLY.md` ya están corregidos
+para que nadie re-derive el error.
 
-O sea que el BOM estaba mal desde el principio, no solo el kit que llegó. **Falta
-M2.5** (tornillos y separadores) y no está en ninguna lista.
+El **kit M4 sí sirve** para lo que no es el Pi: baseplate, el marco metálico que
+reacciona el par del servo, y el bracket.
 
-El **M4 sí sirve** para lo que no es el Pi: baseplate, marco metálico que reacciona
-el par del servo, y bracket. Guárdalo para eso.
-
-**Verificable hoy en 10 segundos:** mide un barreno del Pi con el calibrador que
-ya vas a sacar para el barril de la fuente. Si mide 2.7, es M2.5 y punto. Para el
-módulo ADS1115 los barrenos suelen ser de ~3 mm, así que ahí sí entra M2.5 o M3.
+**Dos cosas que la carcasa NO cubre:**
+- **Acceso al header de 40 pines.** Muchas carcasas lo tapan. Confirmar que los
+  jumpers pueden salir — si no, hay que abrirle una ranura o usar otra.
+- **La caja de electrónica del BOM es otra cosa.** Esa era para alojar Pi +
+  protoboard + UBEC + portafusibles con protección contra salpicaduras. Una
+  carcasa de Pi no la sustituye. Cuánto importa depende de cómo quede el arreglo
+  final — y ahora importa más, porque el rig se queda operándose sin Adrián
+  enfrente.
 
 ## ⚠ El diverter puede invalidar la medición — verificar ANTES de tomar datos
 
