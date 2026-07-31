@@ -1,0 +1,1293 @@
+<div class="hoja-pot">
+<style>
+.hoja-pot{
+  --tp:#1a1a1a; --ts:#5b5b5b; --s1:#ffffff; --s2:#fafafa; --bd:#e4e4e4;
+  --pwr:#1f5e8b; --ctrl:#7a2f2f; --sig:#8a6d00; --good:#1e7d32; --bad:#b3261e;
+  --data:#6b3fa0; --grey:#9e9e9e; --warn:#b8860b; --gnd:#1a1a1a;
+  color: var(--text-primary, var(--tp));
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size:14px; line-height:1.6; font-weight:400;
+  max-width:1180px; margin:0 auto; padding:8px 4px 32px;
+}
+@media (prefers-color-scheme: dark){
+  .hoja-pot{ --tp:#ececec; --ts:#a6a6a6; --s1:#1b1b1d; --s2:#232326; --bd:#3a3a3d; --gnd:#c9c9c9; }
+}
+.hoja-pot h1{ font-size:22px; font-weight:500; margin:0 0 6px; letter-spacing:-.01em; }
+.hoja-pot h2{ font-size:16px; font-weight:500; margin:0 0 14px; letter-spacing:.06em; text-transform:uppercase; }
+.hoja-pot h3{ font-size:14px; font-weight:500; margin:0 0 8px; }
+.hoja-pot h4{ font-size:13px; font-weight:500; margin:14px 0 6px; letter-spacing:.05em; text-transform:uppercase; color:var(--text-secondary, var(--ts)); }
+.hoja-pot p{ margin:0 0 10px; }
+.hoja-pot .sub{ color: var(--text-secondary, var(--ts)); }
+.hoja-pot .bajada{ font-size:14px; color: var(--text-secondary, var(--ts)); margin:0 0 22px; max-width:940px; }
+.hoja-pot .caja{ background: var(--surface-1, var(--s1)); border:1px solid var(--border, var(--bd)); border-radius:8px; padding:18px 20px; }
+.hoja-pot .rule{ height:1px; background: var(--border, var(--bd)); border:0; margin:26px 0; }
+.hoja-pot .cols{ display:grid; grid-template-columns:1fr 1fr; gap:1.6rem; align-items:start; }
+.hoja-pot .cols3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.1rem; }
+.hoja-pot .cols23{ display:grid; grid-template-columns:1.35fr 1fr; gap:1.6rem; align-items:start; }
+@media (max-width:900px){
+  .hoja-pot .cols, .hoja-pot .cols3, .hoja-pot .cols23{ grid-template-columns:1fr; }
+}
+.hoja-pot .tiny{ font-size:12px; }
+.hoja-pot .why{ font-size:13px; color: var(--text-secondary, var(--ts)); }
+.hoja-pot code{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12.5px;
+  background: color-mix(in srgb, var(--grey) 16%, transparent); padding:1px 5px; border-radius:4px; }
+.hoja-pot b{ font-weight:500; }
+.hoja-pot strong{ font-weight:500; }
+
+/* ---- bandas ---- */
+.hoja-pot .banda{ border-radius:8px; padding:16px 20px; margin:0 0 20px; }
+.hoja-pot .banda-bad{ border:2px solid var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+.hoja-pot .banda-warn{ border:2px solid var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.hoja-pot .banda-data{ border:2px solid var(--data); background: color-mix(in srgb, var(--data) 10%, transparent); }
+.hoja-pot .banda-good{ border:2px solid var(--good); background: color-mix(in srgb, var(--good) 10%, transparent); }
+.hoja-pot .banda h3{ font-size:15px; font-weight:500; margin:0 0 6px; }
+.hoja-pot .grito{ border:3px solid var(--bad); border-radius:10px; padding:20px 22px; margin:0 0 22px;
+  background: color-mix(in srgb, var(--bad) 11%, transparent); }
+.hoja-pot .grito h3{ font-size:18px; font-weight:500; color:var(--bad); margin:0 0 4px; letter-spacing:-.01em; }
+
+/* ---- pills de estado ---- */
+.hoja-pot .pill{ display:inline-block; font-size:11px; letter-spacing:.045em; text-transform:uppercase;
+  border:1px solid var(--c); color:var(--c); border-radius:4px; padding:1px 7px; white-space:nowrap;
+  background: color-mix(in srgb, var(--c) 9%, transparent); }
+.hoja-pot .p-hoy{ --c:var(--good); }
+.hoja-pot .p-espera{ --c:var(--warn); }
+.hoja-pot .p-pi{ --c:var(--data); }
+.hoja-pot .p-falta{ --c:var(--bad); }
+
+/* ---- bloques de armado ---- */
+.hoja-pot .blk{ background: var(--surface-1, var(--s1)); border:1px solid var(--border, var(--bd));
+  border-left:4px solid var(--c, var(--good)); border-radius:8px; padding:16px 18px; margin:0 0 14px; }
+.hoja-pot .blk-h{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+.hoja-pot .blk-n{ font-size:19px; font-weight:500; color:var(--c); line-height:1; }
+.hoja-pot .blk-t{ font-size:15px; font-weight:500; }
+.hoja-pot .mide{ border-radius:6px; padding:10px 12px; margin:10px 0 0; font-size:13.5px;
+  border:1px dashed var(--good); background: color-mix(in srgb, var(--good) 8%, transparent); }
+.hoja-pot .difi{ border-radius:6px; padding:10px 12px; margin:8px 0 0; font-size:13.5px;
+  border:1px dashed var(--data); background: color-mix(in srgb, var(--data) 8%, transparent); }
+.hoja-pot .stop{ border-radius:6px; padding:10px 12px; margin:8px 0 0; font-size:13.5px;
+  border:1px dashed var(--bad); background: color-mix(in srgb, var(--bad) 8%, transparent); }
+
+/* ---- filas de destino ---- */
+.hoja-pot .fila{ display:grid; grid-template-columns:24px 118px 1fr; gap:11px; align-items:start; padding:8px 0;
+  border-top:1px solid var(--border, var(--bd)); }
+.hoja-pot .fila:first-of-type{ border-top:0; }
+.hoja-pot .chip{ width:20px; height:20px; border-radius:3px; margin-top:3px; }
+.hoja-pot .nom{ font-weight:500; font-size:13.5px; }
+.hoja-pot .dst{ font-weight:500; }
+
+/* ---- tira de pines ---- */
+.hoja-pot .tira{ display:flex; gap:15px; padding:6px 0 0; }
+.hoja-pot .pin{ text-align:center; }
+.hoja-pot .pinbar{ width:7px; height:26px; margin:0 auto; border-radius:1px; }
+.hoja-pot .pinlab{ writing-mode:vertical-rl; font-size:12px; margin:5px auto 0; letter-spacing:.02em; }
+
+/* ---- callouts ---- */
+.hoja-pot .co{ border-radius:8px; padding:18px 20px; }
+.hoja-pot .co-t{ font-weight:500; margin-bottom:10px; font-size:14.5px; }
+.hoja-pot .co-b{ font-size:14px; line-height:1.62; }
+.hoja-pot .co-red{ border:2px solid var(--bad); }
+.hoja-pot .co-green{ border:2px solid var(--good); }
+.hoja-pot .co-blue{ border:2px solid var(--pwr); }
+.hoja-pot .co-red .co-t{ color:var(--bad); }
+.hoja-pot .co-green .co-t{ color:var(--good); }
+.hoja-pot .co-blue .co-t{ color:var(--pwr); }
+
+/* ---- tablas ---- */
+.hoja-pot table{ border-collapse:collapse; width:100%; font-size:13.5px; }
+.hoja-pot th{ text-align:left; font-weight:500; font-size:12px; letter-spacing:.05em; text-transform:uppercase;
+  color: var(--text-secondary, var(--ts)); padding:0 12px 8px 0; border-bottom:1px solid var(--border, var(--bd)); }
+.hoja-pot td{ padding:9px 12px 9px 0; border-bottom:1px solid var(--border, var(--bd)); vertical-align:top; }
+.hoja-pot svg{ width:100%; height:auto; color: var(--text-primary, var(--tp)); }
+.hoja-pot .mask{ fill: var(--surface-1, var(--s1)); }
+.hoja-pot ul{ margin:0 0 10px; padding-left:19px; }
+.hoja-pot li{ margin-bottom:6px; }
+.hoja-pot .num{ font-variant-numeric: tabular-nums; font-weight:500; }
+.hoja-pot .box2{ border:2px solid var(--bad); border-radius:8px; padding:14px 16px;
+  background: var(--surface-1, var(--s1)); }
+.hoja-pot .box2 .n{ font-size:26px; font-weight:500; color:var(--bad); line-height:1; }
+</style>
+
+<h1>¿En qué orden se arma el lado de 12 V, y por qué hoy solo se puede armar la compuerta?</h1>
+<p class="bajada">
+  La mitad gemela de <code>docs/wiring_banco.html</code>. Aquella cubre los 3.3 V —la cadena que sí
+  se puede armar y medir hoy—; esta cubre lo que mueve cosas: el <b>MOSFET</b>, la <b>bobina del
+  diverter</b>, el <b>V1738</b>, el <b>UBEC</b> con el servo y el <b>reparto de 12 V</b>. Resuelve
+  cuatro dudas que en este lado se pagan caro: cuáles piezas se “alimentan” y cuáles no, para dónde
+  va la banda del diodo, por qué el retorno de potencia no puede tocar el riel contra el que mide el
+  ADC, y qué queda energizado cuando se va la corriente.
+</p>
+
+<div class="grito">
+  <h3>El riel de 12 V está bloqueado por DOS piezas, no una</h3>
+  <p style="margin:0 0 14px; font-size:14.5px">
+    Es el error de lectura más caro de esta hoja: casi todo el repo dice “falta el fusible”, y con eso
+    en la cabeza uno espera un paquete y cree que ya. <b>Son dos paquetes distintos.</b>
+  </p>
+  <div class="cols" style="gap:1rem">
+    <div class="box2">
+      <div style="display:flex; gap:12px; align-items:baseline">
+        <div class="n">#7</div>
+        <div>
+          <div style="font-weight:500">Portafusibles inline + fusible 3 A</div>
+          <div class="why"><code>B088FNTJDV</code> · no ha llegado</div>
+        </div>
+      </div>
+      <p class="why" style="margin:10px 0 0">
+        Sin él, el único límite de corriente del riel es la propia fuente: <b>3 A entregados con gusto</b>
+        a lo que sea que esté mal cableado.
+      </p>
+    </div>
+    <div class="box2">
+      <div style="display:flex; gap:12px; align-items:baseline">
+        <div class="n">#6</div>
+        <div>
+          <div style="font-weight:500">Barrel jack 5.5×2.1 → terminal de tornillo</div>
+          <div class="why"><code>B077QD4G3Q</code> · no ha llegado</div>
+        </div>
+      </div>
+      <p class="why" style="margin:10px 0 0">
+        Sin él <b>no hay dónde aterrizar los 12 V en un tornillo</b>. La fuente termina en un barril
+        macho y no existe la hembra que lo convierta en dos terminales.
+      </p>
+    </div>
+  </div>
+  <p style="margin:14px 0 0; font-size:15px; color:var(--bad); font-weight:500">
+    Si llega SOLO UNA de las dos, el riel sigue sin poder energizarse.
+  </p>
+  <p class="why" style="margin:8px 0 0">
+    Y el #6 arrastra más de lo que parece: en su tornillo negativo es donde vive el <b>punto
+    estrella</b>. Sin ese tornillo no hay tierra de potencia, no hay dónde poner los capacitores
+    —que <b>sí están en la mesa</b>— y el source del MOSFET se queda al aire a propósito.
+  </p>
+</div>
+
+<div class="banda banda-bad">
+  <h3>Los otros dos bloqueos del lado de potencia</h3>
+  <div class="cols" style="gap:1.2rem">
+    <div>
+      <p style="margin:0 0 6px"><b>Diodo 1N5819 (flyback) — no ha llegado.</b>
+        Sin él, al cortar la bobina el pico inverso mata el IRLZ44N. <b>El diverter no se energiza sin
+        ese diodo montado</b>, ni “para una prueba rápida”.</p>
+      <p class="why" style="margin:0">El BOM lo trae en pack de 100 (<code>B079KG1TN2</code>); el pack
+        no ha llegado.</p>
+    </div>
+    <div>
+      <p style="margin:0 0 6px"><b>Solenoide de 3 vías — no ha llegado.</b>
+        Item #2, ESValves <code>231Y-6-12VDC</code>, ~$53, pedido aparte porque los de Amazon son solo
+        aire/gas.</p>
+      <p class="why" style="margin:0">Sin bobina no hay nada que conmutar: los bloques K y L quedan
+        dibujados, no cableados.</p>
+    </div>
+  </div>
+</div>
+
+<div class="banda banda-good">
+  <h3>De todo el lado de potencia, hoy se arma exactamente una cosa: la compuerta</h3>
+  <p style="margin:0">
+    IRLZ44N plantado en el protoboard + <b>470 Ω</b> en serie desde GPIO23 + <b>10 kΩ</b> de pull-down
+    a la tierra lógica. <b>Drain y source se quedan al aire</b> — no “provisionalmente al riel −”, al
+    aire. Eso es el bloque <b>J</b>, y trae una prueba real con multímetro que no necesita ni 12 V ni
+    la Pi. Todo lo demás de esta hoja es lectura hasta que lleguen las piezas.
+  </p>
+</div>
+
+<div class="caja" style="margin-bottom:22px">
+  <h4 style="margin-top:0">Los cuatro estados que usa esta hoja</h4>
+  <div class="cols" style="gap:1rem">
+    <div>
+      <p style="margin:0 0 8px"><span class="pill p-hoy">hoy · se arma y se mide</span> &nbsp;se cablea
+        y queda verificado hoy con el multímetro.</p>
+      <p style="margin:0"><span class="pill p-espera">en la mano · sin dónde ir</span> &nbsp;la pieza
+        está en la mesa pero el nodo donde va todavía no existe. Guárdala, no la improvises.</p>
+    </div>
+    <div>
+      <p style="margin:0 0 8px"><span class="pill p-falta">bloqueado · falta pieza</span> &nbsp;no se
+        cablea porque la pieza no está.</p>
+      <p style="margin:0"><span class="pill p-pi">diferido · pide la Pi</span> &nbsp;necesita
+        <code>install.sh</code> corrido y <code>pigpiod</code> arriba. General lo está resolviendo;
+        esta hoja asume que la Pi va a estar viva.</p>
+    </div>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Bloques, en orden de armado</h2>
+<p class="bajada" style="margin-bottom:18px">
+  Los bloques <b>A–F</b> son los de <code>docs/wiring_banco.html</code> (rieles, divisor, ADS1115,
+  transductor, sonda y el lado de compuerta del diverter). Aquí siguen <b>G–M</b>, y el orden vuelve a
+  no ser estético: <b>la tierra nace antes que cualquier voltaje</b>, el fusible antes que cualquier
+  carga, y el diodo antes que la primera vez que la bobina se energice.
+</p>
+
+<!-- ============================ G ============================ -->
+<div class="blk" style="--c:var(--bad)">
+  <div class="blk-h">
+    <div class="blk-n">G</div>
+    <div class="blk-t">El punto estrella — el tornillo del que cuelga todo</div>
+    <span class="pill p-falta">bloqueado · #6</span>
+    <span class="pill p-hoy">pero hay algo que SÍ se mide hoy</span>
+  </div>
+  <div class="cols23">
+    <div>
+      <p style="margin:0 0 10px">
+        El adaptador barrel → terminal de tornillo no es un accesorio de comodidad: es <b>el nodo</b>.
+        Su tornillo <b>−</b> es el punto estrella de todo el rig y su tornillo <b>+</b> es el único
+        lugar del que sale el positivo de 12 V hacia el fusible.
+      </p>
+      <div class="fila"><div class="chip" style="background:var(--pwr)"></div>
+        <div class="nom" style="color:var(--pwr)">tornillo +</div>
+        <div><div class="dst">→ entrada del portafusibles (#7)</div>
+          <div class="why">nada se cuelga aquí antes del fusible. El fusible va entre la fuente y <b>todo</b> lo demás</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--gnd)"></div>
+        <div class="nom">tornillo − ★</div>
+        <div><div class="dst">el punto estrella: cuatro cables salen de aquí y ninguno pasa por otro</div>
+          <div class="why">riel − del protoboard · source del MOSFET · IN− del UBEC · OUT−/retorno del servo</div></div></div>
+
+      <div class="mide">
+        <b>Mide hoy — dos cosas de la fuente, sin energizar nada:</b>
+        <ol style="margin:6px 0 0; padding-left:18px">
+          <li><b>El barril, con calibrador.</b> <code>INVENTORY.md</code> dice textualmente
+            “<i>asumido</i> barrel 5.5×2.1”. Si el plug real es 5.5×2.5 o 3.5×1.35, <b>el #6 no
+            entra aunque llegue</b> y el riel sigue bloqueado por una tercera razón. Mide el diámetro
+            exterior del barril y el del pin interno.</li>
+          <li><b>La polaridad, con el multímetro.</b> Enchufa la fuente a la pared con nada conectado y
+            mide el barril: <b>pin central contra cuerpo</b>. Debe dar <b>+12 V en el centro</b>
+            (típico, pero <b>este repo no lo fija</b>). Anótalo. Si sale al revés y lo aterrizas
+            según el rótulo del adaptador, el riel entero queda invertido — ver el callout rojo.</li>
+        </ol>
+      </div>
+    </div>
+    <div>
+      <div class="co co-red">
+        <div class="co-t">«¿Qué pasa exactamente si conecto los 12 V al revés?»</div>
+        <div class="co-b">
+          No es una falla difusa, es un camino concreto. Con el riel invertido, el <b>diodo de cuerpo
+          del IRLZ44N</b> (que va de source a drain y siempre está ahí, lo enciendas o no) queda en
+          directa, y en serie con él el <b>1N5819</b> también. Resultado: una vía de dos diodos entre
+          la tierra y el riel negativo, limitada solo por la resistencia del cable.
+          <div style="margin-top:10px">
+            Con fusible: <b>el fusible se va, y eso es el resultado bueno</b> — es literalmente para
+            lo que está. Sin fusible: los 3 A de la fuente se reparten entre un Schottky de <b>1 A</b>
+            y el diodo de cuerpo del MOSFET. Por eso el orden es <b>#6 → medir polaridad → #7 →
+            energizar</b>, y nunca al revés.
+          </div>
+          <div style="margin-top:10px">
+            El UBEC sí trae protección de polaridad invertida <b>en su entrada</b>. Los capacitores,
+            el diodo y el MOSFET no traen nada.
+          </div>
+        </div>
+      </div>
+      <div class="stop" style="margin-top:14px">
+        <b>No improvises el punto estrella con una fila del protoboard.</b> Un contacto de protoboard
+        está dado a <b>~1 A</b> y por ahí van a pasar 1.08 A de bobina más los picos del servo. Y si el
+        retorno pasa por el riel, la caída se suma a lo que mide el ADC: ver la sección de tierra.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ H ============================ -->
+<div class="blk" style="--c:var(--bad)">
+  <div class="blk-h">
+    <div class="blk-n">H</div>
+    <div class="blk-t">Fusible de 3 A, en el positivo, antes de todo</div>
+    <span class="pill p-falta">bloqueado · #7</span>
+  </div>
+  <div class="cols23">
+    <div>
+      <div class="fila"><div class="chip" style="background:var(--pwr)"></div>
+        <div class="nom" style="color:var(--pwr)">entrada</div>
+        <div><div class="dst">← tornillo + del #6</div>
+          <div class="why">el tramo entre la fuente y el fusible es el único sin proteger: déjalo tan corto como puedas</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--pwr)"></div>
+        <div class="nom" style="color:var(--pwr)">salida</div>
+        <div><div class="dst">→ nodo <b>+12 V fusible</b>, del que cuelgan las DOS ramas</div>
+          <div class="why">rama 1: IN+ del UBEC · rama 2: polo 1 del V1738 → bobina+</div></div></div>
+
+      <h4>El presupuesto de corriente, con los números que hay</h4>
+      <table>
+        <tr><th style="width:44%">Consumidor</th><th>Corriente del riel de 12 V</th></tr>
+        <tr><td>Bobina del diverter, energizada</td>
+            <td><b class="num">1.08 A</b> <span class="why">(13 W / 12 V, listado ESValves)</span></td></tr>
+        <tr><td>UBEC, con el servo calado</td>
+            <td><b class="num">~0.95 A</b> <span class="why">(10 W de salida / ~88 % de eficiencia)</span></td></tr>
+        <tr><td><b>Suma peor caso</b></td>
+            <td><b class="num">2.03 A</b> contra un fusible de <b>3 A</b> ✓</td></tr>
+      </table>
+      <p class="why" style="margin:10px 0 0">
+        <b>Los dos números son de catálogo y ninguno está medido en el rig.</b> El margen es
+        cómodo (48 %), pero si la bobina real jala más de lo que dice el listado, el primero en
+        enterarse va a ser el fusible.
+      </p>
+    </div>
+    <div>
+      <div class="co co-blue">
+        <div class="co-t">«¿El fusible protege al MOSFET y al diodo?»</div>
+        <div class="co-b">
+          <b>No, y conviene tenerlo claro para no confiarse.</b> Un fusible de 3 A protege el
+          <b>cableado y la fuente</b> contra un corto franco. Las fallas caras de este circuito pasan
+          por debajo de su umbral y él ni se entera:
+          <ul style="margin:10px 0 0">
+            <li>La aleta del MOSFET tocando metal aterrizado → la bobina queda energizada
+              permanentemente a <b>1.08 A</b>. El fusible no se mueve. El rig colecta a un recipiente
+              medido todo el tiempo, y nadie lo ve.</li>
+            <li>El pico inverso de la bobina sin diodo → mata al IRLZ44N en microsegundos, con una
+              energía que el fusible no alcanza ni a notar.</li>
+          </ul>
+          <div style="margin-top:10px">
+            Lo que sí atrapa: el riel invertido, un jumper de 12 V contra tierra, y un hilo suelto de
+            trenzado cruzando el reparto. Es decir, <b>convierte “se quemó un componente” en “se
+            quemó un fusible”</b>, no en “no pasó nada”.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ I ============================ -->
+<div class="blk" style="--c:var(--warn)">
+  <div class="blk-h">
+    <div class="blk-n">I</div>
+    <div class="blk-t">Nodo de +12 V, su capacitor, y el reparto por 22AWG</div>
+    <span class="pill p-espera">capacitores en la mano</span>
+    <span class="pill p-falta">el nodo no existe</span>
+  </div>
+  <div class="cols23">
+    <div>
+      <div class="fila"><div class="chip" style="background:var(--pwr)"></div>
+        <div class="nom" style="color:var(--pwr)">+12 V fusible</div>
+        <div><div class="dst">nodo físico: un empalme de 22AWG, <b>no una fila del protoboard</b></div>
+          <div class="why">contactos de ~1 A contra 2.03 A de suma. Los 12 V no entran a los rieles ni a las filas: viven en cable y en el V1738</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--warn)"></div>
+        <div class="nom" style="color:var(--warn)">470–1000 µF</div>
+        <div><div class="dst">del nodo +12 V al punto estrella, <b>franja = pata negativa</b></div>
+          <div class="why">≥25 V (el kit del BOM es de 25 V — úsalo, no bajes de ahí). Sostiene el riel cuando el UBEC o la bobina piden un escalón, y le da a dónde ir a la energía que la bobina devuelve al cortar</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--ctrl)"></div>
+        <div class="nom" style="color:var(--ctrl)">1000 µF</div>
+        <div><div class="dst">en la <b>salida del UBEC</b> (nodo de 6 V), pegado al servo</div>
+          <div class="why">el servo pasa de 5 mA a ~1.67 A en menos de un milisegundo; el cable de por medio es parte del problema, por eso el capacitor va del lado del servo</div></div></div>
+
+      <div class="banda banda-warn" style="margin:12px 0 0">
+        <h3>Los capacitores YA llegaron — pero no tienen dónde ir</h3>
+        <p style="margin:0 0 8px">
+          <code>INVENTORY.md</code> los da por recibidos el <b>2026-07-27</b> (item #8, kit
+          electrolítico 470/1000 µF) y el item #8 <b>ya no aparece</b> en la lista de compras
+          pendientes.
+        </p>
+        <p style="margin:0">
+          <b>Ojo con <code>docs/wiring_ubec.html</code>:</b> sigue diciendo “no han llegado” y los
+          lista como bloqueo para energizar. <b>Está desactualizada en ese punto</b> — quien manda es
+          <code>INVENTORY.md</code>, que es más nuevo. Lo que sí bloquea de verdad son el #6 y el #7,
+          porque sin ellos no existe el nodo donde colgarlos.
+        </p>
+      </div>
+    </div>
+    <div>
+      <div class="co co-green">
+        <div class="co-t">«¿Cuál de estas piezas se alimenta? — Ninguna»</div>
+        <div class="co-b">
+          Es la duda número uno y en este lado tiene tres respuestas distintas que conviene no
+          mezclar:
+          <table style="margin-top:10px">
+            <tr><th style="width:36%">Pieza</th><th>¿Se alimenta?</th><th>¿Polaridad?</th></tr>
+            <tr><td>Resistencia (470 Ω, 10 kΩ)</td><td><b>No</b>, es pasiva: dos patas, sin pin de corriente</td><td><b>No</b> — da igual cómo la pongas</td></tr>
+            <tr><td>Diodo 1N5819</td><td><b>No</b>, también pasivo, dos patas</td><td><b>SÍ</b> — la banda es el cátodo</td></tr>
+            <tr><td>Capacitor electrolítico</td><td><b>No</b></td><td><b>SÍ</b> — la franja impresa es la pata <b>negativa</b></td></tr>
+            <tr><td>MOSFET IRLZ44N</td><td><b>Tampoco.</b> No tiene pin de alimentación: es un interruptor de tres patas</td><td><b>SÍ</b> — G, D y S no son intercambiables</td></tr>
+          </table>
+          <div style="margin-top:10px">
+            Lo único que “se alimenta” aquí, en el sentido de tener un pin de entrada de corriente,
+            son la <b>bobina</b>, el <b>UBEC</b> y el <b>servo</b>. Todo lo demás está en el camino de
+            una corriente que otro produce.
+          </div>
+        </div>
+      </div>
+      <div class="co co-blue" style="margin-top:14px">
+        <div class="co-t">«¿El 22AWG aguanta 1.08 A?»</div>
+        <div class="co-b">
+          Sí, y con mucho margen. El 22 AWG tiene <b>~53 mΩ por metro</b>: un tramo de 30 cm son
+          <b>16 mΩ</b>, o sea <b>17 mV</b> de caída y <b>19 mW</b> de calor a 1.08 A. Nada.
+          <div style="margin-top:10px">
+            El problema nunca fue el cable: es el <b>contacto del protoboard</b>, un resorte dado a
+            ~1 A que ya está por debajo de la corriente de la bobina. Por eso la regla no es “usa
+            cable más grueso”, es <b>“saca esa corriente del protoboard”</b> (bloque K).
+            <span class="sub">Los 53 mΩ/m salen de tabla de calibres, no del repo.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ J ============================ -->
+<div class="blk" style="--c:var(--good)">
+  <div class="blk-h">
+    <div class="blk-n">J</div>
+    <div class="blk-t">La compuerta — lo único que se arma hoy</div>
+    <span class="pill p-hoy">hoy · se arma y se mide</span>
+  </div>
+  <div class="cols23">
+    <div>
+      <div class="tira" style="margin-bottom:6px">
+        <div class="pin"><div class="pinbar" style="background:var(--ctrl)"></div><div class="pinlab" style="color:var(--ctrl)">G · compuerta</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--grey)"></div><div class="pinlab" style="color:var(--grey)">D · al aire hoy</div></div>
+        <div class="pin"><div class="pinbar" style="background:var(--grey)"></div><div class="pinlab" style="color:var(--grey)">S · al aire hoy</div></div>
+      </div>
+      <p class="why" style="margin:34px 0 12px">
+        IRLZ44N en TO-220, <b>parado y con el texto hacia ti</b>: G · D · S de izquierda a derecha.
+        <b>La aleta metálica está unida al drain</b> — no la recargues contra nada conductor ni la
+        atornilles a un chasis aterrizado sin aislante.
+      </p>
+
+      <div class="fila"><div class="chip" style="background:var(--ctrl)"></div>
+        <div class="nom" style="color:var(--ctrl)">GPIO23</div>
+        <div><div class="dst">Pi pin 16 → fila 33 → pata libre de la 470 Ω</div>
+          <div class="why"><code>diverter.pin: 23</code> en <code>config.yaml</code></div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--ctrl)"></div>
+        <div class="nom" style="color:var(--ctrl)">470 Ω serie</div>
+        <div><div class="dst">fila 33 (h33) ↔ fila 37 (h37)</div>
+          <div class="why">3.3 V / 470 Ω = <b>7 mA</b> de pico ✓ dentro de los <b>8 mA</b> del BCM2711 del Pi 4. <b>No 220 Ω</b>: pediría 15 mA</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--ctrl)"></div>
+        <div class="nom" style="color:var(--ctrl)">G · fila 37</div>
+        <div><div class="dst">f37, con la 470 Ω y la 10 kΩ en la misma fila</div>
+          <div class="why">única pata del MOSFET que usa el protoboard, y mueve microamperios</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--gnd)"></div>
+        <div class="nom">10 kΩ pull-down</div>
+        <div><div class="dst">fila 37 (i37) → riel − del protoboard</div>
+          <div class="why">mientras el Pi bootea, GPIO23 es <b>entrada</b>: la compuerta la define solo esta resistencia. Sin ella flota y el diverter puede energizarse solo</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--grey)"></div>
+        <div class="nom" style="color:var(--grey)">D y S</div>
+        <div><div class="dst">al aire — hoy no se conectan</div>
+          <div class="why">van soldados directo a la pata con 22AWG (bloque K), nunca por el clip</div></div></div>
+
+      <div class="mide">
+        <b>Mide hoy — que el MOSFET esté vivo y la compuerta funcione, sin 12 V y sin la Pi:</b>
+        <ol style="margin:6px 0 0; padding-left:18px">
+          <li><b>Ohmmetro a las resistencias antes de plantarlas.</b> <b>470 Ω y 4.7 kΩ solo difieren
+            en el multiplicador</b> (amarillo-violeta-negro-<b>negro</b> vs -<b>café</b>) y la 4.7 k es
+            del pull-up de la sonda. Confundirlas es el error más fácil del banco entero.</li>
+          <li><b>Diodo de cuerpo:</b> multímetro en modo diodo, <b>rojo en S, negro en D</b> →
+            debe leer <b>~0.4–0.7 V</b>. Al revés (rojo en D, negro en S) → <b>OL</b>. Si las dos
+            lecturas dan lo mismo, el MOSFET viene muerto: toma otro del pack de 10.</li>
+          <li><b>Canal:</b> deja rojo en D y negro en S (leyendo OL) y <b>puentea la fila 33 al riel +
+            (3.3 V)</b>, que es exactamente lo que hará GPIO23. El canal enciende y la lectura cae a
+            <b>~0.000 V</b>. Quita el puente, aterriza la fila 33 al riel − y vuelve a OL.</li>
+        </ol>
+        <p style="margin:8px 0 0">
+          Ese tercer paso valida de una vez <b>el MOSFET, la 470 Ω, la 10 kΩ y la fila</b>. Es la única
+          verificación de potencia que hoy se puede cerrar entera.
+        </p>
+      </div>
+      <p class="why" style="margin:10px 0 0">
+        <b>Lo que esa prueba NO te dice:</b> la <code>R_DS(on)</code>. El datasheet del IRLZ44N la
+        caracteriza a V<sub>GS</sub> = 5 V y 4 V; con 3.3 V de GPIO el transistor corre <b>fuera de la
+        tabla</b>, así que el 0.022 Ω que se cita por ahí no aplica aquí. A ~1 A no importa — pero no
+        lo cites como si aplicara.
+      </p>
+    </div>
+
+    <div>
+      <div class="stop" style="margin-top:0">
+        <b>No pongas el source en el riel − “mientras tanto”.</b> Es la tentación obvia y es el bug
+        permanente: el día que llegue la bobina, esa tierra compartida mete la caída de ~1 A en la
+        misma referencia contra la que el ADC mide A0. Los arreglos temporales que funcionan no se
+        vuelven a tocar. <b>Déjalo al aire.</b>
+      </div>
+      <div class="co co-green" style="margin-top:14px">
+        <div class="co-t">«Con el 10k puesto, ¿la compuerta recibe los 3.3 V completos?»</div>
+        <div class="co-b">
+          No exactamente, y el número está bien: la 470 Ω y la 10 kΩ forman un divisor, así que en
+          reposo la compuerta se queda en <b>3.3 × 10 000 / 10 470 = 3.15 V</b>, con
+          <b>315 µA</b> circulando de forma continua mientras GPIO23 esté alto.
+          <div style="margin-top:10px">
+            Los dos números son buenos. 3.15 V pasa de sobra el umbral del IRLZ44N (es un MOSFET de
+            nivel lógico) y 315 µA son <b>4 %</b> de los 8 mA del pin. Bajar el pull-down a 1 kΩ para
+            “apagarlo más rápido” costaría 3.1 mA continuos sin comprarte nada: el diverter conmuta
+            unas <b>seis veces por corrida</b>.
+          </div>
+        </div>
+      </div>
+      <div class="co co-blue" style="margin-top:14px">
+        <div class="co-t">«¿Este 470 Ω también sirve para la válvula PWM?»</div>
+        <div class="co-b">
+          <b>No, y tampoco sirve el razonamiento.</b> Esa topología (<code>valve.type: pwm</code>,
+          no construida) tiene la restricción contraria: 1 kHz continuo contra pasos de duty de 1 µs.
+          Lo que fija el flanco no es la RC sino la <b>meseta de Miller</b> (~2.5 V), y un GPIO de
+          3.3 V deja apenas ~0.8 V de sobremanejo: el flanco sale de varios microsegundos con
+          <i>cualquier</i> resistencia. Eso no se arregla con un valor, se arregla con un
+          <b>driver de compuerta</b>. El rig corre <code>type: servo</code>, así que no está
+          construida.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ K ============================ -->
+<div class="blk" style="--c:var(--bad)">
+  <div class="blk-h">
+    <div class="blk-n">K</div>
+    <div class="blk-t">Drain y source — soldados a la pata, no al protoboard</div>
+    <span class="pill p-falta">bloqueado · bobina y estrella</span>
+  </div>
+  <div class="cols23">
+    <div>
+      <p style="margin:0 0 10px">
+        Esta es la regla que dejó de ser consejo y pasó a ser obligatoria cuando apareció el dato de
+        catálogo de la bobina: <b>13 W a 12 V = 1.08 A</b>, contra un contacto de protoboard dado a
+        <b>~1 A</b>. No es un margen delgado, es estar arriba del límite.
+      </p>
+      <div class="fila"><div class="chip" style="background:var(--ctrl)"></div>
+        <div class="nom" style="color:var(--ctrl)">D · fila 38</div>
+        <div><div class="dst">22AWG <b>soldado a la pata</b> → polo 2 del V1738 → bobina−</div>
+          <div class="why">el clip de la fila 38 se queda ahí solo sujetando mecánicamente; la corriente no pasa por él</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--gnd)"></div>
+        <div class="nom">S · fila 39</div>
+        <div><div class="dst">22AWG <b>soldado a la pata</b> → <b>directo al tornillo estrella</b></div>
+          <div class="why">no al riel −, no a la fila de tierra, no “de pasada” por ningún lado. Un cable, punto a punto</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--grey)"></div>
+        <div class="nom" style="color:var(--grey)">aleta (tab)</div>
+        <div><div class="dst">sin conectar, y <b>aislada</b></div>
+          <div class="why">está unida internamente al drain. En reposo (MOSFET apagado) la aleta está a <b>+12 V</b></div></div></div>
+
+      <div class="banda banda-warn" style="margin:12px 0 0">
+        <h3>Cómo aislar esas soldaduras hoy: no se puede del todo</h3>
+        <p style="margin:0 0 8px">
+          El termorretráctil es el <b>item #9</b> (<code>B07WWWPR2X</code>) y <b>no ha llegado</b>; no
+          hay crimpeadora; y la <b>cinta de aislar no está en <code>BOM.csv</code></b> — nadie la
+          listó. Dos soldaduras a 2.54 mm de distancia, una a +12 V y otra a tierra, sin aislar, es
+          exactamente la clase de cosa que no debe quedar “por mientras”.
+        </p>
+        <p style="margin:0">
+          Como este bloque está bloqueado igual por la bobina, no hay prisa: <b>pide el #9 y hazlo una
+          sola vez</b>.
+        </p>
+      </div>
+    </div>
+    <div>
+      <div class="co co-red">
+        <div class="co-t">«¿Qué pasa si la aleta toca metal aterrizado?»</div>
+        <div class="co-b">
+          Es la falla silenciosa favorita de este circuito. La aleta <b>es el drain</b>, o sea
+          bobina−. Si toca algo que llegue a tierra, la corriente encuentra el camino
+          <b>+12 V → bobina → aleta → tierra</b> y la bobina queda <b>energizada permanentemente</b>,
+          sin que el MOSFET tenga nada que ver.
+          <div style="margin-top:10px">
+            Consecuencias, en orden de gravedad real: el diverter manda permeado al <b>recipiente
+            medido todo el tiempo</b> —incluido el periodo que no es de colecta—, la bobina se calienta
+            sin descanso, y <b>el fusible no se mueve</b> porque 1.08 A está muy por debajo de 3 A.
+            No se quema nada; se corrompe el dato. Aísla la aleta o monta el MOSFET sobre plástico.
+          </div>
+        </div>
+      </div>
+      <div class="co co-blue" style="margin-top:14px">
+        <div class="co-t">«El mismo cable, dos tratamientos opuestos»</div>
+        <div class="co-b">
+          El 22AWG del inventario es <b>trenzado</b>, y sus dos extremos se terminan al revés:
+          <ul style="margin:10px 0 0">
+            <li><b>En la pata del MOSFET: se suelda.</b> Es una unión metalúrgica, no mecánica, y
+              aguanta.</li>
+            <li><b>Bajo el tornillo del V1738 o del #6: NO se estaña.</b> El estaño <b>fluye en frío</b>
+              bajo presión sostenida, la junta se afloja sola con los meses y nadie lo ve. Ahí va
+              trenzado desnudo y retorcido, o ferrule.</li>
+          </ul>
+          <div style="margin-top:10px">
+            Es contraintuitivo justo porque es el mismo cable. La regla corta:
+            <b>soldadura para lo que se une, cobre desnudo para lo que se aprieta.</b>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ L ============================ -->
+<div class="blk" style="--c:var(--bad)">
+  <div class="blk-h">
+    <div class="blk-n">L</div>
+    <div class="blk-t">Bobina + 1N5819 + V1738 — el bloque que no perdona</div>
+    <span class="pill p-falta">bloqueado · diodo y solenoide</span>
+  </div>
+
+  <div class="caja" style="padding:12px 14px; margin-bottom:14px">
+  <svg viewBox="0 0 1180 400" role="img"
+    aria-label="Detalle del diverter: el positivo de 12 V fusible entra al polo 1 del V1738 y sale a bobina más; la bobina retorna por bobina menos al polo 2 y de ahí al drain del MOSFET; el diodo 1N5819 va en paralelo a la bobina con la banda hacia el lado de más 12 voltios; el polo 3 del header queda muerto como llave anti-inversión">
+
+    <!-- lado placa -->
+    <text x="20" y="34" font-size="12.5" font-weight="500" fill="var(--pwr)">LADO PLACA</text>
+    <text x="20" y="52" font-size="11" fill="currentColor" opacity=".6">fijo, no se desconecta</text>
+
+    <path d="M20 96 H 300" stroke="var(--pwr)" stroke-width="2.4" fill="none"/>
+    <text x="24" y="86" font-size="12" fill="var(--pwr)">+12 V fusible</text>
+
+    <path d="M20 250 H 300" stroke="var(--ctrl)" stroke-width="2.4" fill="none"/>
+    <text x="24" y="240" font-size="12" fill="var(--ctrl)">drain del IRLZ44N</text>
+    <text x="24" y="272" font-size="11" fill="currentColor" opacity=".6">22AWG soldado a la pata</text>
+
+    <!-- V1738 header + plug -->
+    <rect x="300" y="60" width="86" height="264" rx="6" fill="none" stroke="var(--good)" stroke-width="2"/>
+    <rect x="386" y="60" width="86" height="264" rx="6" fill="none" stroke="var(--good)" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="343" y="46" text-anchor="middle" font-size="11.5" fill="var(--good)">header</text>
+    <text x="429" y="46" text-anchor="middle" font-size="11.5" fill="var(--good)">plug</text>
+    <text x="386" y="346" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--good)">V1738 · 3 polos</text>
+    <text x="386" y="364" text-anchor="middle" font-size="11" fill="currentColor" opacity=".6">mide el paso antes de soldar</text>
+
+    <!-- polo 1 -->
+    <path d="M300 96 H 472" stroke="var(--pwr)" stroke-width="2.4" fill="none"/>
+    <circle cx="343" cy="96" r="4.5" fill="var(--pwr)"/>
+    <text x="386" y="84" text-anchor="middle" font-size="12" font-weight="500" fill="var(--pwr)">polo 1</text>
+
+    <!-- polo 2 -->
+    <path d="M300 250 H 472" stroke="var(--ctrl)" stroke-width="2.4" fill="none"/>
+    <circle cx="343" cy="250" r="4.5" fill="var(--ctrl)"/>
+    <text x="386" y="238" text-anchor="middle" font-size="12" font-weight="500" fill="var(--ctrl)">polo 2</text>
+
+    <!-- polo 3 muerto -->
+    <path d="M330 173 H 356" stroke="var(--bad)" stroke-width="2.4" fill="none"/>
+    <g stroke="var(--bad)" stroke-width="3" stroke-linecap="round">
+      <line x1="336" y1="167" x2="350" y2="181"/>
+      <line x1="350" y1="167" x2="336" y2="181"/>
+    </g>
+    <text x="478" y="170" font-size="12" font-weight="500" fill="var(--bad)">polo 3 · MUERTO</text>
+    <text x="478" y="188" font-size="11" fill="var(--bad)">nada landeado · rotúlalo NC</text>
+
+    <!-- lado húmedo -->
+    <text x="560" y="34" font-size="12.5" font-weight="500" fill="var(--ctrl)">LADO HÚMEDO / MÓVIL</text>
+    <text x="560" y="52" font-size="11" fill="currentColor" opacity=".6">sale completo al desenchufar</text>
+
+    <!-- bobina -->
+    <path d="M472 96 H 700" stroke="var(--pwr)" stroke-width="2.4" fill="none"/>
+    <circle cx="700" cy="96" r="5" fill="var(--pwr)"/>
+    <text x="712" y="90" font-size="11.5" fill="var(--pwr)">bobina +</text>
+
+    <rect x="640" y="140" width="120" height="66" rx="5" fill="none" stroke="var(--bad)" stroke-width="2.2" stroke-dasharray="6 4"/>
+    <path d="M700 96 V 140" stroke="var(--pwr)" stroke-width="2.4" fill="none"/>
+    <text x="700" y="168" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--bad)">BOBINA</text>
+    <text x="700" y="186" text-anchor="middle" font-size="11" fill="var(--bad)">no ha llegado</text>
+    <text x="700" y="200" text-anchor="middle" font-size="11" fill="currentColor" opacity=".65">1.08 A · ~11 Ω</text>
+
+    <path d="M700 206 V 250" stroke="var(--ctrl)" stroke-width="2.4" fill="none"/>
+    <path d="M472 250 H 700" stroke="var(--ctrl)" stroke-width="2.4" fill="none"/>
+    <circle cx="700" cy="250" r="5" fill="var(--ctrl)"/>
+    <text x="712" y="266" font-size="11.5" fill="var(--ctrl)">bobina − = drain</text>
+
+    <!-- diodo en paralelo -->
+    <path d="M700 96 H 880" stroke="var(--bad)" stroke-width="2.2" fill="none" stroke-dasharray="6 4"/>
+    <path d="M880 96 V 148" stroke="var(--bad)" stroke-width="2.2" fill="none" stroke-dasharray="6 4"/>
+    <line x1="860" y1="152" x2="900" y2="152" stroke="var(--bad)" stroke-width="4"/>
+    <polygon points="864,192 896,192 880,156" fill="none" stroke="var(--bad)" stroke-width="2.4"/>
+    <path d="M880 192 V 250" stroke="var(--bad)" stroke-width="2.2" fill="none" stroke-dasharray="6 4"/>
+    <path d="M700 250 H 880" stroke="var(--bad)" stroke-width="2.2" fill="none" stroke-dasharray="6 4"/>
+
+    <text x="916" y="132" font-size="12" font-weight="500" fill="var(--bad)">1N5819 — no ha llegado</text>
+    <text x="916" y="152" font-size="11.5" font-weight="500" fill="var(--bad)">la BANDA va ARRIBA</text>
+    <text x="916" y="168" font-size="11" fill="currentColor" opacity=".7">banda = cátodo → bobina + = +12 V</text>
+    <text x="916" y="190" font-size="11" fill="currentColor" opacity=".7">en reposo está en INVERSA:</text>
+    <text x="916" y="206" font-size="11" fill="currentColor" opacity=".7">no conduce, no calienta, no hace nada</text>
+    <text x="916" y="228" font-size="11" fill="currentColor" opacity=".7">al cortar la bobina conduce y</text>
+    <text x="916" y="244" font-size="11" fill="currentColor" opacity=".7">recircula esos 1.08 A localmente</text>
+
+    <text x="700" y="292" text-anchor="middle" font-size="11.5" fill="var(--bad)">el diodo va PEGADO a la bobina, no en la placa</text>
+    <text x="830" y="308" text-anchor="middle" font-size="11" fill="currentColor" opacity=".65">así el lazo de recirculación es corto — y si desenchufas el V1738 con la bobina viva, diodo y bobina se van juntos</text>
+
+    <!-- inversion -->
+    <rect x="20" y="316" width="256" height="70" rx="6" fill="none" stroke="var(--good)" stroke-width="1.6"/>
+    <text x="32" y="338" font-size="11.5" font-weight="500" fill="var(--good)">Plug al revés (girado 180°)</text>
+    <text x="32" y="356" font-size="11" fill="currentColor" opacity=".75">1→3 · 2→2 · 3→1</text>
+    <text x="32" y="374" font-size="11" fill="var(--good)">bobina+ cae en el polo muerto → circuito abierto</text>
+  </svg>
+  </div>
+
+  <div class="cols">
+    <div class="co co-red">
+      <div class="co-t">«¿Y si pongo el 1N5819 al revés?»</div>
+      <div class="co-b">
+        <b>Es un corto franco y permanente, no un “no funciona”.</b> Con la banda hacia abajo el diodo
+        queda en <b>directa entre +12 V y el drain</b>: la bobina queda puenteada por un diodo. La
+        primera vez que GPIO23 se ponga alto, la corriente va <b>+12 V → diodo → drain → source →
+        tierra</b>, limitada solo por la fuente.
+        <div style="margin-top:10px">
+          Qué se va, en orden: el <b>1N5819</b> es un componente de <b>1 A</b> y estaría viendo los 3 A
+          de la fuente, así que se va primero; después el fusible, o el IRLZ44N. Y lo peor: <b>en
+          reposo no se nota nada</b> — mientras el MOSFET esté apagado, el circuito se ve normal.
+          <b>Marca la banda antes de soldar y verifica con el multímetro en modo diodo antes de
+          energizar.</b>
+        </div>
+      </div>
+    </div>
+    <div class="co co-green">
+      <div class="co-t">«¿Por qué el polo 3 se queda muerto en vez de aprovecharlo?»</div>
+      <div class="co-b">
+        Porque <b>ese polo vacío ES la llave anti-inversión</b>. Un plug de 3 polos girado 180° mapea
+        1→3, 2→2, 3→1. Con la bobina en los polos 1–2 y <b>nada</b> landeado en el polo 3 del header,
+        un plug al revés deja bobina+ colgando: el circuito abre, la bobina no se energiza y el
+        permeado sigue yéndose a desecho — <b>la misma dirección que el failsafe de diseño</b>.
+        <div style="margin-top:10px">
+          Si en cambio landeas los tres polos, el plug invertido pone el diodo en directa entre +12 V y
+          el drain, que es exactamente el caso del callout rojo de al lado. <b>El tercer polo no es un
+          repuesto, es la llave.</b> Rotúlalo <code>NC</code> en el header para que nadie lo
+          reutilice dentro de seis meses.
+        </div>
+        <div style="margin-top:10px">
+          Solo hay <b>un</b> V1738 en la mesa, así que solo compra <b>una</b> junta desmontable, y ya
+          está asignada a la bobina. El servo y la sonda se quedan sin ella a propósito.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stop" style="margin-top:14px">
+    <b>Antes de soldar el V1738, dos datos que el repo no tiene:</b> <b>el paso</b> (5.08 mm sí cae en
+    columnas alternadas del protoboard; 3.81 o 3.5 mm no entran a un 0.1" y piden perfboard) y
+    <b>su rating de corriente</b> contra los 1.08 A de la bobina. Los dos se leen o se miden en la
+    pieza; ninguno está escrito en ningún archivo.
+  </div>
+</div>
+
+<!-- ============================ M ============================ -->
+<div class="blk" style="--c:var(--ctrl)">
+  <div class="blk-h">
+    <div class="blk-n">M</div>
+    <div class="blk-t">UBEC y servo — cuelgan del mismo riel, y tienen su propia hoja</div>
+    <span class="pill p-falta">bloqueado · fusible</span>
+    <span class="pill p-falta">no energizar · no acoplar</span>
+  </div>
+  <div class="cols23">
+    <div>
+      <div class="fila"><div class="chip" style="background:var(--pwr)"></div>
+        <div class="nom" style="color:var(--pwr)">UBEC IN +</div>
+        <div><div class="dst">→ nodo +12 V, <b>después</b> del fusible</div>
+          <div class="why">nunca antes: la protección va entre la fuente y todo lo demás</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--gnd)"></div>
+        <div class="nom">UBEC IN −</div>
+        <div><div class="dst">→ tornillo estrella, con su propio cable</div>
+          <div class="why">no por el riel del protoboard, no en cadena con el source del MOSFET</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--good)"></div>
+        <div class="nom" style="color:var(--good)">jumper</div>
+        <div><div class="dst">posición <b>6 V</b></div>
+          <div class="why">este UBEC solo hace 5 V o 6 V; <b>la posición de 6.8 V no existe</b> en la pieza comprada</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--ctrl)"></div>
+        <div class="nom" style="color:var(--ctrl)">UBEC OUT +</div>
+        <div><div class="dst">→ nodo de 6 V → hilo rojo del servo (+ el 1000 µF)</div>
+          <div class="why"><b>este nodo no toca ningún pin del Pi. Jamás.</b> 6 V en un GPIO de 3.3 V lo mata</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--gnd)"></div>
+        <div class="nom">UBEC OUT − / servo café</div>
+        <div><div class="dst">→ tornillo estrella</div>
+          <div class="why">dentro del UBEC IN− y OUT− son el mismo nodo (buck <b>no aislado</b>); llevar los dos al tornillo evita que el retorno del servo viaje por el cable de entrada</div></div></div>
+      <div class="fila"><div class="chip" style="background:var(--ctrl)"></div>
+        <div class="nom" style="color:var(--ctrl)">servo naranja</div>
+        <div><div class="dst">→ <b>GPIO18 · pin físico 12</b></div>
+          <div class="why">PWM por hardware (BCM 12/13/18/19). Es una entrada lógica: microamperios</div></div></div>
+
+      <p class="why" style="margin:12px 0 0">
+        Detalle completo del subsistema —croquis de la pieza, orden de los tres hilos del servo, los
+        modos de falla del plug invertido y el porqué de que un divisor o un lineal no sirvan— en
+        <code>docs/wiring_ubec.html</code>. Esta hoja solo fija <b>de dónde cuelga</b> y <b>a dónde
+        retorna</b>.
+      </p>
+    </div>
+    <div>
+      <div class="stop" style="margin-top:0">
+        <b>No energices ni acoples el servo.</b> <code>ServoValve.__init__</code> llama
+        <code>to_safe()</code> <b>al construirse</b>: en cuanto el software arranque en
+        <code>mode: hardware</code>, el servo salta a <b>700 µs</b> sin que nadie se lo pida. Y
+        <code>servo_close_us</code> sigue en <b>0</b> = sin calibrar. La calibración de extremos va con
+        la válvula <b>DESACOPLADA</b> del vástago.
+        <div style="margin-top:8px">
+          Corolario para el banco: si corres <code>mode: hardware</code> solo para leer el sensor,
+          hazlo con el <b>UBEC sin energía y el servo desconectado de GPIO18</b> — el pulso sale igual.
+        </div>
+      </div>
+      <div class="co co-red" style="margin-top:14px">
+        <div class="co-t">«Si se va el 12 V a media corrida, ¿el rig se protege solo?»</div>
+        <div class="co-b">
+          <b>No, y este es el hallazgo que más pesa de esta hoja.</b> Perder el riel de 12 V hace dos
+          cosas a la vez:
+          <ul style="margin:10px 0 0">
+            <li>El diverter cae a <b>desecho</b> ✓ — bien, es el failsafe de diseño.</li>
+            <li>El servo se queda <b>exactamente donde iba</b>, porque un servo no tiene resorte de
+              retorno: sostiene por fricción. Si iba abierto, <b>sigue abierto</b> y el aire sigue
+              entrando.</li>
+          </ul>
+          <div style="margin-top:10px">
+            Y aquí está el punto: el software <b>sí</b> ve subir la presión y <b>sí</b> ordena cerrar
+            — pero la orden viaja a un servo sin alimentación. <b>El aborto se vuelve un no-op.</b>
+            El único freno que queda es mecánico.
+          </div>
+          <div style="margin-top:10px">
+            <b>Ese freno mecánico todavía no existe.</b> La escalera de seguridad cuenta con un alivio
+            de ~90 kPa que <b>no se ha comprado</b>, y las dos fuentes del repo no describen la misma
+            pieza: <code>BOM.csv</code> pide un <b>CR25-100 ajustable</b>, mientras
+            <code>INVENTORY.md</code> apunta a un ASIN que se rastrea a un <b>CPR-25 de 5 psi fijos =
+            34.5 kPa</b> — que se abriría <i>por debajo</i> del ensayo de 35 kPa. Hasta que eso se
+            resuelva y la pieza esté montada, el failsafe de este escenario es <b>cerrar el
+            suministro a mano</b>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Tierra en estrella — la parte que se ve igual y no lo es</h2>
+<p class="bajada" style="margin-bottom:16px">
+  Las dos versiones “funcionan”. La diferencia no aparece en ninguna prueba de continuidad: aparece
+  como presión que no existe, y solo cuando el diverter conmuta.
+</p>
+
+<div class="caja" style="padding:12px 14px; margin-bottom:16px">
+<svg viewBox="0 0 1080 330" role="img"
+  aria-label="Comparación: a la izquierda el retorno de la bobina comparte el riel negativo del protoboard y su caída se suma a la lectura del ADC; a la derecha el retorno va por su propio cable hasta el tornillo estrella y la referencia del ADC queda limpia">
+
+  <!-- ================= MAL ================= -->
+  <text x="20" y="26" font-size="13.5" font-weight="500" fill="var(--bad)">MAL — el retorno de potencia por el riel −</text>
+
+  <rect x="30" y="120" width="420" height="20" rx="3" fill="none" stroke="var(--gnd)" stroke-width="2"/>
+  <text x="240" y="135" text-anchor="middle" font-size="11.5" fill="currentColor">riel − del protoboard</text>
+
+  <g font-size="11" fill="currentColor">
+    <path d="M80 66 V 120" stroke="var(--gnd)" stroke-width="1.5"/>
+    <circle cx="80" cy="120" r="4" fill="var(--gnd)"/>
+    <text x="80" y="56" text-anchor="middle">ADS1115</text>
+    <path d="M170 66 V 120" stroke="var(--sig)" stroke-width="1.5"/>
+    <circle cx="170" cy="120" r="4" fill="var(--gnd)"/>
+    <text x="170" y="56" text-anchor="middle" fill="var(--sig)">R2</text>
+    <path d="M260 66 V 120" stroke="var(--gnd)" stroke-width="1.5"/>
+    <circle cx="260" cy="120" r="4" fill="var(--gnd)"/>
+    <text x="260" y="56" text-anchor="middle">transductor</text>
+  </g>
+
+  <path d="M400 78 V 120" stroke="var(--bad)" stroke-width="4"/>
+  <polygon points="400,120 393,106 407,106" fill="var(--bad)"/>
+  <circle cx="400" cy="120" r="4.5" fill="var(--bad)"/>
+  <text x="400" y="68" text-anchor="middle" font-size="11.5" font-weight="500" fill="var(--bad)">source · 1.08 A</text>
+
+  <path d="M392 160 H 60" stroke="var(--bad)" stroke-width="3.4"/>
+  <polygon points="52,160 66,153 66,167" fill="var(--bad)"/>
+  <text x="230" y="180" text-anchor="middle" font-size="11.5" fill="var(--bad)">1.08 A recorriendo el riel por debajo de los tres sensores</text>
+
+  <text x="30" y="216" font-size="11.5" fill="currentColor">20–50 mΩ de riel y contactos &#160;×&#160; 1.08 A &#160;=&#160; <tspan font-weight="500" fill="var(--bad)">20–54 mV</tspan></text>
+  <text x="30" y="238" font-size="11.5" fill="currentColor">× 37.6 kPa/V de la cadena &#160;=&#160; <tspan font-weight="500" fill="var(--bad)">0.75 – 1.9 kPa de presión fantasma</tspan></text>
+  <text x="30" y="266" font-size="11" fill="currentColor" opacity=".7">aparece y desaparece <tspan font-weight="500">al conmutar el diverter</tspan> — o sea justo al entrar</text>
+  <text x="30" y="282" font-size="11" fill="currentColor" opacity=".7">en COLLECTING, que es donde empieza el promedio que va a la regresión</text>
+  <text x="30" y="298" font-size="11" fill="currentColor" opacity=".7">de Darcy. Ninguna prueba de continuidad lo detecta.</text>
+
+  <!-- divisor -->
+  <line x1="530" y1="20" x2="530" y2="310" stroke="currentColor" stroke-opacity=".22" stroke-width="1"/>
+
+  <!-- ================= BIEN ================= -->
+  <text x="570" y="26" font-size="13.5" font-weight="500" fill="var(--good)">BIEN — cada retorno con su cable, todos a UN tornillo</text>
+
+  <rect x="580" y="120" width="300" height="20" rx="3" fill="none" stroke="var(--gnd)" stroke-width="2"/>
+  <text x="730" y="135" text-anchor="middle" font-size="11.5" fill="currentColor">riel − del protoboard · solo µA</text>
+
+  <g font-size="11" fill="currentColor">
+    <path d="M630 66 V 120" stroke="var(--gnd)" stroke-width="1.5"/>
+    <circle cx="630" cy="120" r="4" fill="var(--gnd)"/>
+    <text x="630" y="56" text-anchor="middle">ADS1115</text>
+    <path d="M710 66 V 120" stroke="var(--sig)" stroke-width="1.5"/>
+    <circle cx="710" cy="120" r="4" fill="var(--gnd)"/>
+    <text x="710" y="56" text-anchor="middle" fill="var(--sig)">R2</text>
+    <path d="M790 66 V 120" stroke="var(--gnd)" stroke-width="1.5"/>
+    <circle cx="790" cy="120" r="4" fill="var(--gnd)"/>
+    <text x="790" y="56" text-anchor="middle">transductor</text>
+  </g>
+
+  <path d="M960 66 V 200" stroke="var(--bad)" stroke-width="4"/>
+  <text x="960" y="56" text-anchor="middle" font-size="11.5" font-weight="500" fill="var(--bad)">source · 1.08 A</text>
+  <text x="1006" y="140" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">22AWG</text>
+  <text x="1006" y="154" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">17 mV</text>
+
+  <path d="M730 140 V 200" stroke="var(--gnd)" stroke-width="2"/>
+  <path d="M730 200 H 960" stroke="currentColor" stroke-opacity="0" stroke-width="0"/>
+  <path d="M730 200 L 845 236" stroke="var(--gnd)" stroke-width="2" fill="none"/>
+  <path d="M960 200 L 845 236" stroke="var(--bad)" stroke-width="3" fill="none"/>
+  <path d="M600 200 L 845 236" stroke="var(--pwr)" stroke-width="2" fill="none"/>
+  <text x="596" y="192" text-anchor="middle" font-size="10.5" fill="var(--pwr)">UBEC</text>
+
+  <circle cx="845" cy="236" r="7" fill="var(--bad)"/>
+  <path d="M845 236 V 254" stroke="var(--gnd)" stroke-width="2.4"/>
+  <path d="M823 254 H 867" stroke="var(--gnd)" stroke-width="3"/>
+  <path d="M830 263 H 860" stroke="var(--gnd)" stroke-width="3"/>
+  <path d="M837 272 H 853" stroke="var(--gnd)" stroke-width="3"/>
+  <text x="885" y="248" font-size="11.5" font-weight="500" fill="var(--bad)">★ tornillo − del #6</text>
+  <text x="885" y="264" font-size="11" fill="var(--bad)">HOY NO EXISTE</text>
+
+  <text x="570" y="298" font-size="11" fill="currentColor" opacity=".75">Los 1.08 A siguen existiendo: ahora su caída de 17 mV vive en <tspan font-weight="500">su propio cable</tspan>,</text>
+  <text x="570" y="314" font-size="11" fill="currentColor" opacity=".75">no debajo del ADC. La referencia del ADC llega al mismo tornillo por otra vía.</text>
+</svg>
+</div>
+
+<div class="cols23">
+  <div class="caja">
+    <h3>Las cuatro patas del tornillo estrella</h3>
+    <table>
+      <tr><th style="width:34%">Pata</th><th>Qué lleva</th></tr>
+      <tr><td><b>riel −</b> del protoboard</td>
+          <td>la tierra de <b>medición</b>: Pi pin 6, GND del ADS1115, R2 del divisor, GND del transductor, GND de la sonda y el pull-down de 10 kΩ. Corriente: <b>microamperios</b></td></tr>
+      <tr><td><b>source</b> del IRLZ44N</td>
+          <td>el retorno de la bobina: <b>1.08 A</b> en pulsos, ~6 veces por corrida</td></tr>
+      <tr><td><b>IN −</b> del UBEC</td>
+          <td>el retorno de la conversión 12→6 V</td></tr>
+      <tr><td><b>OUT −</b> del UBEC / café del servo</td>
+          <td>el retorno del motor: hasta <b>1.67 A</b> de pico al calarse</td></tr>
+    </table>
+    <p class="why" style="margin:12px 0 0">
+      Cuatro cables, cuatro tornillazos en el <b>mismo</b> terminal. <b>Nunca uno a través de otro</b> y
+      nunca en cadena: en el momento en que la pata de medición cuelga de la pata de potencia, vuelves
+      al dibujo de la izquierda.
+    </p>
+  </div>
+  <div>
+    <div class="co co-red">
+      <div class="co-t">«¿El cable que no lleva corriente puedo dejarlo para el final?»</div>
+      <div class="co-b">
+        No: es el más importante de los cuatro. El riel − no transporta potencia, pero es la
+        <b>referencia</b> de dos cosas a la vez — contra él mide A0 el ADC, y contra él está la
+        compuerta del MOSFET a través del pull-down de 10 kΩ.
+        <div style="margin-top:10px">
+          Si ese cable se rompe o nunca se apretó, con 12 V vivos el source queda referido al tornillo
+          y la compuerta a un nodo flotante: <b>V<sub>GS</sub> deja de estar definida</b> y el
+          diverter puede hacer cualquier cosa, incluida energizarse sola. Es el clásico “ese cable no
+          hace nada” que resulta ser el que sostiene el failsafe.
+        </div>
+        <div style="margin-top:10px">
+          Regla de manos, la misma del servo: <b>la tierra se conecta primero y se desconecta al
+          final.</b>
+        </div>
+      </div>
+    </div>
+    <p class="why" style="margin:12px 0 0">
+      Hoy, sin el #6, la referencia provisional del banco es el <b>pin 6 del Pi</b> y es legítima
+      precisamente porque no hay potencia: por el riel − no circula más que los 141 µA del divisor y
+      los microamperios de la compuerta. El día que llegue el #6 nacen los cuatro cables de arriba.
+      <span class="sub">Los 20–50 mΩ de riel son una estimación de contacto de protoboard, no una
+      medición.</span>
+    </p>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>El esquemático completo del lado de 12 V</h2>
+
+<div class="caja" style="padding:12px 14px">
+<svg viewBox="0 0 1240 600" role="img"
+  aria-label="Esquemático del lado de potencia: la fuente de 12 V entra por el adaptador de barrel jack a tornillo, pasa por el fusible de 3 amperes y forma el nodo de más 12 voltios; de ahí cuelgan el capacitor de entrada, la rama de la bobina a través del V1738 con su diodo flyback y el MOSFET, y la rama del UBEC con el servo; todos los retornos convergen en un solo tornillo estrella">
+
+  <!-- cadena de entrada -->
+  <rect x="18" y="36" width="150" height="58" rx="6" fill="none" stroke="var(--pwr)" stroke-width="1.8"/>
+  <text x="93" y="60" text-anchor="middle" font-size="12.5" font-weight="500" fill="currentColor">Fuente 12 V 3 A</text>
+  <text x="93" y="79" text-anchor="middle" font-size="11" fill="var(--good)">✓ en la mano</text>
+
+  <path d="M168 62 H 206" stroke="var(--pwr)" stroke-width="2.2"/>
+
+  <rect x="206" y="26" width="170" height="72" rx="6" fill="none" stroke="var(--bad)" stroke-width="2.2" stroke-dasharray="6 4"/>
+  <text x="291" y="48" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--bad)">#6 BARREL → TORNILLO</text>
+  <text x="291" y="66" text-anchor="middle" font-size="11" fill="var(--bad)">no ha llegado</text>
+  <text x="291" y="86" text-anchor="middle" font-size="11" fill="currentColor" opacity=".7">aquí nace el ★</text>
+
+  <path d="M376 62 H 412" stroke="var(--pwr)" stroke-width="2.2"/>
+
+  <rect x="412" y="34" width="150" height="56" rx="6" fill="none" stroke="var(--bad)" stroke-width="2.2" stroke-dasharray="6 4"/>
+  <text x="487" y="58" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--bad)">FUSIBLE 3 A</text>
+  <text x="487" y="77" text-anchor="middle" font-size="11" fill="var(--bad)">#7 · no ha llegado</text>
+
+  <!-- bus +12 -->
+  <path d="M562 62 H 1180" stroke="var(--pwr)" stroke-width="2.4"/>
+  <text x="640" y="50" font-size="12" font-weight="500" fill="var(--pwr)">+12 V fusible</text>
+  <text x="1000" y="50" font-size="11" fill="currentColor" opacity=".65">22AWG, nunca riel de protoboard</text>
+
+  <!-- cap de entrada -->
+  <circle cx="600" cy="62" r="5" fill="var(--pwr)"/>
+  <path d="M600 62 V 110" stroke="var(--pwr)" stroke-width="2.2"/>
+  <path d="M582 110 H 618" stroke="var(--warn)" stroke-width="3"/>
+  <path d="M586 122 H 614" stroke="var(--warn)" stroke-width="3"/>
+  <path d="M600 122 V 470" stroke="var(--pwr)" stroke-width="2.2"/>
+  <text x="626" y="106" font-size="10.5" fill="var(--warn)">470 µF</text>
+  <text x="626" y="126" font-size="10.5" fill="var(--warn)">25 V</text>
+  <text x="626" y="146" font-size="10" fill="currentColor" opacity=".6">franja = −</text>
+
+  <!-- rama bobina -->
+  <circle cx="760" cy="62" r="5" fill="var(--pwr)"/>
+  <path d="M760 62 V 120" stroke="var(--pwr)" stroke-width="2.2"/>
+  <rect x="690" y="120" width="140" height="46" rx="5" fill="none" stroke="var(--good)" stroke-width="1.8"/>
+  <text x="760" y="140" text-anchor="middle" font-size="11.5" font-weight="500" fill="var(--good)">V1738 polos 1–2</text>
+  <text x="760" y="157" text-anchor="middle" font-size="10.5" fill="var(--bad)">polo 3 muerto</text>
+
+  <path d="M760 166 V 196" stroke="var(--pwr)" stroke-width="2.2"/>
+  <rect x="680" y="196" width="160" height="64" rx="5" fill="none" stroke="var(--bad)" stroke-width="2.2" stroke-dasharray="6 4"/>
+  <text x="760" y="218" text-anchor="middle" font-size="12" font-weight="500" fill="var(--bad)">Bobina 3 vías</text>
+  <text x="760" y="235" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">13 W = 1.08 A · ~11 Ω</text>
+  <text x="760" y="252" text-anchor="middle" font-size="10.5" fill="var(--bad)">no ha llegado</text>
+
+  <!-- diodo -->
+  <path d="M840 212 H 890" stroke="var(--bad)" stroke-width="2" stroke-dasharray="5 3"/>
+  <path d="M890 212 V 226" stroke="var(--bad)" stroke-width="2" stroke-dasharray="5 3"/>
+  <path d="M876 228 H 904" stroke="var(--bad)" stroke-width="3.4"/>
+  <polygon points="878,254 902,254 890,232" fill="none" stroke="var(--bad)" stroke-width="2"/>
+  <path d="M890 254 V 264" stroke="var(--bad)" stroke-width="2" stroke-dasharray="5 3"/>
+  <path d="M840 264 H 890" stroke="var(--bad)" stroke-width="2" stroke-dasharray="5 3"/>
+  <text x="880" y="284" text-anchor="middle" font-size="10.5" font-weight="500" fill="var(--bad)">1N5819 · banda arriba</text>
+  <text x="880" y="298" text-anchor="middle" font-size="10.5" fill="var(--bad)">no ha llegado</text>
+
+  <path d="M760 260 V 300" stroke="var(--ctrl)" stroke-width="2.2"/>
+  <rect x="680" y="300" width="160" height="70" rx="5" fill="none" stroke="var(--ctrl)" stroke-width="2"/>
+  <text x="760" y="322" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--ctrl)">IRLZ44N</text>
+  <text x="760" y="339" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">D arriba · S abajo</text>
+  <text x="760" y="356" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">aleta = drain</text>
+
+  <path d="M648 335 H 680" stroke="var(--ctrl)" stroke-width="2.2"/>
+  <polygon points="680,335 668,330 668,340" fill="var(--ctrl)"/>
+  <text x="606" y="322" font-size="10.5" fill="var(--ctrl)">compuerta</text>
+  <text x="604" y="358" font-size="9" fill="currentColor" opacity=".6">470 Ω ← GPIO23</text>
+
+  <path d="M760 370 V 470" stroke="var(--ctrl)" stroke-width="3"/>
+  <text x="770" y="410" font-size="10.5" fill="var(--ctrl)">source</text>
+  <text x="770" y="424" font-size="10.5" fill="currentColor" opacity=".6">1.08 A</text>
+
+  <!-- rama UBEC -->
+  <circle cx="1040" cy="62" r="5" fill="var(--pwr)"/>
+  <path d="M1040 62 V 120" stroke="var(--pwr)" stroke-width="2.2"/>
+  <rect x="950" y="120" width="180" height="64" rx="5" fill="none" stroke="var(--pwr)" stroke-width="2"/>
+  <text x="1040" y="142" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--pwr)">UBEC 12→6 V · 3 A</text>
+  <text x="1040" y="159" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">jumper en 6 V</text>
+  <text x="1040" y="176" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">~0.95 A del riel</text>
+
+  <path d="M950 152 H 940" stroke="var(--gnd)" stroke-width="2.2"/>
+  <path d="M940 152 V 470" stroke="var(--gnd)" stroke-width="2.2"/>
+  <text x="934" y="200" text-anchor="end" font-size="10.5" fill="currentColor" opacity=".6">IN −</text>
+
+  <path d="M1040 184 V 300" stroke="var(--ctrl)" stroke-width="2.4"/>
+  <circle cx="1040" cy="220" r="5" fill="var(--ctrl)"/>
+  <text x="1050" y="212" font-size="12" font-weight="500" fill="var(--ctrl)">6.0 V</text>
+
+  <path d="M1040 220 H 1160" stroke="var(--ctrl)" stroke-width="2.2"/>
+  <path d="M1160 220 V 246" stroke="var(--ctrl)" stroke-width="2.2"/>
+  <path d="M1142 246 H 1178" stroke="var(--warn)" stroke-width="3"/>
+  <path d="M1146 258 H 1174" stroke="var(--warn)" stroke-width="3"/>
+  <path d="M1160 258 V 470" stroke="var(--ctrl)" stroke-width="2.2"/>
+  <text x="1136" y="240" text-anchor="end" font-size="10.5" fill="var(--warn)">1000 µF</text>
+
+  <rect x="950" y="300" width="180" height="70" rx="5" fill="none" stroke="var(--ctrl)" stroke-width="2"/>
+  <text x="1040" y="322" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--ctrl)">Servo DS3218</text>
+  <text x="1040" y="339" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">1.67 A de pico</text>
+  <text x="1040" y="356" text-anchor="middle" font-size="10.5" fill="var(--bad)">no acoplar · no energizar</text>
+
+  <path d="M1090 370 V 470" stroke="var(--gnd)" stroke-width="2.4"/>
+  <text x="1098" y="410" font-size="10.5" fill="currentColor" opacity=".6">café · GND</text>
+
+  <!-- riel logico -->
+  <rect x="150" y="420" width="330" height="50" rx="6" fill="none" stroke="var(--gnd)" stroke-width="1.8"/>
+  <text x="315" y="440" text-anchor="middle" font-size="11.5" font-weight="500" fill="currentColor">riel − del protoboard</text>
+  <text x="315" y="457" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".65">Pi pin 6 · ADS1115 · divisor · sonda · 10 kΩ — solo µA</text>
+
+  <!-- negativo de la fuente -->
+  <path d="M60 94 V 470" stroke="var(--gnd)" stroke-width="2.2"/>
+  <text x="68" y="140" font-size="10.5" fill="currentColor" opacity=".65">− de la fuente</text>
+
+  <!-- convergencia en la estrella -->
+  <path d="M60 470 L 600 516" stroke="var(--gnd)" stroke-width="2"/>
+  <path d="M315 470 L 600 516" stroke="var(--gnd)" stroke-width="2"/>
+  <path d="M600 470 V 516" stroke="var(--pwr)" stroke-width="2"/>
+  <path d="M760 470 L 600 516" stroke="var(--ctrl)" stroke-width="3"/>
+  <path d="M940 470 L 600 516" stroke="var(--gnd)" stroke-width="2"/>
+  <path d="M1090 470 L 600 516" stroke="var(--gnd)" stroke-width="2.4"/>
+  <path d="M1160 470 L 600 516" stroke="var(--ctrl)" stroke-width="2"/>
+
+  <circle cx="600" cy="516" r="7" fill="var(--bad)"/>
+  <path d="M600 516 V 532" stroke="var(--gnd)" stroke-width="2.6"/>
+  <path d="M578 532 H 622" stroke="var(--gnd)" stroke-width="3"/>
+  <path d="M585 541 H 615" stroke="var(--gnd)" stroke-width="3"/>
+  <path d="M592 550 H 608" stroke="var(--gnd)" stroke-width="3"/>
+  <text x="640" y="524" font-size="12" font-weight="500" fill="var(--bad)">★ punto estrella = tornillo − del #6</text>
+  <text x="640" y="541" font-size="11" fill="var(--bad)">HOY NO EXISTE — por eso el source se queda al aire</text>
+
+  <text x="18" y="580" font-size="10.5" fill="var(--bad)">— — —  punteado rojo = pieza que no ha llegado, dibujada en su lugar</text>
+  <text x="560" y="580" font-size="10.5" fill="currentColor" opacity=".65">●  nodo (tres o más cables unidos)  ·  las siete patas se juntan en UN tornillo, jamás en cadena</text>
+</svg>
+</div>
+
+<p class="why" style="margin:10px 0 18px">
+  Voltajes por tramo: <b>12 V</b> de la fuente (una fuente barata lee 12.3–13 V en vacío, es normal) ·
+  <b>12 V</b> después del fusible · el drain está a <b>+12 V en reposo</b> y cae casi a <b>0 V</b>
+  cuando GPIO23 va alto · <b>6.0 V ± 0.2</b> a la salida del UBEC · compuerta en <b>3.15 V</b> con
+  GPIO23 alto ✓ (arriba del umbral del IRLZ44N) y <b>0 V</b> con GPIO23 bajo o con el Pi apagado.
+</p>
+
+<hr class="rule">
+
+<h2>Qué queda energizado en cada momento</h2>
+
+<div class="caja">
+  <table>
+    <tr><th style="width:26%">Momento</th><th style="width:24%">Diverter</th><th>Qué pasa realmente</th></tr>
+
+    <tr><td>Enchufas los 12 V con el Pi apagado</td>
+        <td><b style="color:var(--good)">desecho ✓</b></td>
+        <td>GPIO23 está sin alimentar y la compuerta la sostiene el <b>10 kΩ a tierra</b>: V<sub>GS</sub> = 0. Tampoco hay back-feed hacia el Pi, porque la compuerta nunca sube. <b>El orden de encendido no importa eléctricamente</b>; aun así, la costumbre que no cuesta nada es 12 V al final y fuera al principio.</td></tr>
+
+    <tr><td>Arranca el software en <code>mode: hardware</code></td>
+        <td><b style="color:var(--good)">desecho ✓</b></td>
+        <td><code>GpioDiverter</code> abre el pin con <code>initial_value=False</code>. En el mismo instante el <b>servo salta a 700 µs</b> (bloque M). Invertir <code>active_high</code> sin recablear el MOSFET <b>invierte el failsafe</b>: GPIO23 alto al boot = colectando desde el arranque.</td></tr>
+
+    <tr><td>Se corta la corriente a media corrida</td>
+        <td><b style="color:var(--good)">desecho ✓</b></td>
+        <td>Una bobina desenergizada es la posición de reposo de la válvula de 3 vías. <b>Pero el servo se queda donde iba</b> y el aborto del software se vuelve un no-op: ver el callout rojo del bloque M.</td></tr>
+
+    <tr><td>Desenchufas el V1738 con la bobina energizada</td>
+        <td><b style="color:var(--good)">desecho ✓</b></td>
+        <td>Y aquí se paga que el diodo esté <b>en la bobina</b>: bobina y diodo salen juntos, así que la energía almacenada recircula en su propio lazo en vez de arcar en los contactos del plug. Si el diodo estuviera en la placa, el mismo tirón dejaría a la bobina abierta sin camino de retorno.</td></tr>
+
+    <tr><td>Se zafa un hilo de la bobina a media colecta</td>
+        <td><b style="color:var(--warn)">desecho — y nadie se entera</b></td>
+        <td><b>Falla silenciosa de dato.</b> El diverter no tiene realimentación: el secuenciador sigue creyendo que colecta, el permeado se va a desecho, el volumen sale bajo y <b>Q y k salen bajos</b> sin ninguna alarma. Es el análogo del sensor caído, pero sin el kill test que lo delate.</td></tr>
+
+    <tr><td>La aleta del MOSFET toca metal aterrizado</td>
+        <td><b style="color:var(--bad)">colectando SIEMPRE</b></td>
+        <td>La bobina queda energizada por fuera del MOSFET (bloque K). El fusible no se mueve: 1.08 A contra 3 A.</td></tr>
+
+    <tr><td>El plug del V1738 entra al revés</td>
+        <td><b style="color:var(--good)">desecho ✓ — si el polo 3 está muerto</b></td>
+        <td>Con la bobina en 1–2 y nada en el polo 3, un plug girado abre el circuito. <b>Si alguien landea el polo 3</b>, el mismo giro pone el 1N5819 en directa entre +12 V y el drain: corto franco a la primera orden de colectar.</td></tr>
+
+    <tr><td>Se rompe el cable del riel − al tornillo estrella</td>
+        <td><b style="color:var(--bad)">indefinido</b></td>
+        <td>La compuerta pierde su referencia contra el source. V<sub>GS</sub> deja de estar definida y el diverter puede energizarse solo. El cable “que no lleva corriente” es el que sostiene el failsafe.</td></tr>
+  </table>
+</div>
+
+<hr class="rule">
+
+<h2>Antes de energizar — el orden con el multímetro</h2>
+<p class="bajada" style="margin-bottom:16px">
+  El día que lleguen el #6 y el #7. Es una secuencia, no una lista: cada paso supone el anterior.
+</p>
+
+<div class="cols">
+  <div class="caja">
+    <h3 style="color:var(--good)">Con la fuente DESENCHUFADA de la pared</h3>
+    <ol style="margin:0; padding-left:20px" class="why">
+      <li><b>Continuidad de tierras contra el tornillo estrella</b>, una por una: riel − del
+        protoboard, source del MOSFET, IN− del UBEC, OUT−/café del servo. <b>Las cuatro deben pitar.
+        Si alguna no, no sigues.</b></li>
+      <li><b>Aislamiento:</b> nodo +12 V contra el tornillo estrella → <b>circuito abierto</b>. Si
+        pita, hay un corto y el fusible lo va a encontrar por ti.</li>
+      <li><b>Dry-fit del V1738:</b> continuidad de <b>polo 1 → +12 V fusible</b>, <b>polo 2 → drain</b>
+        y <b>polo 3 → a nada</b>. Después mete el plug al revés a propósito, una vez, y confirma que
+        la bobina queda abierta.</li>
+      <li><b>Diodo, en modo diodo:</b> banda hacia +12 V. Punta roja en el lado de +12 V y negra en el
+        drain debe dar <b>OL</b> (está en inversa); al revés, <b>~0.2–0.4 V</b> (es Schottky, cae menos
+        que un silicio).</li>
+    </ol>
+  </div>
+  <div class="caja">
+    <h3 style="color:var(--pwr)">Con la fuente enchufada, receptores fuera</h3>
+    <ol style="margin:0; padding-left:20px" class="why">
+      <li><b>Polaridad del barril</b> antes de aterrizarlo: pin central contra cuerpo. Y con el #6 ya
+        puesto, mide otra vez en los tornillos: <b>+12 V en el tornillo rotulado +</b>.</li>
+      <li><b>Riel con el fusible puesto y todo lo demás desconectado:</b> ~12–13 V en el nodo. Solo
+        entonces conectas el IN+ del UBEC.</li>
+      <li><b>Salida del UBEC antes de tocar el servo:</b> <b>6.0 V ± 0.2</b>, y anota cuál lead es +.
+        Recién ahí conectas el servo, y en este orden: <b>café → tierra, rojo → 6 V, naranja →
+        GPIO18</b>.</li>
+      <li><b>Diverter, la primera vez:</b> con la Pi mandando GPIO23 alto, mide la compuerta contra el
+        source → <b>~3.15 V</b>, y el drain → cae de 12 V a casi 0. La bobina debe hacer clic.</li>
+    </ol>
+    <p class="why" style="margin:12px 0 0">
+      <span class="pill p-pi">diferido</span> El paso 4 necesita la Pi con <code>install.sh</code>
+      corrido. Los tres anteriores no.
+    </p>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>La lista para energizar el riel de 12 V</h2>
+<div class="banda banda-bad">
+  <p style="margin:0 0 10px; font-size:14.5px">
+    Cuatro casillas. <b>Ninguna es opcional y ninguna sustituye a otra.</b>
+  </p>
+  <table>
+    <tr><th style="width:30%">Pieza</th><th style="width:18%">Estado</th><th>Sin ella</th></tr>
+    <tr><td><b>#6</b> barrel jack → terminal de tornillo</td><td><span class="pill p-falta">no ha llegado</span></td>
+        <td>no existe el nodo de 12 V ni el punto estrella; los capacitores no tienen dónde ir</td></tr>
+    <tr><td><b>#7</b> portafusibles + fusible 3 A</td><td><span class="pill p-falta">no ha llegado</span></td>
+        <td>el riel queda sin límite de corriente: 3 A a lo que sea que esté mal</td></tr>
+    <tr><td><b>1N5819</b> flyback</td><td><span class="pill p-falta">no ha llegado</span></td>
+        <td>la primera desconexión de la bobina mata el IRLZ44N</td></tr>
+    <tr><td><b>Solenoide 3 vías</b> (ESValves 231Y-6-12VDC)</td><td><span class="pill p-falta">no ha llegado</span></td>
+        <td>no hay bobina que conmutar; K y L quedan en papel</td></tr>
+  </table>
+  <p style="margin:12px 0 0">
+    Aparte, y con su propia razón: <b>el servo no se energiza ni se acopla</b> hasta que se verifique
+    el extremo de 700 µs con la válvula desacoplada y se calibre <code>servo_close_us</code>, que hoy
+    vale <b>0</b>.
+  </p>
+</div>
+
+<hr class="rule">
+
+<h2>Lo que esta hoja NO verificó</h2>
+<div class="cols">
+  <div>
+    <ul>
+      <li><b>Nada de esto se ha armado.</b> El rig no tiene ni un cable conectado y el lado de
+        potencia no tiene ni la fuente enchufada. Las filas 33/37/38/39 son la propuesta de
+        <code>wiring_protoboard.html</code>.</li>
+      <li><b>La corriente de la bobina (1.08 A)</b> es la cifra del listado de ESValves, <b>no
+        medida</b>. De ella dependen el presupuesto del fusible y la decisión de sacar D y S del
+        protoboard.</li>
+      <li><b>Los ~0.95 A del UBEC</b> salen de suponer ~88 % de eficiencia; Hobbywing no publica la
+        curva de esta unidad.</li>
+      <li><b>El tipo de barril de la fuente</b> está <i>asumido</i> en <code>INVENTORY.md</code>
+        (5.5×2.1) y el ASIN que ahí aparece <b>no es el del <code>BOM.csv</code></b>. Nadie ha medido
+        el plug. Si no coincide, el #6 no entra aunque llegue.</li>
+      <li><b>La polaridad del barril</b> (centro positivo) no está fijada en ningún archivo del repo.</li>
+      <li><b>El paso del V1738 y su rating de corriente</b> siguen sin medirse.</li>
+    </ul>
+  </div>
+  <div>
+    <ul>
+      <li><b>La resistencia del riel del protoboard (20–50 mΩ)</b> es una estimación típica de
+        contacto, no una medición. De ella sale el rango de 0.75–1.9 kPa de presión fantasma.</li>
+      <li><b>Los 53 mΩ/m del 22AWG</b> salen de tabla de calibres, no del repo.</li>
+      <li><b>La <code>R_DS(on)</code> real a 3.3 V de compuerta</b> no está caracterizada en el
+        datasheet del IRLZ44N y nadie la ha medido aquí.</li>
+      <li><b>El par de arranque del vástago</b> no se ha medido, y es lo que decide si el servo va
+        pelón o con reducción 2:1 — y por tanto cuánta corriente pide el UBEC de verdad.</li>
+      <li><b>La válvula de alivio</b> no está comprada y <code>BOM.csv</code> e
+        <code>INVENTORY.md</code> no describen la misma pieza. Es el único failsafe del escenario
+        “se fue el 12 V con la bola abierta”.</li>
+      <li><b>El rating de presión del recipiente y su brida</b> no existe escrito en ningún archivo
+        del repo, y es contra lo que hay que ajustar ese alivio.</li>
+      <li><b>Ningún número de este rig es una medición.</b> Todo lo publicado sale de simulación.</li>
+    </ul>
+  </div>
+</div>
+
+<hr class="rule">
+
+<p class="tiny sub" style="margin:0">
+  <b>Derivado de</b> <code>.claude/roles/hardware.md</code> · <code>config.yaml</code>
+  (bloques <code>diverter:</code> y <code>valve:</code>) · <code>docs/ASSEMBLY.md</code>
+  (“Why the gate resistor is 470 Ω”, “Coil current does cross the breadboard”, “Pluggable break”) ·
+  <code>BOM.csv</code> · <code>tools/gen_wiring.py</code> · <code>INVENTORY.md</code> (2026-07-29) ·
+  <code>README.md</code> · <code>src/hal/{gpio_diverter,servo_valve,pwm_valve}.py</code>.
+  Datasheets: IRLZ44N (PD-9.1346B), 1N5819, ANNIMOS DS3218MG, Hobbywing UBEC-3A.
+  <br>
+  <b>Hojas hermanas — esta no las reemplaza:</b> lado de 3.3 V y orden de armado del banco en
+  <code>docs/wiring_banco.html</code> · topología fila por fila en
+  <code>docs/wiring_protoboard.html</code> · subsistema servo/UBEC a fondo en
+  <code>docs/wiring_ubec.html</code> (<b>ojo: sigue diciendo que los capacitores no han llegado; sí
+  llegaron</b>) · plomería en <code>docs/wiring_fluidos.html</code> · PNG del taller en
+  <code>docs/wiring_diagram.png</code>.
+  <br>
+  <b>Todo lo de esta hoja es diseño, no registro:</b> ninguna de estas conexiones existe todavía en
+  el banco físico.
+</p>
+</div>
