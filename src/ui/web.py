@@ -6,6 +6,15 @@ loop settle into the tolerance band before collection triggers. A thin CLI
 (src/ui/cli.py) covers SSH/tuning.
 
 Run:  python run.py web --config config.yaml   (default http://0.0.0.0:8000)
+
+THERE IS NO LOGIN HERE, BY DESIGN — AND SOMETHING ELSE MUST PROVIDE ONE.
+Every endpoint is unauthenticated: anyone who can reach this port can open the
+feed valve on a pressurised cell. That is acceptable only while the port is
+reachable from the lab LAN alone. The moment it is published — the Cloudflare
+Tunnel in docs/REMOTE_ACCESS.md — **Cloudflare Access has to sit in front of
+it**, and the server must stay bound to 127.0.0.1 so the tunnel is the only way
+in. Never expose the bare tunnel. If you add authentication here one day, say so
+in REMOTE_ACCESS.md too, because that doc currently promises this file has none.
 """
 from __future__ import annotations
 
@@ -119,6 +128,11 @@ class LimitRequest(BaseModel):
     limit: Optional[float] = None
 
 
+class RaiseRequest(BaseModel):
+    """New run ceiling, in display units (the controller converts)."""
+    ceiling: float
+
+
 def create_app(cfg: Config) -> FastAPI:
     app = FastAPI(title="Membrane Rig")
     ctl = RigController(cfg)
@@ -165,6 +179,27 @@ def create_app(cfg: Config) -> FastAPI:
     @app.post("/stop")
     def stop() -> JSONResponse:
         res = ctl.stop()
+        return JSONResponse(res, status_code=200 if res.get("ok") else 400)
+
+    # --- ceiling recovery ----------------------------------------------------
+    # The rig holds at the run ceiling with the feed shut and waits for a
+    # decision. These three are the only ways out (besides a hard abort, which
+    # the rig takes by itself). `recover_stop` — not `/stop` — is what ends a
+    # held run: plain stop() ends the run without leaving the held state, which
+    # would strand the alarm on screen after the run is over.
+    @app.post("/recover/retry")
+    def recover_retry() -> JSONResponse:
+        res = ctl.recover_retry()
+        return JSONResponse(res, status_code=200 if res.get("ok") else 400)
+
+    @app.post("/recover/raise")
+    def recover_raise(req: RaiseRequest) -> JSONResponse:
+        res = ctl.recover_raise(req.ceiling)
+        return JSONResponse(res, status_code=200 if res.get("ok") else 400)
+
+    @app.post("/recover/stop")
+    def recover_stop() -> JSONResponse:
+        res = ctl.recover_stop()
         return JSONResponse(res, status_code=200 if res.get("ok") else 400)
 
     @app.post("/analyze")
@@ -345,6 +380,12 @@ PAGE = r"""<!doctype html>
   header .mode{font-size:12px;color:var(--muted)}
   .wrap{display:grid;grid-template-columns:340px 1fr;gap:18px;padding:18px;max-width:1200px}
   @media(max-width:820px){.wrap{grid-template-columns:1fr}}
+  /* Grid items default to min-width:auto, so the widest table (the 9-column
+     queue) sets the min-content width of the whole column and every card
+     inherits it — that is what made the page 590px wide on a 375px phone.
+     min-width:0 lets the column shrink; the tables scroll inside .tscroll. */
+  .wrap>.card{min-width:0}
+  .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
   .card h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px}
   label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
@@ -395,9 +436,81 @@ PAGE = r"""<!doctype html>
   .queue tr.next td{background:#131c26}
   details summary{cursor:pointer;color:var(--muted);font-size:12px;margin-top:14px}
   .err{color:var(--bad);font-size:12px;margin-top:6px;min-height:16px}
+
+  /* --- safety bar -----------------------------------------------------------
+     Sticky, so the live pressure and the stop control are reachable without
+     scrolling and without pinch-zoom. This is the remote operator's only way to
+     shut the feed: the page is their sole instrument when they cannot see the
+     vessel. Never let this scroll away, and never let it shrink below a
+     thumb-sized tap target. */
+  .safetybar{position:sticky;top:0;z-index:50;background:var(--panel);
+             border-bottom:1px solid var(--line);padding:8px 14px;
+             display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .safetybar .now{display:flex;gap:8px;align-items:baseline;min-width:0}
+  .safetybar .nowv{font-size:26px;font-weight:700;line-height:1;white-space:nowrap}
+  .safetybar .nowu{font-size:13px;color:var(--muted)}
+  .safetybar .spacer{flex:1 1 auto}
+  .estop{width:auto;margin:0;padding:12px 20px;min-height:44px;font-size:15px;
+         background:var(--bad);flex:0 0 auto}
+  .estop:disabled{opacity:.4}
+  .barnote{flex-basis:100%;font-size:11px;color:var(--muted);margin:0}
+  /* Stale = the numbers on screen are no longer known to be true. Dim everything
+     that is a live reading so a frozen page can never be read as a live one. */
+  body.stale .safetybar .now,body.stale .big,body.stale canvas{opacity:.35}
+  .stalebar{display:none;background:#3a2d00;border:1px solid var(--warn);color:#f0d48a;
+            border-radius:7px;padding:6px 10px;font-size:12px;flex-basis:100%}
+  body.stale .stalebar{display:block}
+
+  /* --- held-at-ceiling alarm ------------------------------------------------ */
+  .held{display:none;border-radius:10px;padding:14px;margin:14px 18px 0;
+        border:1px solid var(--warn);background:#2a2000}
+  .held.runaway{border-color:var(--bad);background:#2f1113}
+  .held h3{margin:0 0 8px;font-size:15px;color:var(--ink)}
+  .held .rec{font-size:15px;line-height:1.45;color:var(--ink);margin-bottom:10px}
+  .held .facts{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);
+               margin-bottom:12px}
+  .held .facts b{color:var(--ink)}
+  .held .acts{display:flex;gap:10px;flex-wrap:wrap}
+  .held .acts button{width:auto;margin:0;min-height:44px;padding:11px 18px;flex:0 0 auto}
+  .held .why{font-size:12px;color:var(--muted);margin-top:8px}
+  .raisewrap{display:flex;gap:8px;align-items:center;flex:0 0 auto}
+  .raisewrap input{width:110px}
 </style></head>
 <body>
 <header><h1>Membrane Permeability Rig</h1><span class="mode" id="mode"></span></header>
+
+<div class="safetybar">
+  <div class="now">
+    <span class="nowv" id="barPv">–</span><span class="nowu u"></span>
+  </div>
+  <span class="pill st-idle" id="barPhase">idle</span>
+  <span class="spacer"></span>
+  <button class="estop" id="stopBtn">■ Stop &amp; shut feed</button>
+  <div class="barnote" id="barNote">Stop shuts the feed valve and routes permeate to waste.
+    It does not vent the cell — and the supply valve still has to be closed by hand.</div>
+  <div class="stalebar" id="staleBar">⚠ No answer from the rig — the readings below are the
+    last ones received and may be out of date.</div>
+</div>
+
+<!-- Directly under the safety bar, not down in the playlist card: when the rig is
+     held it is waiting on a decision, and a remote operator must not have to go
+     looking for the buttons that make it. Hidden until held. -->
+<div class="held" id="heldBox">
+  <h3 id="heldTitle">–</h3>
+  <div class="rec" id="heldRec"></div>
+  <div class="facts" id="heldFacts"></div>
+  <div class="acts">
+    <button id="hRetry">↻ Retry this point</button>
+    <div class="raisewrap">
+      <button class="ghost" id="hRaise">▲ Raise ceiling</button>
+      <input id="hRaiseVal" type="number" step="1" placeholder="new"/>
+    </div>
+    <button class="ghost" id="hStop">■ Stop the run</button>
+  </div>
+  <div class="why" id="heldWhy"></div>
+  <div class="err" id="heldErr"></div>
+</div>
+
 <div class="wrap">
 
   <div class="card">
@@ -452,9 +565,9 @@ PAGE = r"""<!doctype html>
       <span>abort above <b id="ceil">–</b> <span class="u"></span></span>
     </div>
     <canvas id="chart" width="900" height="280"></canvas>
-    <table id="results"><thead><tr>
+    <div class="tscroll"><table id="results"><thead><tr>
       <th>Setpoint</th><th>Mean</th><th>Std</th><th>Min</th><th>Max</th><th>In-band</th><th>n</th><th></th>
-    </tr></thead><tbody></tbody></table>
+    </tr></thead><tbody></tbody></table></div>
   </div>
 
   <div class="card" id="playlistCard" style="grid-column:1/-1">
@@ -473,10 +586,10 @@ PAGE = r"""<!doctype html>
     <button class="play" id="playBtn">▶ Play next experiment</button>
     <div class="err" id="playErr"></div>
 
-    <table class="queue" id="queueTable"><thead><tr>
+    <div class="tscroll"><table class="queue" id="queueTable"><thead><tr>
       <th>#</th><th>Name</th><th>Pressure</th><th>Collect</th><th>Status</th>
       <th>Mean</th><th>Volume</th><th>Q (m³/s)</th><th></th>
-    </tr></thead><tbody></tbody></table>
+    </tr></thead><tbody></tbody></table></div>
     <div class="bandnote" id="emptyNote" style="display:none">
       Nothing queued yet — add experiments on the left. Each one runs on its own;
       the rig stops and waits for you between them.</div>
@@ -495,10 +608,10 @@ PAGE = r"""<!doctype html>
     <h2 style="display:flex;justify-content:space-between;align-items:center">
       <span>Data history — all collected runs</span>
       <button class="hbtn" id="refreshRuns">↻ refresh</button></h2>
-    <table id="runsTable"><thead><tr>
+    <div class="tscroll"><table id="runsTable"><thead><tr>
       <th>Date</th><th>Membrane</th><th>Setpoints</th><th>n</th>
       <th>k (m²)</th><th>pore (µm)</th><th>R²</th><th>Files</th>
-    </tr></thead><tbody></tbody></table>
+    </tr></thead><tbody></tbody></table></div>
     <img id="histPlot" alt="selected run plot" style="width:100%;max-width:760px;margin-top:12px;border-radius:8px;background:#fff;display:none"/>
   </div>
 </div>
@@ -581,7 +694,79 @@ $("startBtn").onclick=async()=>{
     kp:parseFloat($("kp").value), ki:parseFloat($("ki").value), kd:parseFloat($("kd").value)});
   if(!r.ok) alert("Could not start: "+(r.data.error||""));
 };
-$("stopBtn")&&($("stopBtn").onclick=async()=>{ await post("/stop"); });
+// The stop control in the safety bar. While the rig is held at the ceiling the
+// run has to end through /recover/stop: /stop would end it without clearing the
+// held state, leaving a stale alarm on screen for a run that is already over.
+let HELD=false;
+$("stopBtn").onclick=async()=>{
+  if(!confirm("Stop the run?\n\nThis shuts the feed valve and routes permeate to waste. "+
+              "It does NOT vent the cell, and the supply valve still has to be closed by hand."))
+    return;
+  const r=await post(HELD?"/recover/stop":"/stop");
+  if(!r.ok && r.data && r.data.error) alert("Could not stop: "+r.data.error);
+};
+
+// --- held at the ceiling -----------------------------------------------------
+// Fail-safe contract with the control layer: `retry_advised` is the ONLY thing
+// that decides whether Retry is live — never parse `recommendation`. Anything
+// unexpected (no alarm object, a severity we don't know, retry_advised missing)
+// is treated as "runaway": Retry off, Stop primary. Absence must degrade to the
+// cautious side, because the remote operator cannot see the vessel.
+function renderHeld(s){
+  const box=$("heldBox"), a=s.held_alarm;
+  if(!s.held){ box.style.display="none"; return; }
+  box.style.display="block";
+  const runaway=!a || a.severity!=="overshoot" || a.retry_advised!==true;
+  box.className="held"+(runaway?" runaway":"");
+  const u=(a&&a.units)||U;
+  $("heldTitle").textContent=runaway
+    ? "⛔ Held at the ceiling — do not retry"
+    : "⏸ Held at the ceiling — waiting for you";
+  $("heldRec").textContent=(a&&a.recommendation)||
+    "The rig stopped at its ceiling and the feed is shut. No detail came through, "+
+    "so treat this as the unsafe case: check the rig before doing anything.";
+  $("heldFacts").innerHTML=a?
+    `<span>reached <b>${fmt(a.pressure_reached)} ${u}</b></span>`+
+    `<span>ceiling <b>${fmt(a.ceiling)} ${u}</b> (${a.ceiling_source||"–"})</span>`+
+    `<span>setpoint <b>${a.setpoint==null?"–":fmt(a.setpoint)+" "+u}</b></span>`+
+    `<span>hit <b>${a.retry_n}</b> of max <b>${a.retry_max}</b></span>`+
+    `<span>layer <b>${a.layer||"–"}</b></span>`:"";
+  // Retry: driven by the machine flag alone.
+  const rt=$("hRetry");
+  rt.disabled=runaway;
+  rt.className=runaway?"ghost":"";
+  // Raise: born disabled — raise_max <= ceiling means config has it switched off.
+  const canRaise=!!a && a.raise_max>a.ceiling;
+  $("hRaise").disabled=!canRaise;
+  $("hRaiseVal").disabled=!canRaise;
+  if(canRaise && !$("hRaiseVal").value) $("hRaiseVal").value=a.raise_max;
+  let why=[];
+  if(runaway) why.push("Retry is disabled: retrying would repeat the excursion.");
+  if(!canRaise) why.push("Raising the ceiling is switched off in the rig's config "+
+                         "(safety.operator_raise_max = 0).");
+  else why.push(`You may raise up to ${fmt(a.raise_max)} ${u}. A raised run is tagged and `+
+                `left out of the combined fit.`);
+  $("heldWhy").textContent=why.join(" ");
+}
+$("hRetry").onclick=async()=>{
+  const r=await post("/recover/retry");
+  $("heldErr").textContent=r.ok?"":(r.data.error||"could not retry");
+};
+$("hStop").onclick=async()=>{
+  if(!confirm("End this run?\n\nThe feed is already shut. The run will be closed out "+
+              "and its collected points kept.")) return;
+  const r=await post("/recover/stop");
+  $("heldErr").textContent=r.ok?"":(r.data.error||"could not stop");
+};
+$("hRaise").onclick=async()=>{
+  const v=parseFloat($("hRaiseVal").value);
+  if(isNaN(v)){ $("heldErr").textContent="Enter the new ceiling."; return; }
+  if(!confirm(`Raise this run's ceiling to ${v} ${U}?\n\n`+
+              "The specimen will see pressure it was not declared to tolerate. "+
+              "This run gets tagged and is excluded from the combined fit.")) return;
+  const r=await post("/recover/raise",{ceiling:v});
+  $("heldErr").textContent=r.ok?"":(r.data.error||"could not raise the ceiling");
+};
 
 // --- playlist rendering ------------------------------------------------------
 async function loadPlaylist(force){
@@ -788,9 +973,41 @@ async function loadRuns(){
 }
 $("refreshRuns").onclick=loadRuns;
 
+// A failed poll used to be swallowed silently, leaving the last good numbers on
+// screen looking live. Next to the rig you notice; over the tunnel you cannot,
+// and a frozen page reading "60 kPa, collecting" is the worst thing this UI can
+// do. Two misses (~1 s) flips the page into a visibly stale state.
+let missed=0;
+function setStale(on,msg){
+  document.body.classList.toggle("stale",on);
+  $("stopBtn").disabled=on;
+  if(on){
+    $("barPhase").className="pill st-fault";
+    $("barPhase").textContent="no link";
+    if(msg) $("staleBar").textContent="⚠ "+msg;
+  }
+}
+
 async function poll(){
+  // Two separate failures, both of which must be VISIBLE. Fetching is the link
+  // to the rig: only a successful fetch may clear the stale flag, and the miss
+  // counter must not be reset anywhere else, or a persistent failure below
+  // would keep resetting it and never trip. A render blow-up is different but
+  // no safer: the screen is then half-updated, so it is not to be trusted
+  // either. Silence is the one option this page does not have.
+  let s;
   try{
-    const s=await (await fetch("/status")).json();
+    const r=await fetch("/status");
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    s=await r.json();
+    missed=0;
+    setStale(false);
+  }catch(e){
+    if(++missed>=2) setStale(true,"No answer from the rig — the readings below are the "+
+                                  "last ones received and may be out of date.");
+    return;
+  }
+  try{
     if(s.running && wasFinished){ wasFinished=false; }
     if(s.finished && !wasFinished){ wasFinished=true; onFinished(s); loadPlaylist(true); setTimeout(loadRuns,1300); }
     else if(s.analysis && !s.item_id){ showAnalysis(s.analysis); }
@@ -803,7 +1020,21 @@ async function poll(){
     $("div").textContent=s.diverter_measured?"MEASURED":"waste";
     $("band").textContent=s.in_band?"yes":"no";
     $("elapsed").textContent=fmt(s.elapsed_s,1);
-    $("ceil").textContent=fmt(s.run_ceiling_disp,1);
+    // Name the bound that set the ceiling whenever it was NOT the run ceiling:
+    // clamping to the specimen limit means the real margin is tighter than
+    // setpoint+overshoot, and that should never be silent.
+    $("ceil").textContent=fmt(s.run_ceiling_disp,1)+
+      ((s.run_ceiling_source && s.run_ceiling_source!=="run ceiling")
+        ? " ("+s.run_ceiling_source+")" : "");
+    // safety bar mirrors the live reading and the state
+    HELD=!!s.held;
+    $("barPv").textContent=fmt(s.pressure_disp);
+    const bp=$("barPhase");
+    if(s.fault){ bp.className="pill st-fault"; bp.textContent="fault"; }
+    else if(s.held){ bp.className="pill st-fault"; bp.textContent="held"; }
+    else { bp.className=phaseClass(s.phase); bp.textContent=s.phase; }
+    $("stopBtn").disabled=!(s.running||s.held);
+    renderHeld(s);
     $("nowWrap").style.display=(s.running&&s.item_label)?"inline":"none";
     $("nowLabel").textContent=s.item_label||"–";
     $("collectWrap").style.display=(s.phase==="collecting")?"inline":"none";
@@ -827,7 +1058,10 @@ async function poll(){
       tb.appendChild(tr);
     });
     if(!s.running) loadPlaylist(false);
-  }catch(e){}
+  }catch(e){
+    setStale(true,"This page hit an error while drawing the rig's state ("+e.message+"). "+
+                  "What you see may be incomplete — reload before acting on it.");
+  }
 }
 loadConfig().then(()=>{loadPlaylist(true);loadRuns();poll();setInterval(poll,500);});
 </script>

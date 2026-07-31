@@ -73,6 +73,33 @@ Cloudflare dashboard → **Zero Trust → Access → Applications → Add applic
 Now `rig.divid.site` shows a Cloudflare login first; only approved emails reach
 the rig. Free tier covers up to 50 users.
 
+## What the page does when you are not standing next to the rig
+
+Operating over the tunnel means the page is your **only** instrument: you cannot
+see the vessel, hear the valve, or read the cylinder. The UI is built for that,
+and the parts below exist specifically for it.
+
+- **The safety bar is pinned to the top of the page.** Live pressure, the current
+  phase, and **Stop** stay on screen without scrolling or zooming, at a
+  thumb-sized tap target. Whatever else changes on this page, that has to remain
+  true — a stop control you have to scroll to find is not a stop control.
+- **Stop shuts the feed; it does not vent the cell.** It fully closes the feed
+  valve and routes permeate to waste. The cell then bleeds down through the
+  membrane. There is also a mechanical relief at ~90 kPa that needs no software.
+- **The supply valve still has to be closed by hand**, and remotely *nobody can
+  do that*. The servo only holds position; it does not seal when it loses power.
+  So a remote session is never fully "put away" until someone walks to the bench.
+  Plan the end of a remote run around that.
+- **A page that loses contact says so.** If two polls in a row fail, the readings
+  dim, the phase reads *no link*, and Stop is disabled — because a control that
+  cannot reach the rig must not look like one that can. The numbers on screen are
+  then the last ones received, not the current ones.
+- **Held at the ceiling.** If a run trips its ceiling, the rig shuts the feed and
+  waits for you, and the page shows what to do — not just what happened. When the
+  pressure is still rising while the valve is being commanded shut, **Retry is
+  disabled**: that is the signature of a stuck valve or a lying sensor, and
+  retrying only repeats the excursion. That case needs someone at the bench.
+
 ## Notes
 
 - The rig is reachable only while the Pi is powered and both services
