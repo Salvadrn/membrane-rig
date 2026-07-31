@@ -1,0 +1,846 @@
+<div class="hoja-div">
+<style>
+.hoja-div{
+  --tp:#1a1a1a; --ts:#5b5b5b; --s1:#ffffff; --s2:#fafafa; --bd:#e4e4e4;
+  --pwr:#1f5e8b; --ctrl:#7a2f2f; --sig:#8a6d00; --good:#1e7d32; --bad:#b3261e;
+  --data:#6b3fa0; --grey:#9e9e9e; --gnd:#1a1a1a; --warn:#b8860b;
+  color: var(--text-primary, var(--tp));
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size:14px; line-height:1.6; font-weight:400;
+  max-width:1180px; margin:0 auto; padding:8px 4px 32px;
+}
+@media (prefers-color-scheme: dark){
+  .hoja-div{ --tp:#ececec; --ts:#a6a6a6; --s1:#1b1b1d; --s2:#232326; --bd:#3a3a3d; --gnd:#d8d8d8; }
+}
+.hoja-div h1{ font-size:22px; font-weight:500; margin:0 0 6px; letter-spacing:-.01em; }
+.hoja-div h2{ font-size:16px; font-weight:500; margin:0 0 14px; letter-spacing:.06em; text-transform:uppercase; }
+.hoja-div h3{ font-size:14px; font-weight:500; margin:0 0 8px; }
+.hoja-div h4{ font-size:13px; font-weight:500; margin:16px 0 8px; letter-spacing:.04em; text-transform:uppercase;
+  color: var(--text-secondary, var(--ts)); }
+.hoja-div p{ margin:0 0 10px; }
+.hoja-div .sub{ color: var(--text-secondary, var(--ts)); }
+.hoja-div .bajada{ font-size:14px; color: var(--text-secondary, var(--ts)); margin:0 0 22px; max-width:940px; }
+.hoja-div .caja{ background: var(--surface-1, var(--s1)); border:1px solid var(--border, var(--bd)); border-radius:8px; padding:18px 20px; }
+.hoja-div .rule{ height:1px; background: var(--border, var(--bd)); border:0; margin:26px 0; }
+.hoja-div .cols{ display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start; }
+.hoja-div .cols23{ display:grid; grid-template-columns:1.35fr 1fr; gap:1.6rem; align-items:start; }
+@media (max-width:900px){
+  .hoja-div .cols, .hoja-div .cols23{ grid-template-columns:1fr; }
+}
+.hoja-div .tiny{ font-size:12px; }
+.hoja-div .why{ font-size:13px; color: var(--text-secondary, var(--ts)); }
+.hoja-div code{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12.5px;
+  background: color-mix(in srgb, var(--grey,#9e9e9e) 16%, transparent); padding:1px 5px; border-radius:4px; }
+
+/* ---- bandas ---- */
+.hoja-div .banda{ border-radius:8px; padding:16px 20px; margin:0 0 18px; }
+.hoja-div .banda-bad{ border:2px solid var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+.hoja-div .banda-warn{ border:2px solid var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.hoja-div .banda-good{ border:2px solid var(--good); background: color-mix(in srgb, var(--good) 10%, transparent); }
+.hoja-div .banda h3{ font-size:15px; font-weight:500; margin:0 0 6px; }
+
+/* ---- filas de destino ---- */
+.hoja-div .fila{ display:grid; grid-template-columns:26px 150px 1fr; gap:12px; align-items:start; padding:9px 0;
+  border-top:1px solid var(--border, var(--bd)); }
+.hoja-div .fila:first-of-type{ border-top:0; }
+.hoja-div .chip{ width:22px; height:22px; border-radius:3px; margin-top:2px; }
+.hoja-div .nom{ font-weight:500; font-size:13.5px; }
+.hoja-div .dst{ font-weight:500; }
+
+/* ---- callouts ---- */
+.hoja-div .co{ border-radius:8px; padding:18px 20px; }
+.hoja-div .co-t{ font-weight:500; margin-bottom:10px; font-size:14.5px; }
+.hoja-div .co-b{ font-size:14px; line-height:1.62; }
+.hoja-div .co-red{ border:2px solid var(--bad); } .hoja-div .co-red .co-t{ color:var(--bad); }
+.hoja-div .co-green{ border:2px solid var(--good); } .hoja-div .co-green .co-t{ color:var(--good); }
+.hoja-div .co-blue{ border:2px solid var(--pwr); } .hoja-div .co-blue .co-t{ color:var(--pwr); }
+.hoja-div .co-amber{ border:2px solid var(--warn); } .hoja-div .co-amber .co-t{ color:var(--warn); }
+
+/* ---- tablas ---- */
+.hoja-div table{ border-collapse:collapse; width:100%; font-size:13.5px; }
+.hoja-div th{ text-align:left; font-weight:500; font-size:12px; letter-spacing:.05em; text-transform:uppercase;
+  color: var(--text-secondary, var(--ts)); padding:0 10px 8px 0; border-bottom:1px solid var(--border, var(--bd)); }
+.hoja-div td{ padding:9px 10px 9px 0; border-bottom:1px solid var(--border, var(--bd)); vertical-align:top; }
+.hoja-div .num{ font-variant-numeric:tabular-nums; white-space:nowrap; }
+.hoja-div tr.ok td{ background: color-mix(in srgb, var(--good) 12%, transparent); }
+
+.hoja-div svg{ width:100%; height:auto; color: var(--text-primary, var(--tp)); }
+.hoja-div .pend{ display:inline-block; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+  border:1px solid var(--bad); color:var(--bad); border-radius:4px; padding:1px 6px; vertical-align:middle; }
+.hoja-div .conf{ display:inline-block; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+  border:1px solid var(--grey); color:var(--grey); border-radius:4px; padding:1px 6px; vertical-align:middle; }
+.hoja-div .hoy{ display:inline-block; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+  border:1px solid var(--good); color:var(--good); border-radius:4px; padding:1px 6px; vertical-align:middle; }
+.hoja-div ul{ margin:0 0 10px; padding-left:20px; }
+.hoja-div li{ margin-bottom:6px; }
+</style>
+
+<h1>¿Cómo se cablea el diverter de 3 vías?</h1>
+<p class="bajada">
+  La hoja de la pieza que ya está en la mano: el solenoide <strong>231Y-6-12VDC</strong>. Resuelve cuatro dudas —
+  <strong>cómo se conectan sus dos terminales</strong> y si la bobina tiene polaridad,
+  <strong>cuál de los tres puertos recibe el permeado</strong> (no es el que el proveedor llama «inlet»),
+  <strong>qué se puede confirmar hoy sin 12 V</strong> soplando por los puertos y con el ohmmetro,
+  y <strong>qué pasa si se plomea al revés</strong> — que es una falla silenciosa, no un error visible.
+  El lado eléctrico completo (fusible, reparto de 12 V, protoboard) vive en <code>docs/wiring_potencia.html</code>;
+  el circuito de fluidos entero, en <code>docs/wiring_fluidos.html</code>.
+</p>
+
+<div class="banda banda-bad">
+  <h3>Hoy no se energiza y tampoco se plomea. Hoy se MIDE la pieza.</h3>
+  <div class="cols" style="gap:1.4rem">
+    <div>
+      <p style="margin:0 0 6px"><strong>Faltan tres piezas para energizar</strong>, y ninguna es opcional:</p>
+      <ul class="why" style="margin:0">
+        <li><strong>1N5819</strong> (flyback). Sin él, al cortar la bobina el pico inverso mata el IRLZ44N.
+          No se energiza «para una prueba rápida».</li>
+        <li><strong>Portafusibles + fusible 3 A</strong> — item #7, no ha llegado.</li>
+        <li><strong>Barrel jack → terminal de tornillo</strong> — item #6, no ha llegado: hoy no hay dónde aterrizar
+          los 12 V de la fuente.</li>
+      </ul>
+      <p class="why" style="margin:8px 0 0"><strong>Y para plomear faltan otras cuatro:</strong> cinta de PTFE,
+        los adaptadores 1/4"&nbsp;NPT-M × barb (item #5), la tubería de silicón y las abrazaderas.
+        Sin cinta no se sella ningún puerto del solenoide.</p>
+    </div>
+    <div>
+      <p style="margin:0 0 6px"><strong>Lo que sí se cierra hoy</strong>, con la válvula en la mano, el multímetro
+      y nada más:</p>
+      <ul class="why" style="margin:0">
+        <li><span class="hoy">hoy</span> <strong>Leer el grabado del cuerpo</strong> y compararlo con el mapa
+          de puertos de abajo, que <em>está derivado de un texto</em>, no de la pieza.</li>
+        <li><span class="hoy">hoy</span> <strong>Prueba de soplado</strong> desenergizada — tacha 4 de las
+          6 formas de plomearla.</li>
+        <li><span class="hoy">hoy</span> <strong>Ohmmetro a la bobina</strong> — contesta lo de la polaridad
+          <em>y</em> convierte los 1.08 A de catálogo en un número medido.</li>
+        <li><span class="hoy">hoy</span> <strong>Abrir el conector DIN</strong> y ver cuántas terminales trae
+          y cómo están rotuladas.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="banda banda-warn">
+  <h3>Antes de plomearla: esta válvula puede invalidar la medición. No es una pieza inocente.</h3>
+  <p style="margin:0 0 8px">
+    Orificio de <strong>1.5 mm</strong>, <strong>Cv 0.09–0.21</strong>. Está <strong>aguas abajo de la membrana</strong>,
+    y todo el cálculo de permeabilidad supone que ese lado está a atmósfera. Si el orificio restringe, hay contrapresión;
+    y como la caída va con <strong>Q²</strong> mientras Q crece con ΔP, el error <strong>no desplaza la recta de Darcy:
+    la dobla</strong>. A 30 mL/s con el Cv optimista se come los 35 kPa completos.
+  </p>
+  <p style="margin:0 0 8px">
+    <strong>Y el criterio de R² no lo caza:</strong> una recta doblada lo suficiente para dejar <code>k</code>
+    un <strong>49.5 % baja</strong> sigue dando <strong>R² = 0.9969</strong> y <code>follows_darcy = True</code>.
+  </p>
+  <p class="tiny sub" style="margin:0">
+    El análisis completo y la <strong>prueba de aceptación bloqueante</strong> están en
+    <code>docs/COMMISSIONING.md</code> § Stage&nbsp;10.5 y en <code>INVENTORY.md</code> § «El diverter puede invalidar
+    la medición». Resumen operativo: <strong>mide primero el caudal libre con la válvula puenteada</strong>. Si sale
+    ≤ 5 mL/s la válvula es transparente; si sale más, hay que correr la comparación con y sin diverter antes de tomar
+    un solo dato bueno. <span class="pend">caudal real nunca medido</span>
+  </p>
+</div>
+
+<hr class="rule">
+
+<h2>La pieza como se ve</h2>
+
+<div class="cols23" style="margin-bottom:22px">
+  <div class="caja">
+    <h3>El cuerpo y sus tres puertos — 1/4" NPT hembra</h3>
+    <svg viewBox="0 0 620 300" role="img"
+      aria-label="Cuerpo de latón del solenoide con la bobina y el conector DIN arriba y tres puertos NPT hembra; los tres puertos están rotulados con signos de interrogación porque el grabado real no está registrado en el repo">
+      <!-- conector DIN -->
+      <rect x="238" y="18" width="120" height="40" rx="5" fill="none" stroke="var(--ctrl)" stroke-width="2"/>
+      <circle cx="298" cy="38" r="5" fill="none" stroke="var(--ctrl)" stroke-width="1.6"/>
+      <line x1="294" y1="38" x2="302" y2="38" stroke="var(--ctrl)" stroke-width="1.6"/>
+      <line x1="298" y1="34" x2="298" y2="42" stroke="var(--ctrl)" stroke-width="1.6"/>
+      <text x="368" y="34" font-size="12" fill="var(--ctrl)">conector DIN 43650A</text>
+      <text x="368" y="50" font-size="11" fill="currentColor" opacity=".65">tornillo central Phillips · gira en pasos de 90°</text>
+      <!-- prensaestopa -->
+      <rect x="212" y="28" width="26" height="20" rx="3" fill="none" stroke="var(--ctrl)" stroke-width="1.6"/>
+      <path d="M212 38 H 176" stroke="var(--ctrl)" stroke-width="2.4"/>
+      <text x="172" y="34" text-anchor="end" font-size="11.5" fill="var(--ctrl)">al V1738</text>
+      <text x="172" y="50" text-anchor="end" font-size="11" fill="currentColor" opacity=".65">prensaestopa · hacia abajo</text>
+
+      <!-- bobina -->
+      <rect x="248" y="58" width="100" height="72" rx="4" fill="none" stroke="var(--ctrl)" stroke-width="2.4"/>
+      <text x="298" y="88" text-anchor="middle" font-size="12.5" fill="currentColor">bobina 12 V</text>
+      <text x="298" y="106" text-anchor="middle" font-size="12" fill="var(--ctrl)">13 W ≈ 1.08 A</text>
+      <text x="298" y="122" text-anchor="middle" font-size="11" fill="currentColor" opacity=".65">100 % duty</text>
+
+      <!-- cuerpo -->
+      <rect x="186" y="130" width="224" height="86" rx="6" fill="none" stroke="var(--pwr)" stroke-width="2.4"/>
+      <text x="298" y="158" text-anchor="middle" font-size="12" fill="currentColor">cuerpo de latón · sellos NBR</text>
+      <text x="298" y="176" text-anchor="middle" font-size="11" fill="currentColor" opacity=".7">acción directa · 3 vías NC · 0–115 psi</text>
+      <text x="298" y="194" text-anchor="middle" font-size="11" fill="currentColor" opacity=".7">231Y-6-12VDC · ESValves</text>
+
+      <!-- puertos -->
+      <path d="M166 173 H 186" stroke="var(--grey)" stroke-width="2"/>
+      <rect x="106" y="158" width="60" height="30" rx="3" fill="none" stroke="var(--grey)" stroke-width="2"/>
+      <text x="136" y="178" text-anchor="middle" font-size="13" fill="var(--grey)">¿ ? ?</text>
+      <path d="M410 173 H 430" stroke="var(--grey)" stroke-width="2"/>
+      <rect x="430" y="158" width="60" height="30" rx="3" fill="none" stroke="var(--grey)" stroke-width="2"/>
+      <text x="460" y="178" text-anchor="middle" font-size="13" fill="var(--grey)">¿ ? ?</text>
+      <path d="M298 216 V 226" stroke="var(--grey)" stroke-width="2"/>
+      <rect x="268" y="226" width="60" height="30" rx="3" fill="none" stroke="var(--grey)" stroke-width="2"/>
+      <text x="298" y="246" text-anchor="middle" font-size="13" fill="var(--grey)">¿ ? ?</text>
+
+      <text x="298" y="274" text-anchor="middle" font-size="12" fill="var(--bad)">Dónde está cada puerto en el cuerpo NO está en el repo.</text>
+      <text x="298" y="290" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".7">La posición de los tres puertos en este dibujo es ilustrativa — léela de la pieza.</text>
+    </svg>
+    <p class="why" style="margin:10px 0 0">
+      <strong>Lo único que el repo sabe del cuerpo</strong> es que los tres puertos son <strong>1/4" NPT hembra</strong>
+      y que hay tres. La disposición física, el grabado y qué número lleva cada uno
+      <span class="pend">no registrados</span> — se leen de la pieza y se anotan aquí.
+    </p>
+  </div>
+
+  <div class="caja">
+    <h3>El conector DIN 43650A por dentro</h3>
+    <svg viewBox="0 0 420 210" role="img"
+      aria-label="Vista interior del conector DIN forma A: dos terminales de tornillo numeradas 1 y 2 en los extremos y una terminal de tierra al centro, desplazada, en gris porque no se usa">
+      <rect x="60" y="26" width="300" height="120" rx="8" fill="none" stroke="var(--ctrl)" stroke-width="2"/>
+      <!-- terminal 1 -->
+      <rect x="96" y="52" width="34" height="34" rx="3" fill="none" stroke="var(--pwr)" stroke-width="2.6"/>
+      <text x="113" y="75" text-anchor="middle" font-size="15" fill="var(--pwr)">1</text>
+      <text x="113" y="108" text-anchor="middle" font-size="12" fill="var(--pwr)">bobina +</text>
+      <text x="113" y="124" text-anchor="middle" font-size="11" fill="currentColor" opacity=".65">→ +12 V fusible</text>
+      <!-- tierra -->
+      <rect x="193" y="86" width="34" height="30" rx="3" fill="none" stroke="var(--grey)" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="210" y="107" text-anchor="middle" font-size="13" fill="var(--grey)">⏚</text>
+      <text x="210" y="138" text-anchor="middle" font-size="11.5" fill="var(--grey)">no se usa</text>
+      <!-- terminal 2 -->
+      <rect x="290" y="52" width="34" height="34" rx="3" fill="none" stroke="var(--ctrl)" stroke-width="2.6"/>
+      <text x="307" y="75" text-anchor="middle" font-size="15" fill="var(--ctrl)">2</text>
+      <text x="307" y="108" text-anchor="middle" font-size="12" fill="var(--ctrl)">bobina −</text>
+      <text x="307" y="124" text-anchor="middle" font-size="11" fill="currentColor" opacity=".65">→ drain del IRLZ44N</text>
+      <!-- tornillo central -->
+      <circle cx="210" cy="46" r="8" fill="none" stroke="var(--ctrl)" stroke-width="1.6"/>
+      <line x1="204" y1="46" x2="216" y2="46" stroke="var(--ctrl)" stroke-width="1.6"/>
+      <line x1="210" y1="40" x2="210" y2="52" stroke="var(--ctrl)" stroke-width="1.6"/>
+      <text x="210" y="180" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".7">
+        el tornillo central atraviesa la tapa y prensa el empaque contra la bobina</text>
+      <text x="210" y="198" text-anchor="middle" font-size="11.5" fill="var(--bad)">
+        confirmar en la pieza: número de terminales y su rotulado</text>
+    </svg>
+    <p class="why" style="margin:10px 0 0">
+      La bobina <strong>no trae cables sueltos</strong>: trae una torreta de tres pines y el conector DIN se atornilla
+      encima. Los cables los pones tú, por el prensaestopa. El proveedor solo dice
+      «<em>Terminal 1: hot o positivo · Terminal 2: neutro o negativo · Terminal de tierra: solo para tensiones AC</em>»
+      — es texto genérico de conector, <strong>no una afirmación sobre esta bobina</strong>.
+    </p>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>A dónde va cada terminal — eléctrico</h2>
+
+<div class="cols23" style="margin-bottom:8px">
+<div class="caja">
+
+  <div class="fila">
+    <div class="chip" style="background:var(--pwr)"></div>
+    <div class="nom" style="color:var(--pwr)">DIN terminal 1</div>
+    <div>
+      <div class="dst">→ bobina + → <strong>polo 1 del V1738</strong> → nodo <strong>+12 V fusible</strong></div>
+      <div class="why">No va al riel del protoboard: 1.08 A pasa de largo el ~1 A que aguanta un contacto de protoboard.
+        El nodo +12 V vive en cable y en tornillos (ver <code>wiring_potencia.html</code> bloque H).</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--ctrl)"></div>
+    <div class="nom" style="color:var(--ctrl)">DIN terminal 2</div>
+    <div>
+      <div class="dst">→ bobina − → <strong>polo 2 del V1738</strong> → <strong>drain del IRLZ44N</strong></div>
+      <div class="why">El MOSFET conmuta el <em>lado bajo</em>: la bobina siempre tiene +12 V de un lado y el MOSFET le
+        abre o le cierra el camino a tierra. El cable al drain va <strong>soldado a la pata</strong>, no por el clip
+        del protoboard.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--grey)"></div>
+    <div class="nom" style="color:var(--grey)">DIN terminal ⏚</div>
+    <div>
+      <div class="dst"><strong>sin conectar</strong> — y es a propósito</div>
+      <div class="why">Es la tierra de protección del conector, y existe para bobinas de línea AC. Aquí todo es de
+        12 V DC: no hay riesgo eléctrico que aterrizar. Aterrizar el cuerpo de latón crearía un <strong>segundo camino
+        a la tierra de medición</strong> —el rig tiene un solo tornillo estrella a propósito— y el cuerpo está mojado y
+        en contacto con la línea de permeado. Déjala vacía.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--bad)"></div>
+    <div class="nom" style="color:var(--bad)">1N5819 (flyback)</div>
+    <div>
+      <div class="dst">→ <strong>en paralelo a la bobina</strong>, entre terminal 1 y terminal 2 · <strong>banda al lado de +12 V</strong></div>
+      <div class="why">La banda es el cátodo y va al <strong>terminal 1</strong>. Al revés es un corto franco desde el
+        primer flanco de GPIO23 — el desarrollo está en <code>wiring_potencia.html</code>. Va <strong>del lado de la
+        bobina del V1738</strong>: dentro de la tapa del DIN si cabe, o en el pigtail a ≤3 cm. Si quedara del lado del
+        protoboard, desenchufar el V1738 con la bobina viva dejaría el pico sin camino y aparecería en el conector abierto.
+        <span class="pend">no ha llegado</span></div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--grey)"></div>
+    <div class="nom" style="color:var(--grey)">V1738 polo 3</div>
+    <div>
+      <div class="dst"><strong>muerto en el header</strong> — rotúlalo <code>NC</code></div>
+      <div class="why">No es un polo de repuesto, es la <strong>llave anti-inversión</strong>. Un plug de 3 polos volteado
+        180° mapea 1→3 y 3→1: con la bobina en 1–2 y nada aterrizado en el polo 3, el plug al revés deja bobina+ al aire,
+        el circuito abre y el permeado se sigue yendo a desecho — la misma dirección del failsafe.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--ctrl)"></div>
+    <div class="nom" style="color:var(--ctrl)">Compuerta · GPIO23</div>
+    <div>
+      <div class="dst">Pi <strong>pin físico 16</strong> → <strong>470 Ω</strong> en serie → compuerta · <strong>10 kΩ</strong> de la compuerta a la tierra lógica</div>
+      <div class="why">La 470 Ω limita el pico a 3.3/470 = <strong>7 mA ✓</strong> dentro de los 8 mA del Pi 4.
+        La 10 kΩ es la que sostiene la compuerta abajo <strong>mientras el Pi bootea</strong>, cuando GPIO23 todavía es
+        entrada: sin ella flota y el diverter puede energizarse solo.</div>
+    </div>
+  </div>
+
+</div>
+
+<div>
+  <div class="co co-green">
+    <div class="co-t">«¿Y las resistencias y el diodo, cómo se alimentan?»</div>
+    <div class="co-b">
+      No se alimentan. La 470 Ω, la 10 kΩ y el 1N5819 son <strong>pasivos</strong>: dos patas, sin pin de corriente,
+      sin riel propio. Lo que los hace trabajar es estar <em>en el camino</em> de una corriente que ya existe.
+      <div style="margin-top:10px">
+        Con una diferencia que importa a la hora de plantarlos:
+        <ul style="margin:8px 0 0">
+          <li><strong>Las resistencias no tienen polaridad.</strong> Da exactamente igual cómo las metas.</li>
+          <li><strong>El diodo sí.</strong> La <strong>banda es el cátodo</strong> y ese extremo va al lado de +12 V.
+            Es el único componente de los tres que se puede poner «al revés».</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="co co-blue" style="margin-top:14px">
+    <div class="co-t">«¿Un diodo de 1 A para una bobina de 1.08 A no queda corto?»</div>
+    <div class="co-b">
+      No, y vale entender por qué, porque a simple vista se ve mal. El <strong>1 A del 1N5819 es corriente directa
+      continua</strong>. El diodo de flyback no conduce continuo: conduce solo mientras la corriente atrapada en la
+      bobina se extingue al apagar el MOSFET, y eso pasa <strong>una vez por punto de la playlist</strong>, no 20 veces
+      por segundo. El pico arranca en 1.08 A y decae; el 1N5819 aguanta decenas de amperes en pulso.
+      <div style="margin-top:10px">
+        Dónde <em>sí</em> importaría: si a alguien se le ocurriera conmutar esta bobina por PWM. No se hace —
+        <code>GpioDiverter</code> es <code>on()</code>/<code>off()</code> y nada más.
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<hr class="rule">
+
+<h2>El lazo eléctrico, con los voltajes anotados</h2>
+
+<div class="caja" style="margin-bottom:22px">
+<svg viewBox="0 0 1120 480" role="img"
+  aria-label="Esquemático del diverter: del nodo de más 12 voltios fusible sale al polo 1 del V1738 y a la terminal 1 del conector DIN, entra a la bobina, sale por la terminal 2 al polo 2 y al drain del MOSFET; el diodo 1N5819 va en paralelo a la bobina con la banda hacia más 12 voltios; la compuerta viene de GPIO23 por una resistencia de 470 ohms con un pull-down de 10 kilohms; el source va directo al tornillo estrella">
+
+  <!-- riel +12 -->
+  <path d="M60 64 H 1030" fill="none" stroke="var(--pwr)" stroke-width="2.6"/>
+  <text x="60" y="50" font-size="12.5" fill="var(--pwr)">nodo +12 V fusible</text>
+  <text x="228" y="50" font-size="12" fill="currentColor" opacity=".7">medido: <tspan fill="var(--pwr)">12.0 V</tspan> contra el tornillo estrella</text>
+  <text x="640" y="50" font-size="12" fill="var(--bad)">bloqueado: falta el fusible #7 y el barrel jack #6</text>
+
+  <!-- bajada al polo 1 y cruce del V1738 -->
+  <circle cx="250" cy="64" r="5" fill="var(--pwr)"/>
+  <path d="M250 64 V 232" fill="none" stroke="var(--pwr)" stroke-width="2.6"/>
+
+  <!-- retorno: term 2 -> polo 2 -> drain -->
+  <path d="M470 232 V 112 H 900 V 190" fill="none" stroke="var(--ctrl)" stroke-width="2.6"/>
+
+  <!-- frontera V1738 -->
+  <path d="M170 150 H 560" fill="none" stroke="var(--good)" stroke-width="2.2" stroke-dasharray="7 5"/>
+  <text x="580" y="140" font-size="12" fill="var(--good)">V1738 · polos 1–2 — la junta desmontable</text>
+  <text x="580" y="157" font-size="11.5" fill="currentColor" opacity=".72">polo 3 muerto en el header = llave anti-inversión</text>
+
+  <!-- la pieza -->
+  <rect x="176" y="186" width="358" height="218" rx="6" fill="none" stroke="var(--ctrl)" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="365" y="205" text-anchor="middle" font-size="11.5" fill="var(--ctrl)">el conector DIN y la bobina — esto es la pieza</text>
+
+  <!-- terminales -->
+  <circle cx="250" cy="232" r="5" fill="var(--pwr)"/>
+  <text x="234" y="228" text-anchor="end" font-size="12" fill="var(--pwr)">term. 1</text>
+  <circle cx="470" cy="232" r="5" fill="var(--ctrl)"/>
+  <text x="486" y="228" font-size="12" fill="var(--ctrl)">term. 2</text>
+
+  <!-- bobina -->
+  <path d="M250 232 V 268" fill="none" stroke="var(--pwr)" stroke-width="2.4"/>
+  <path d="M470 232 V 268" fill="none" stroke="var(--ctrl)" stroke-width="2.4"/>
+  <path d="M250 268 q 22 -26 44 0 q 22 -26 44 0 q 22 -26 44 0 q 22 -26 44 0 q 22 -26 44 0"
+        fill="none" stroke="var(--ctrl)" stroke-width="2.6"/>
+  <text x="365" y="298" text-anchor="middle" font-size="12.5" fill="var(--ctrl)">bobina 13 W</text>
+  <text x="365" y="315" text-anchor="middle" font-size="12" fill="currentColor" opacity=".72">R esperada = 12²/13 = <tspan fill="var(--good)">11.1 Ω ✓</tspan> → 1.08 A</text>
+  <text x="365" y="331" text-anchor="middle" font-size="11.5" fill="var(--bad)">mídela: hoy 1.08 A es catálogo, no medición</text>
+
+  <!-- diodo flyback en paralelo a la bobina, dentro de la pieza -->
+  <path d="M250 232 H 210 V 352 H 500 V 232 H 470" fill="none" stroke="var(--bad)" stroke-width="2.2"/>
+  <polygon points="322,340 322,364 298,352" fill="none" stroke="var(--bad)" stroke-width="2.2"/>
+  <line x1="298" y1="340" x2="298" y2="364" stroke="var(--bad)" stroke-width="3.4"/>
+  <text x="365" y="378" text-anchor="middle" font-size="11.5" fill="var(--bad)">1N5819 · la banda (cátodo) va al terminal 1</text>
+  <text x="365" y="394" text-anchor="middle" font-size="11" fill="currentColor" opacity=".72">dentro de la tapa del DIN, o a ≤3 cm de ella</text>
+
+  <!-- MOSFET -->
+  <path d="M900 190 V 254" fill="none" stroke="var(--ctrl)" stroke-width="3"/>
+  <path d="M884 198 V 246" fill="none" stroke="var(--ctrl)" stroke-width="3"/>
+  <text x="916" y="182" font-size="12" fill="var(--ctrl)">drain</text>
+  <text x="916" y="198" font-size="11.5" fill="currentColor" opacity=".72">canal OFF: <tspan fill="var(--pwr)">+12 V</tspan> · canal ON: casi 0 V</text>
+  <text x="916" y="230" font-size="12.5" fill="var(--ctrl)">IRLZ44N</text>
+
+  <!-- compuerta -->
+  <path d="M884 222 H 736" fill="none" stroke="var(--ctrl)" stroke-width="2.2"/>
+  <rect x="690" y="214" width="46" height="16" fill="none" stroke="var(--ctrl)" stroke-width="2"/>
+  <text x="713" y="208" text-anchor="middle" font-size="11.5" fill="var(--ctrl)">470 Ω</text>
+  <path d="M690 222 H 632" fill="none" stroke="var(--ctrl)" stroke-width="2.2"/>
+  <circle cx="632" cy="222" r="5" fill="none" stroke="var(--ctrl)" stroke-width="2"/>
+  <text x="640" y="248" text-anchor="middle" font-size="12" fill="var(--ctrl)">GPIO23 · Pi pin 16</text>
+  <text x="640" y="264" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".72">7 mA pico ✓ &lt; 8 mA</text>
+
+  <!-- pull-down -->
+  <circle cx="790" cy="222" r="5" fill="var(--ctrl)"/>
+  <path d="M790 222 V 270" fill="none" stroke="var(--ctrl)" stroke-width="2.2"/>
+  <rect x="774" y="270" width="32" height="44" fill="none" stroke="var(--ctrl)" stroke-width="2"/>
+  <text x="766" y="286" text-anchor="end" font-size="11.5" fill="var(--ctrl)">10 kΩ pull-down</text>
+  <text x="766" y="302" text-anchor="end" font-size="11" fill="currentColor" opacity=".72">sostiene la compuerta abajo</text>
+  <text x="766" y="317" text-anchor="end" font-size="11" fill="currentColor" opacity=".72">mientras el Pi bootea</text>
+  <path d="M790 314 V 352" fill="none" stroke="var(--gnd)" stroke-width="2.2"/>
+
+  <!-- source y tierra estrella -->
+  <path d="M900 254 V 352" fill="none" stroke="var(--gnd)" stroke-width="2.6"/>
+  <text x="916" y="290" font-size="11.5" fill="currentColor" opacity=".72">source → cable propio,</text>
+  <text x="916" y="306" font-size="11.5" fill="currentColor" opacity=".72">directo al tornillo · <tspan fill="var(--gnd)">0 V</tspan></text>
+  <path d="M790 352 H 900" fill="none" stroke="var(--gnd)" stroke-width="2.6"/>
+  <path d="M845 352 V 366" fill="none" stroke="var(--gnd)" stroke-width="2.6"/>
+  <circle cx="845" cy="352" r="5" fill="var(--gnd)"/>
+  <line x1="823" y1="366" x2="867" y2="366" stroke="var(--gnd)" stroke-width="3"/>
+  <line x1="831" y1="374" x2="859" y2="374" stroke="var(--gnd)" stroke-width="3"/>
+  <line x1="839" y1="382" x2="851" y2="382" stroke="var(--gnd)" stroke-width="3"/>
+  <text x="845" y="402" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".72">tornillo estrella — la tierra lógica y la de potencia se juntan SOLO aquí</text>
+
+  <!-- aleta -->
+  <text x="60" y="436" font-size="12" fill="var(--bad)">La aleta del IRLZ44N es el drain: en reposo está a +12 V.</text>
+  <text x="60" y="454" font-size="11.5" fill="currentColor" opacity=".78">Aíslala o móntalo sobre plástico — si toca metal aterrizado, la bobina queda energizada para siempre y el fusible ni se entera (1.08 A ≪ 3 A).</text>
+  <text x="60" y="472" font-size="11.5" fill="currentColor" opacity=".78">La bobina cruza el V1738 en los dos sentidos: por el polo 1 llega el +12 V y por el polo 2 se va el retorno al drain. Un solo tirón desconecta las dos.</text>
+</svg>
+</div>
+
+<hr class="rule">
+
+<h2>El mapa de los tres puertos — derivado, sin confirmar</h2>
+
+<div class="banda banda-warn">
+  <h3>De dónde sale este mapa, y por qué no es un hecho todavía</h3>
+  <p style="margin:0 0 8px">
+    <strong>De una frase de texto del proveedor, no de un diagrama ni de la pieza.</strong> ESValves describe la
+    231Y-6 como 3 vías normalmente cerrada:
+    «<em>energizada, el puerto de escape cierra y el medio viaja del puerto de entrada al de salida; desenergizada,
+    el puerto de entrada cierra y el medio viaja del de salida al de escape</em>».
+    O sea: energizada <strong>1→2</strong>, desenergizada <strong>2→3</strong>.
+  </p>
+  <p style="margin:0 0 8px">
+    De ahí sale todo lo demás por lógica: el <strong>puerto 2 es el único conectado a algo en los dos estados</strong>,
+    así que es el <strong>común</strong> y es el que recibe el permeado. Y como <code>GpioDiverter</code> arranca
+    desenergizado (<code>initial_value=False</code>) y eso tiene que significar <em>desecho</em>, el <strong>3 es el
+    desecho</strong> y el <strong>1 la probeta</strong>.
+  </p>
+  <p class="tiny" style="margin:0">
+    <strong>Lo que corrobora sin confirmar:</strong> esa numeración coincide con la convención ISO para válvulas 3/2
+    (1 = alimentación, 2 = trabajo, 3 = escape). Es una coincidencia tranquilizadora, no una verificación.
+    <strong>Lo que falta:</strong> el grabado del cuerpo real. La ficha del proveedor <em>no publica</em> cómo están
+    rotulados los puertos. <span class="pend">confirmar contra la pieza</span>
+  </p>
+</div>
+
+<div class="cols23" style="margin-bottom:22px">
+  <div class="caja">
+    <svg viewBox="-72 18 772 284" role="img"
+      aria-label="Los dos estados de la válvula: desenergizada el puerto 2 conecta con el 3 y el 1 está bloqueado; energizada el puerto 1 conecta con el 2 y el 3 está bloqueado">
+      <!-- estado reposo -->
+      <rect x="26" y="56" width="250" height="150" rx="8" fill="none" stroke="var(--good)" stroke-width="2.4"/>
+      <text x="151" y="40" text-anchor="middle" font-size="13" fill="var(--good)">DESENERGIZADA · reposo</text>
+      <text x="151" y="226" text-anchor="middle" font-size="12" fill="var(--good)">permeado → desecho ✓ failsafe</text>
+      <text x="151" y="244" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".7">GPIO23 bajo · resorte · sin corriente</text>
+      <!-- puertos reposo -->
+      <text x="16" y="106" text-anchor="end" font-size="12.5" fill="var(--sig)">2 permeado</text>
+      <path d="M26 100 H 90" stroke="var(--sig)" stroke-width="2.6"/>
+      <path d="M90 100 H 176 L 212 148" stroke="var(--good)" stroke-width="2.6" fill="none"/>
+      <polygon points="150,94 150,106 166,100" fill="var(--good)"/>
+      <path d="M212 148 H 276" stroke="var(--good)" stroke-width="2.6"/>
+      <text x="286" y="152" font-size="12.5" fill="var(--good)">3 desecho</text>
+      <path d="M26 178 H 84" stroke="var(--ctrl)" stroke-width="2.6"/>
+      <line x1="84" y1="166" x2="84" y2="190" stroke="var(--bad)" stroke-width="3.4"/>
+      <text x="16" y="182" text-anchor="end" font-size="12.5" fill="var(--ctrl)">1 probeta</text>
+      <text x="112" y="184" font-size="11.5" fill="var(--bad)">cerrado</text>
+
+      <!-- estado energizado -->
+      <rect x="364" y="56" width="250" height="150" rx="8" fill="none" stroke="var(--ctrl)" stroke-width="2.4"/>
+      <text x="489" y="40" text-anchor="middle" font-size="13" fill="var(--ctrl)">ENERGIZADA · colecta</text>
+      <text x="489" y="226" text-anchor="middle" font-size="12" fill="var(--ctrl)">permeado → probeta</text>
+      <text x="489" y="244" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".7">GPIO23 alto · solo durante <tspan font-family="ui-monospace,Menlo,monospace">collection_s</tspan></text>
+      <text x="354" y="106" text-anchor="end" font-size="12.5" fill="var(--sig)">2 permeado</text>
+      <path d="M364 100 H 428" stroke="var(--sig)" stroke-width="2.6"/>
+      <path d="M428 100 H 514 L 550 148" stroke="var(--ctrl)" stroke-width="2.6" fill="none"/>
+      <polygon points="488,94 488,106 504,100" fill="var(--ctrl)"/>
+      <path d="M550 148 H 614" stroke="var(--ctrl)" stroke-width="2.6"/>
+      <text x="624" y="152" font-size="12.5" fill="var(--ctrl)">1 probeta</text>
+      <path d="M364 178 H 422" stroke="var(--good)" stroke-width="2.6"/>
+      <line x1="422" y1="166" x2="422" y2="190" stroke="var(--bad)" stroke-width="3.4"/>
+      <text x="354" y="182" text-anchor="end" font-size="12.5" fill="var(--good)">3 desecho</text>
+      <text x="450" y="184" font-size="11.5" fill="var(--bad)">cerrado</text>
+
+      <text x="320" y="286" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".7">
+        El puerto 2 aparece conectado en los dos cuadros. Ese es el argumento entero de por qué es el común.</text>
+    </svg>
+  </div>
+
+  <div class="caja">
+    <div class="fila">
+      <div class="chip" style="background:var(--sig)"></div>
+      <div class="nom" style="color:var(--sig)">Puerto 2 · COMÚN</div>
+      <div>
+        <div class="dst">→ aquí <strong>entra el permeado</strong> del recipiente</div>
+        <div class="why">Silicón 1/4" ID con <strong>barb + abrazadera</strong>, sobre un adaptador 1/4" NPT-M × barb.
+          El proveedor lo llama «outlet» y aun así es la <em>entrada</em> de este rig: usado como diverter, el flujo va
+          al revés de como lo describe el catálogo.</div>
+      </div>
+    </div>
+    <div class="fila">
+      <div class="chip" style="background:var(--good)"></div>
+      <div class="nom" style="color:var(--good)">Puerto 3 · ESCAPE</div>
+      <div>
+        <div class="dst">→ al <strong>vaso de desecho</strong></div>
+        <div class="why">Es el camino que queda abierto sin corriente, y por eso tiene que ser el desecho: es lo que
+          hace que <code>initial_value=False</code> signifique lo que el código dice que significa. La sonda DS18B20
+          va en este chorro, no dentro de la probeta.</div>
+      </div>
+    </div>
+    <div class="fila">
+      <div class="chip" style="background:var(--ctrl)"></div>
+      <div class="nom" style="color:var(--ctrl)">Puerto 1 · «INLET»</div>
+      <div>
+        <div class="dst">→ a la <strong>probeta graduada</strong></div>
+        <div class="why">Solo se abre con la bobina energizada, o sea solo durante la ventana de colecta.
+          Manguera <strong>corta y en bajada</strong>: lo que se quede dentro es volumen que no se leyó.</div>
+      </div>
+    </div>
+    <div class="fila">
+      <div class="chip" style="background:var(--grey)"></div>
+      <div class="nom" style="color:var(--grey)">Los tres puertos</div>
+      <div>
+        <div class="dst"><strong>1/4" NPT hembra</strong> → cinta de PTFE, 2–3 vueltas</div>
+        <div class="why">Al revés que el resto del rig. Las juntas Swagelok del lado del aire sellan con la férula sobre
+          el tubo y la cinta <strong>ahí estorba</strong>; el NPT sella en la rosca misma y <strong>sin cinta gotea</strong>.
+          Vueltas en el sentido de la rosca, dejando libre el primer hilo. <span class="pend">la cinta no ha llegado</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Las seis formas de plomearla, y qué hace cada una</h2>
+
+<div class="caja" style="margin-bottom:18px">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:78px">Permeado</th><th style="width:78px">Desecho</th><th style="width:78px">Probeta</th>
+        <th style="width:24%">Desenergizada (reposo, casi todo el tiempo)</th>
+        <th style="width:24%">Energizada (la ventana de colecta)</th>
+        <th>Qué pasa en realidad</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="ok">
+        <td class="num" style="color:var(--sig)">2</td><td class="num" style="color:var(--good)">3</td><td class="num" style="color:var(--ctrl)">1</td>
+        <td>permeado → desecho ✓</td>
+        <td>permeado → probeta ✓</td>
+        <td><strong style="color:var(--good)">La correcta</strong> — y sigue siendo <em>derivada</em>. Es la que hay que
+          confirmar, no la que hay que asumir.</td>
+      </tr>
+      <tr>
+        <td class="num">1</td><td class="num">3</td><td class="num">2</td>
+        <td><strong style="color:var(--bad)">línea de permeado TAPADA</strong></td>
+        <td>permeado → probeta</td>
+        <td><strong>«Como suena»</strong> — permeado al puerto que dice <em>inlet</em>. Colecta bien y por eso engaña:
+          entre colecta y colecta la línea queda ciega y sube a la presión del recipiente detrás de silicón de baja presión.
+          <strong>Nada la delata</strong>: el lazo sigue sosteniendo presión y no hay caudalímetro.</td>
+      </tr>
+      <tr>
+        <td class="num">3</td><td class="num">2</td><td class="num">1</td>
+        <td>permeado → desecho ✓ <span class="tiny">(se ve bien)</span></td>
+        <td><strong style="color:var(--bad)">línea TAPADA justo en la ventana</strong></td>
+        <td><strong>La que pasa la prueba de soplado y aun así está mal.</strong> En reposo se comporta idéntico a la
+          correcta. La probeta queda conectada al vaso de desecho y no colecta nada, mientras la línea se ciega
+          exactamente durante los segundos que importan.</td>
+      </tr>
+      <tr>
+        <td class="num">2</td><td class="num">1</td><td class="num">3</td>
+        <td><strong style="color:var(--bad)">permeado → probeta</strong> (failsafe invertido)</td>
+        <td>permeado → desecho</td>
+        <td>El rig <strong>colecta desde que enciende</strong> y manda a desecho justo durante la ventana. Q sale enorme
+          y con el R² intacto. Es exactamente lo que Control blindó por software y aquí se rompe con dos mangueras.</td>
+      </tr>
+      <tr>
+        <td class="num">1</td><td class="num">2</td><td class="num">3</td>
+        <td><strong style="color:var(--bad)">línea TAPADA</strong></td>
+        <td>permeado → desecho</td>
+        <td>La probeta <strong>nunca recibe nada</strong> y la línea está ciega en reposo. Al menos falla ruidosamente:
+          probeta vacía al terminar el primer punto.</td>
+      </tr>
+      <tr>
+        <td class="num">3</td><td class="num">1</td><td class="num">2</td>
+        <td><strong style="color:var(--bad)">permeado → probeta</strong> (failsafe invertido)</td>
+        <td><strong style="color:var(--bad)">línea TAPADA</strong></td>
+        <td><strong>La peor:</strong> colecta cuando no debe y se ciega cuando debe colectar. Los dos modos de falla a la vez.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="cols" style="margin-bottom:22px">
+  <div class="co co-green">
+    <div class="co-t">«¿Cómo confirmo el mapa hoy, sin 12 V?» — la prueba de soplado</div>
+    <div class="co-b">
+      Con la válvula <strong>en la mano y desenergizada</strong>, sopla por cada puerto y mira por dónde sale.
+      Sin manguera, sin cinta, sin nada montado.
+      <ul style="margin:10px 0 0">
+        <li><strong>Uno de los tres no deja pasar nada.</strong> Ese es el <strong>puerto 1</strong>, y es el que va a
+          la <strong>probeta</strong>.</li>
+        <li><strong>Los otros dos están conectados entre sí</strong> y el aire pasa en ambos sentidos. Ese par es
+          <strong>2 y 3</strong> — el común y el escape.</li>
+      </ul>
+      <div style="margin-top:10px">
+        <strong>Qué prueba exactamente:</strong> de las seis filas de arriba, <strong>tacha cuatro</strong>.
+        Quedan dos en pie: la correcta y la tercera de la tabla.
+      </div>
+      <div style="margin-top:10px">
+        <strong>Qué NO prueba:</strong> cuál de esos dos puertos conectados es el común. Soplado son simétricos —
+        el aire pasa de 2 a 3 igual que de 3 a 2. <strong>Y no hay forma de distinguirlos sin energizar.</strong>
+        No la inventes a partir de la forma del cuerpo ni de cuál puerto está en el eje de la bobina:
+        eso no está verificado en ningún lado.
+      </div>
+    </div>
+  </div>
+
+  <div class="co co-amber">
+    <div class="co-t">«¿Y la otra mitad?» — la que sí necesita 12 V</div>
+    <div class="co-b">
+      Energizada, el común (2) se conecta al 1 y el escape (3) <strong>cierra</strong>. Ese es el discriminador:
+      de los dos puertos que quedaron vivos en la prueba de soplado, <strong>el que cierra al energizar es el 3
+      (desecho)</strong> y el que sigue pasando es el 2 (común).
+      <div style="margin-top:10px">
+        Hoy no se puede: faltan el <strong>1N5819</strong>, el <strong>fusible #7</strong> y el
+        <strong>barrel jack #6</strong>. Cuando lleguen, el orden es este y no otro:
+        <ol style="margin:8px 0 0">
+          <li>Medir la polaridad del barril de la fuente (centro +) <strong>antes</strong> de conectar nada.</li>
+          <li>Fusible en el positivo.</li>
+          <li>1N5819 montado en paralelo a la bobina, banda a +12 V.</li>
+          <li>Energizar la bobina <strong>sola</strong>, desde el riel fusible, con el MOSFET fuera del circuito, y
+            repetir el soplado. El MOSFET no se expone hasta que el mapa esté cerrado.</li>
+        </ol>
+      </div>
+      <div style="margin-top:10px">
+        Anota el resultado en el cuerpo de la válvula con marcador indeleble: <strong>P</strong>, <strong>W</strong>,
+        <strong>M</strong>. Lo que se confirma una vez y no se rotula, se vuelve a dudar.
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>¿La bobina tiene polaridad?</h2>
+
+<div class="cols23" style="margin-bottom:22px">
+  <div class="co co-blue">
+    <div class="co-t">«¿Importa cuál cable va a cuál terminal del DIN?»</div>
+    <div class="co-b">
+      <strong>Una bobina de DC pelona no tiene polaridad</strong> — es alambre de cobre enrollado, y la fuerza sobre el
+      émbolo no depende del sentido de la corriente. El «Terminal 1: positivo / Terminal 2: negativo» de la ficha es
+      <strong>texto genérico del conector DIN</strong>, que también se vende para bobinas de AC.
+      <div style="margin-top:10px">
+        <strong>Pero muchas bobinas de 12 V traen algo adentro</strong> — un diodo de supresión, un LED indicador, o un
+        rectificador si el conector es de los universales AC/DC. Cualquiera de esos <strong>sí</strong> impone polaridad.
+        <strong>La ficha de ESValves no dice si esta lo trae</strong>, y el repo tampoco.
+        <span class="pend">confirmar en la pieza</span>
+      </div>
+      <div style="margin-top:10px">
+        Mientras no esté confirmado, <strong>cablea como si la tuviera</strong>: terminal 1 al +12 V. No cuesta nada
+        y si resulta que sí la tiene, ya quedó bien.
+      </div>
+    </div>
+  </div>
+
+  <div class="caja">
+    <h3 style="color:var(--good)">La prueba con ohmmetro — se hace hoy y contesta dos cosas</h3>
+    <p style="margin:0 0 10px" class="why">
+      Multímetro en <strong>Ω</strong>, puntas en las dos terminales de la bobina (con el conector DIN quitado, sobre los
+      pines de la torreta; o en los tornillos 1 y 2 del conector ya puesto). <strong>Mide en los dos sentidos</strong>,
+      intercambiando las puntas.
+    </p>
+    <table>
+      <thead><tr><th>Lo que lees</th><th>Qué significa</th></tr></thead>
+      <tbody>
+        <tr><td><strong class="num">≈ 11 Ω</strong> en ambos sentidos</td>
+            <td>Bobina pelona: <strong>sin polaridad</strong>. Y confirma el consumo: 12/11.1 = <strong>1.08 A</strong>,
+              justo el número de catálogo.</td></tr>
+        <tr><td><strong>Distinto en cada sentido</strong></td>
+            <td>Hay un semiconductor adentro (diodo o LED). <strong>Sí hay polaridad</strong> — y hay que averiguar cuál
+              es antes de energizar. Repite en modo <strong>diodo</strong> para verlo mejor.</td></tr>
+        <tr><td><strong>Circuito abierto</strong></td>
+            <td>Bobina cortada o estás midiendo contra el pin de tierra. Vuelve a identificar las terminales.</td></tr>
+        <tr><td><strong>Muy lejos de 11 Ω</strong></td>
+            <td>El presupuesto de corriente del fusible cambia. <strong>Avisa antes de energizar</strong>: los 2.03 A de
+              suma contra el fusible de 3 A dependen de este número.</td></tr>
+      </tbody>
+    </table>
+    <p class="why" style="margin:12px 0 0">
+      <strong>Por qué vale tanto esta medición de 30 segundos:</strong> hoy los 1.08 A del riel de 12 V son
+      <strong>una cifra de listado, nunca medida</strong> — así lo dicen <code>docs/ASSEMBLY.md</code>,
+      <code>wiring_potencia.html</code> y <code>wiring_banco.html</code>. Un ohmmetro sobre la bobina fría la convierte
+      en un número real. Ojo: en frío el cobre tiene menos resistencia que caliente, así que la lectura fría es el
+      <strong>peor caso</strong> para el fusible — que es exactamente el caso que interesa.
+    </p>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Qué hace el diverter cuando algo sale mal</h2>
+
+<div class="caja" style="margin-bottom:18px">
+  <table>
+    <thead><tr><th style="width:30%">Evento</th><th style="width:22%">Qué hace la bobina</th><th>Consecuencia real</th></tr></thead>
+    <tbody>
+      <tr><td>El Pi bootea, antes de que arranque el software</td>
+          <td style="color:var(--good)">desenergizada ✓</td>
+          <td>GPIO23 todavía es <strong>entrada</strong>; quien define la compuerta es la <strong>10 kΩ de pull-down</strong>,
+            no el Pi. Permeado a desecho. Sin esa resistencia la compuerta flota y esto deja de ser cierto.</td></tr>
+      <tr><td>Arranca la app en <code>mode: hardware</code></td>
+          <td style="color:var(--good)">desenergizada ✓</td>
+          <td><code>GpioDiverter</code> construye con <code>initial_value=False</code>. Invertir <code>active_high</code>
+            en <code>config.yaml</code> sin recablear <strong>invierte el failsafe</strong>.</td></tr>
+      <tr><td>Se corta la corriente a media corrida</td>
+          <td style="color:var(--good)">desenergizada ✓</td>
+          <td>El diverter cae a desecho, correcto. <strong>Pero la válvula de bola no sella al perder corriente</strong>
+            —el servo sostiene por fricción— y <strong>el alivio mecánico quedó fuera del pedido</strong>: el recipiente
+            se queda presurizado y nada lo ventea. Cerrar el suministro a mano al terminar es obligatorio.</td></tr>
+      <tr><td>Ctrl+C, o el proceso muere</td>
+          <td style="color:var(--good)">desenergizada ✓</td>
+          <td><code>to_safe()</code> y <code>close()</code> apagan el pin. Verificación en
+            <code>COMMISSIONING.md</code> § 10.8. <span class="conf">el backend de gpiozero no está fijado — confirmar en la Pi</span></td></tr>
+      <tr><td>Se desenchufa el V1738 con la bobina energizada</td>
+          <td style="color:var(--good)">desenergizada ✓</td>
+          <td>El circuito abre y el permeado vuelve a desecho. La energía de la bobina se recircula por el 1N5819
+            <strong>siempre que el diodo esté del lado de la bobina</strong>. Si estuviera del lado del protoboard,
+            el pico aparecería en el conector abierto.</td></tr>
+      <tr><td>El plug del V1738 entra volteado 180°</td>
+          <td style="color:var(--good)">desenergizada ✓</td>
+          <td>Polo 3 muerto = bobina+ al aire. Falla en la dirección segura. <strong>Solo si nadie usó el polo 3.</strong></td></tr>
+      <tr><td>La aleta del MOSFET toca metal aterrizado</td>
+          <td style="color:var(--bad)">energizada siempre ✗</td>
+          <td>Camino +12 V → bobina → aleta → tierra, sin pasar por el canal. <strong>Colecta todo el tiempo</strong>,
+            la bobina se calienta sin descanso y <strong>el fusible ni se entera</strong> (1.08 A ≪ 3 A). No se quema
+            nada; se corrompe el dato.</td></tr>
+      <tr><td>Se zafa la manguera de la probeta a media colecta</td>
+          <td style="color:var(--grey)">indiferente</td>
+          <td>El permeado cae al piso y <strong>el rig no tiene forma de saberlo</strong>: no hay caudalímetro ni sensor
+            en el lado del permeado. Lo delata la probeta al final del punto, nada más.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="cols">
+  <div class="co co-amber">
+    <div class="co-t">«¿Importa cuánta manguera queda entre la válvula y la probeta?»</div>
+    <div class="co-b">
+      Sí, y menos de lo que parece — por una razón que vale conocer. El análisis saca <code>k</code> de la
+      <strong>pendiente</strong> de Q contra ΔP, con la ordenada al origen libre. Un volumen muerto que se comporta
+      <strong>igual en todos los puntos</strong> le pega a la ordenada, no a la pendiente, y <code>k</code> sobrevive.
+      <div style="margin-top:10px">
+        Lo que sí sesga es un volumen muerto <strong>inconsistente</strong>: el primer punto arranca con la manguera seca
+        y los siguientes no. Por eso: <strong>manguera corta, en bajada continua, sin lazos que hagan sifón</strong>, y
+        una colecta de descarte antes del primer punto para que todos los puntos empiecen igual.
+      </div>
+      <div style="margin-top:10px">
+        Y purga el aire de la línea: <strong>un orificio de 1.5 mm necesita ~2 cm de columna de agua</strong>
+        (4σ/d ≈ 0.19 kPa) para que el agua desaloje una burbuja atrapada. Contra 35 kPa no bloquea nada, pero el aire
+        que quede adentro es volumen que la probeta no va a contar. <span class="conf">razonado, no medido</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="co co-green">
+    <div class="co-t">«¿Esta válvula funciona con el permeado casi a atmósfera?»</div>
+    <div class="co-b">
+      Sí, y no era obvio. Muchas solenoides —las <em>pilotadas</em>— necesitan una <strong>diferencia de presión mínima</strong>
+      para abrir, porque usan la propia presión de línea para mover el diafragma. En una línea de permeado, que está
+      esencialmente a atmósfera, una válvula así <strong>no abriría</strong>.
+      <div style="margin-top:10px">
+        La 231Y-6 es de <strong>acción directa</strong>: el émbolo lo mueve la bobina, no la presión. El listado da el
+        rango como <strong>0–115 psi</strong>, sin mínimo. Es la razón por la que esta pieza sirve aquí y muchas
+        parecidas no.
+      </div>
+      <div style="margin-top:10px" class="tiny sub">
+        Del mismo listado: latón, sellos NBR, −5 a 90 °C, agua y otros fluidos de baja viscosidad,
+        <strong>100 % duty</strong> a temperatura ambiente nominal — importa porque la bobina va a estar energizada
+        <code>collection_s</code> segundos seguidos por punto. Todos son datos de catálogo, ninguno medido.
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="rule">
+
+<h2>Lo que esta hoja NO verificó</h2>
+
+<div class="caja">
+  <div class="cols" style="gap:1.6rem">
+    <div>
+      <h4 style="margin-top:0">Pendiente en la pieza</h4>
+      <ul class="why" style="margin:0">
+        <li><strong>El grabado de los puertos.</strong> Todo el mapa 1/2/3 sale de una descripción de texto del proveedor.
+          Nadie del proyecto ha visto el cuerpo. <span class="pend">bloquea plomear</span></li>
+        <li><strong>Si la bobina tiene polaridad.</strong> No hay dato de diodo, LED ni rectificador — ni en la ficha ni
+          en el repo. <span class="pend">ohmmetro</span></li>
+        <li><strong>Si el conector DIN venía en la caja</strong> y si trae empaque. Sin él no hay dónde landear cables.</li>
+        <li><strong>Si el prensaestopa aprieta el 22AWG.</strong> El gland está hecho para cable redondo con chaqueta;
+          dos hilos sueltos no los sujeta. Este es el conector que más se va a golpear del rig.</li>
+        <li><strong>La resistencia real de la bobina</strong>, y por lo tanto la corriente. 1.08 A es catálogo.</li>
+      </ul>
+    </div>
+    <div>
+      <h4 style="margin-top:0">Fuera del alcance de esta hoja</h4>
+      <ul class="why" style="margin:0">
+        <li><strong>Si el diverter estrangula la medición.</strong> Esta hoja avisa y enlaza; la prueba de aceptación
+          vive en <code>COMMISSIONING.md</code> § Stage 10.5 y <strong>no se ha corrido</strong> porque depende del
+          caudal real, que nunca se ha medido.</li>
+        <li><strong>El resto del lado de potencia</strong> —fusible, capacitores, punto estrella, reparto de 12 V—
+          está en <code>wiring_potencia.html</code>. Esta hoja solo sigue la bobina.</li>
+        <li><strong>El resto del circuito de fluidos</strong> —de qué lado de la bola van las tomas, familias de rosca,
+          el recipiente— está en <code>wiring_fluidos.html</code>.</li>
+        <li><strong>El orden de armado del banco</strong> está en <code>wiring_banco.html</code>; el estado de cada
+          pieza, en <code>INVENTORY.md</code>.</li>
+        <li><strong>Nada de esto se ha probado en hardware.</strong> El rig no tiene un solo cable conectado y todos los
+          números del proyecto son de simulación.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</div>
