@@ -906,8 +906,19 @@ function showAnalysis(a, combined){
      `<span>slope <b>${Number(a.slope_per_kpa).toExponential(3)}</b> (m³/s)/kPa</span>`+
      `<span>R² <b>${Number(a.r2).toFixed(5)}</b></span>`+
      `<span>Darcy k <b>${Number(a.k_darcy_m2).toExponential(3)}</b> m²</span>`+
+     // k is only ever as good as the slope it came from, and R2 does not measure
+     // that: three points can sit on a line beautifully with the slope still
+     // poorly pinned. null here means UNKNOWN (no residual degrees of freedom
+     // below 3 points) — it must never render as "+/- 0", which would claim a
+     // precision nobody measured.
+     (a.k_stderr_m2==null
+       ? `<span title="Needs at least 3 points to estimate">k uncertainty `+
+         `<b>n/a</b> (needs ≥3 points)</span>`
+       : `<span>k uncertainty <b>± ${Number(a.k_stderr_m2).toExponential(2)}</b> m² `+
+         `(${Number(a.k_stderr_pct).toFixed(2)}%)</span>`)+
      `<span>pore d <b>${Number(a.pore_size_um).toFixed(3)}</b> µm</span>`+
-     `<span>${a.follows_darcy?"✓ follows Darcy's law":"⚠ low R²"}</span>`;
+     `<span title="R² measures how well the points fit a line, not how tightly `+
+     `the slope is pinned down">${a.follows_darcy?"✓ follows Darcy's law":"⚠ low R²"}</span>`;
   const base=combined?"/playlist/file/":"";
   $("downloads").innerHTML = a.xlsx_file
     ? `<a href="${combined?"/playlist/file/xlsx":"/download?ts="+Date.now()}"
@@ -917,6 +928,11 @@ function showAnalysis(a, combined){
     img.dataset.file=key;
     img.src=(combined?"/playlist/file/plot?ts=":"/plot?ts=")+Date.now();
     img.style.display="block";
+  } else if(!a.plot_file){
+    // Analysing with no run open (set_volumes after a server restart) produces
+    // no plot. Leaving the previous one up would caption someone else's figure
+    // with these numbers.
+    img.dataset.file=""; img.removeAttribute("src"); img.style.display="none";
   }
 }
 async function computeAnalysis(volumes){
@@ -985,13 +1001,22 @@ $("refreshRuns").onclick=loadRuns;
 // screen looking live. Next to the rig you notice; over the tunnel you cannot,
 // and a frozen page reading "60 kPa, collecting" is the worst thing this UI can
 // do. Two misses (~1 s) flips the page into a visibly stale state.
-let missed=0;
-function setStale(on,msg){
+let missed=0, lastTs=null, sameTs=0, isStale=false;
+// Two ways the page can stop being truthful, and they need OPPOSITE handling of
+// the stop button:
+//   linkDown=true  — we cannot reach the rig at all. A press could not arrive,
+//                    so the button is disabled rather than pretending.
+//   linkDown=false — the server answers but the control loop has stopped
+//                    ticking. /stop still runs _safe_all() in the request
+//                    thread, so stopping very likely still WORKS and is the
+//                    safest thing left. Never take it away here.
+function setStale(on,msg,linkDown){
+  isStale=on;
   document.body.classList.toggle("stale",on);
-  $("stopBtn").disabled=on;
   if(on){
+    $("stopBtn").disabled=!!linkDown;
     $("barPhase").className="pill st-fault";
-    $("barPhase").textContent="no link";
+    $("barPhase").textContent=linkDown?"no link":"loop stalled";
     if(msg) $("staleBar").textContent="⚠ "+msg;
   }
 }
@@ -1009,10 +1034,21 @@ async function poll(){
     if(!r.ok) throw new Error("HTTP "+r.status);
     s=await r.json();
     missed=0;
-    setStale(false);
+    // A healthy 200 is not proof the rig is alive. The control loop stamps `ts`
+    // on every tick — 20 Hz, and it keeps ticking while idle — so a stamp that
+    // stops moving means the loop has stalled while the web server carries on
+    // answering cheerfully with whatever was last written. Compare successive
+    // stamps instead of measuring against the local clock: the phone and the Pi
+    // do not share one, and a clock skew must not read as a stalled rig.
+    if(s.ts!=null && s.ts===lastTs){ sameTs++; } else { sameTs=0; lastTs=s.ts; }
+    if(sameTs>=4)
+      setStale(true,"The rig is answering, but its control loop has not ticked for "+
+                    "several seconds — the readings below are frozen, not live. "+
+                    "Stop still reaches the rig; use it.",false);
+    else setStale(false);
   }catch(e){
     if(++missed>=2) setStale(true,"No answer from the rig — the readings below are the "+
-                                  "last ones received and may be out of date.");
+                                  "last ones received and may be out of date.",true);
     return;
   }
   try{
@@ -1037,11 +1073,16 @@ async function poll(){
     // safety bar mirrors the live reading and the state
     HELD=!!s.held;
     $("barPv").textContent=fmt(s.pressure_disp);
-    const bp=$("barPhase");
-    if(s.fault){ bp.className="pill st-fault"; bp.textContent="fault"; }
-    else if(s.held){ bp.className="pill st-fault"; bp.textContent="held"; }
-    else { bp.className=phaseClass(s.phase); bp.textContent=s.phase; }
-    $("stopBtn").disabled=!(s.running||s.held);
+    // While stale the bar is owned by setStale: overwriting it here would put a
+    // healthy-looking phase back on a page whose numbers are known to be frozen,
+    // and would re-enable a stop button that cannot reach anything.
+    if(!isStale){
+      const bp=$("barPhase");
+      if(s.fault){ bp.className="pill st-fault"; bp.textContent="fault"; }
+      else if(s.held){ bp.className="pill st-fault"; bp.textContent="held"; }
+      else { bp.className=phaseClass(s.phase); bp.textContent=s.phase; }
+      $("stopBtn").disabled=!(s.running||s.held);
+    }
     renderHeld(s);
     $("nowWrap").style.display=(s.running&&s.item_label)?"inline":"none";
     $("nowLabel").textContent=s.item_label||"–";
