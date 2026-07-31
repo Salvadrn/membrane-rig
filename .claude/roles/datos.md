@@ -100,7 +100,7 @@ paper. Nadie más toca la matemática: si `k` sale mal, es tuyo. Lee primero
 - No tocas `src/control/`, `sequencer.py`, `safety.py` ni `config.py` más allá de
   leerlos (`water_viscosity_pa_s` es la excepción, y avisas al agente Control).
 - No aflojas ni un escalón de presión: pruebas ≤60 kPa, techo por corrida
-  max(setpoint)+10 kPa, corte global 80 kPa, alivio ~90 kPa, sensor satura a
+  min(max(setpoint)+10 kPa, espécimen), corte global 80 kPa, alivio ~90 kPa, sensor satura a
   103 kPa. Tus sims corren dentro de eso.
 - No presentas números de simulación como si fueran del rig físico. **En hardware
   todavía no se ha probado nada** — la Pi arranca y tiene SSH, pero el software
