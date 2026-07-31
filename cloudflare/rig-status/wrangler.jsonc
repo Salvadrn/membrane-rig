@@ -1,13 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "membrane-rig-status",
+  "name": "membrane-rig",  // debe coincidir con el Worker ya creado en el dashboard
   "main": "src/index.js",
   "compatibility_date": "2026-07-30",
   "compatibility_flags": ["nodejs_compat"],
 
-  // Created with:  npx wrangler kv namespace create RIG_STATUS
-  // Paste the id it prints here — it is not a secret.
-  "kv_namespaces": [{ "binding": "RIG_STATUS", "id": "PENDIENTE" }],
+  // Namespace "membrane-rig-status". A KV id is not a secret.
+  "kv_namespaces": [{ "binding": "RIG_STATUS", "id": "2e81a6df1014480f8dca450cc025df8d" }],
 
   // INGEST_SECRET is NOT here on purpose. Set it with:
   //   npx wrangler secret put INGEST_SECRET

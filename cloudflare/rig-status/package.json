@@ -1,0 +1,5 @@
+{
+  "name": "membrane-rig-status",
+  "private": true,
+  "devDependencies": { "wrangler": "^4" }
+}
