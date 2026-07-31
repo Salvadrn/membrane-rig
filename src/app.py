@@ -707,6 +707,28 @@ class RigController:
             return self.safety.max_pressure          # no raise possible
         return min(configured, self.pressure_limit_kpa(), self.cfg.safety.max_pressure_kpa)
 
+    def _retry_possible(self, severity: Optional[str] = None) -> tuple:
+        """SINGLE SOURCE OF TRUTH for the alarm's `retry_advised`: "would the Retry
+        button do anything if it were tapped?". The UI keys the button off this
+        flag alone and must never re-derive the policy in JS — if it looks alive,
+        tapping it works. Returns (possible, why_not).
+
+        Note the asymmetry, which is deliberate: a "runaway" classification makes
+        retry NOT advised (the UI disables the button), but recover_retry() itself
+        still honours an explicit call, because that classification is a heuristic
+        and an operator who has physically gone and fixed the rig must not be
+        hard-blocked by it. What must never happen is the reverse — advised=True
+        and the call rejecting."""
+        if not self._held:
+            return False, "the rig is not waiting at a ceiling"
+        if self._hold_count >= self._retry_max:
+            return False, (f"no retries left ({self._hold_count}/{self._retry_max}) — "
+                           f"something physical needs checking")
+        if severity == "runaway":
+            return False, ("pressure is still rising with the valve commanded shut — "
+                           "check the rig instead of retrying")
+        return True, ""
+
     def _enter_held(self, now: float, pressure: float, reason: str) -> None:
         """Stop to safe at the run ceiling and wait for the operator instead of
         ending the run. The feed is SHUT here and stays shut every held tick — the
@@ -728,8 +750,16 @@ class RigController:
                       "reasonable; the feed is shut and pressure is bleeding down.")
         cap = self._raise_cap_kpa()
         d = self.cfg.disp
+        # every field is populated here, under the lock, at the same time as
+        # status["held"] — the UI is guaranteed a COMPLETE alarm whenever held is
+        # true, so a missing field can safely be treated as "assume the worst".
+        sp_kpa = self.sequencer.current_setpoint_kpa()
+        retry_ok, retry_why = self._retry_possible(severity)
+        if not retry_ok and retry_why and not runaway:
+            advice = f"{advice} {retry_why.capitalize()}."
         self._held_alarm = {
-            "setpoint": self.status.get("setpoint_disp"),
+            "setpoint": round(d(sp_kpa), 2) if sp_kpa is not None
+                        else self.status.get("setpoint_disp"),
             "ceiling": round(d(self.safety.max_pressure), 2),
             "ceiling_source": self.safety.limit_name,
             "pressure_reached": round(d(pressure), 2),
@@ -737,8 +767,8 @@ class RigController:
             "retry_n": self._hold_count,
             "retry_max": self._retry_max,
             "raise_max": round(d(cap), 2),
-            "severity": severity,
-            "retry_advised": not runaway,
+            "severity": severity,          # tone of the screen
+            "retry_advised": retry_ok,     # the Retry button keys off THIS alone
             "recommendation": advice,
             "units": self.cfg.units,
         }
@@ -778,6 +808,12 @@ class RigController:
         with self._lock:
             if not self._held:
                 return {"ok": False, "error": "the rig is not waiting at a ceiling"}
+            if self._hold_count >= self._retry_max:
+                return {"ok": False, "error": f"no retries left "
+                                              f"({self._hold_count}/{self._retry_max})"}
+            # NOTE: a "runaway" classification is not rejected here on purpose —
+            # see _retry_possible. The UI hides the button; an operator who went
+            # and fixed the rig is not hard-blocked by a heuristic.
             self._resume_point(time.monotonic())
             return {"ok": True, "action": "retry"}
 
@@ -1095,6 +1131,10 @@ class RigController:
     def _update_status(self, pressure_kpa, setpoint_kpa, command, measured, phase,
                        index, total, elapsed, collect_remaining, *, in_band) -> None:
         s = self.status
+        # Heartbeat: wall-clock stamp of the last control tick. A remote screen
+        # can serve a perfectly fine 200 with stale data if the loop has stalled,
+        # so the UI needs to see staleness rather than trust freshness.
+        s["ts"] = time.time()
         s["running"] = self._active
         s["phase"] = phase.value if hasattr(phase, "value") else str(phase)
         s["fault"] = self._fault_reason

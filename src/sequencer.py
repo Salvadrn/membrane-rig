@@ -145,6 +145,13 @@ class Sequencer:
     def finished(self) -> bool:
         return self.phase in (Phase.DONE, Phase.IDLE)
 
+    def current_setpoint_kpa(self) -> Optional[float]:
+        """The setpoint being worked on right now, or None when idle/done. Lets
+        the controller report the live setpoint without reaching into internals."""
+        if self.finished or self._idx >= len(self._setpoints):
+            return None
+        return self._setpoints[self._idx]
+
     # --- internal transitions ------------------------------------------------
     def _enter_stabilizing(self, now: float) -> None:
         self.phase = Phase.STABILIZING
