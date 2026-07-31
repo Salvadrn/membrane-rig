@@ -48,6 +48,16 @@ Para pasar trabajo entre sesiones, usa la herramienta de mensajes entre sesiones
 
 - **Git a nombre de Adrián.** Cada cambio se commitea y pushea sin preguntar,
   autor `Salvadrn <adrngeng@gmail.com>`. **Nunca** co-autoría de Claude.
+- **Checkout compartido: commitea POR RUTA, nunca por index.** Seis sesiones
+  escriben sobre `~/Desktop/membrane-rig` al mismo tiempo, así que el index es
+  territorio común y `git add X && git commit` se lleva **todo lo que otra sesión
+  dejó preparado**. Pasó de verdad: el commit `4c7687e` ("stop promising a relief
+  valve") arrastró tres archivos de `src/` de Datos, cuyo commit había fallado
+  dejándolos en el index — el historial ahora atribuye el error estándar de `k` a
+  un commit sobre válvulas de alivio. Usa siempre la forma con rutas
+  (`git commit CLAUDE.md -m "…"`) y corre `git status` antes de commitear. Si ya
+  se pusheó, **no se reescribe historia**: todos trabajan sobre main; se anota y
+  se sigue.
 - **La seguridad de presión no se negocia.** El rig presuriza una celda con una
   malla delicada. La escalera es:
 
