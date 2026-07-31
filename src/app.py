@@ -353,6 +353,10 @@ class RigController:
                 "stabilize_timeout_s": i.stabilize_timeout_s,
                 "run_name": i.run_name, "note": i.note,
                 "needs_volume": i.needs_volume(),
+                # provenance: this run's ceiling was raised mid-test, so it is
+                # excluded from the combined fit — the queue view needs to be able
+                # to say which rows are out and why.
+                "ceiling_raised": bool(i.ceiling_raised),
                 "results": i.results,
             })
         nxt = self.playlist.next_pending()
