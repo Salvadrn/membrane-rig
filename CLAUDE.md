@@ -63,13 +63,23 @@ Para pasar trabajo entre sesiones, usa la herramienta de mensajes entre sesiones
   Nadie afloja estos límites sin decírselo a Adrián. La UI solo puede apretar.
 - **Verificar antes de decir "listo".** Corre el sim, corre el test, mira la
   salida. Nada de "debería funcionar".
-- **Al cambiar una constante, barre también los valores DERIVADOS.** Un
-  find/replace del número literal no basta: hay cifras calculadas a partir de él
-  que no contienen ni el número ni el nombre de la pieza. Caso real (ronda del
-  divisor 10k/20k → 10k/22k): el paper traía un `1.366 V` que era `2.047 × 0.667`
-  y no contenía "0.667" ni "20k" — habría quedado contradiciendo su propia
-  ecuación. Antes de cerrar, pregúntate qué números *se calcularon* con el viejo
-  y recalcula esos también.
+- **Al cambiar una constante O UN COMPORTAMIENTO, barre lo DERIVADO.** Un
+  find/replace del literal no basta, y hay dos clases:
+  - **Numéricos:** cifras calculadas con el valor viejo, que no contienen ni el
+    número ni el nombre de la pieza. Caso real (divisor 10k/20k → 10k/22k): el
+    paper traía un `1.366 V` que era `2.047 × 0.667` y no contenía "0.667" ni
+    "20k" — habría quedado contradiciendo su propia ecuación.
+  - **En prosa:** descripciones de comportamiento, **sin un solo número**, que
+    quedan mintiendo. Caso real (clamp del techo + estado HELD): `CLAUDE.md`,
+    `README.md` y tres roles decían *"una prueba de 20 kPa aborta cerca de 30"* y
+    *"max(setpoint)+10"*. No cambió ningún número: cambió lo que el sistema HACE.
+
+  Los numéricos se cazan preguntando *"¿qué cifras se calcularon con el viejo?"*.
+  **Los de prosa no se cazan con grep** — hay que releer lo que cada documento
+  *afirma* sobre el comportamiento y contrastarlo contra el código. Las seis de
+  ese caso salieron releyendo, no buscando. Si cambiaste **qué hace** el sistema y
+  no solo con qué número, abre `CLAUDE.md`, `README.md`, `.claude/roles/*` y
+  `docs/paper/` y léelos contra el código.
 - **Simulación ≠ hardware.** Cualquier afirmación sobre el comportamiento físico
   va marcada como pendiente de validar en el rig.
 - **Un sensor caído nunca se interpreta como "presión baja"** — se trata como
