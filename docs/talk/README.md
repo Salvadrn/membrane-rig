@@ -6,7 +6,7 @@ background. The material is all from `docs/paper/`; the job was to **cut**, not 
 
 ## The three pieces
 
-- **`slides.md`** — the canonical slide content (10 cards), deliberately sparse. Source of truth.
+- **`slides.md`** — the canonical slide content (11 cards), deliberately sparse. Source of truth.
 - **`script.md`** — the presenter guion: what to say on each slide, timed to 8:00, with
   cut/expand lists and figure cues. **This is the part to rehearse from.**
 - **The Gamma deck** — generated from `slides.md`. Direction "Pizarra": theme `onyx`
@@ -46,12 +46,16 @@ AI-generated art, nothing fabricated. Drop these into the Gamma editor:
 
 | Slide | Figure | The one idea |
 |---|---|---|
-| 4 · the core idea | `talk_scatter_vs_bias.png` | scatter the fit survives vs bias it can't undo (schematic) |
-| 5 · Darcy as a slope | `talk_fit.png` | the line, the points, k and R² |
-| 6 · it checks itself | `talk_temperature.png` | raw slope +39%, k dead flat |
-| 7 · the system | `talk_system.png` | just the two loops — pressure, and collection timing |
+| 5 · the core idea | `talk_scatter_vs_bias.png` | scatter the fit survives vs bias it can't undo (schematic) |
+| 6 · Darcy as a slope | `talk_fit.png` | the line, the points, k and R² |
+| 7 · it checks itself | `talk_temperature.png` | raw slope +39%, k dead flat |
+| 8 · the system | `talk_system.png` | just the two loops — pressure, and collection timing |
 
-Slides 1–3 and 8–10 are text only — delete their placeholders.
+Slides 1–4 and 9–11 are text only — delete their placeholders.
+
+**Slide 2 was added in the Gamma editor, not by regenerating.** Two reasons: a fresh `generate`
+caps at 10 cards, and regenerating mints a new deck URL and would discard the figures already
+dropped in. `slides.md` still holds its text as the source of truth.
 
 **Where the numbers come from:** the fit and temperature figures use `offline_sim.py`'s own stdout
 (the paper's RUN A and temperature sweep), so the talk cannot contradict the paper. The

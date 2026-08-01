@@ -44,11 +44,11 @@
 
 <header>
   <h1>Membrane rig — ENLACE talk</h1>
-  <span class="total">8:00 · 10 slides</span>
+  <span class="total">8:00 · 11 slides</span>
 </header>
 
 <div class="rule">
-  <b>Say “in simulation” out loud</b> on slide 1 and again on slide 8. Never let a number be heard
+  <b>Say “in simulation” out loud</b> on slide 1 and again on slide 9. Never let a number be heard
   without it. It is a strength — verifiable with no hardware attached was the design goal.
 </div>
 
@@ -60,19 +60,26 @@
     <span class="facts">…and everything I show is verified in simulation — I'll come back to why that's deliberate.</span></td>
 </tr>
 <tr>
-  <td class="t">0:20<span class="n">→1:15</span></td>
-  <td class="what">Why it's hard</td>
-  <td class="say"><span class="lead">The lab builds two-phase cooling devices — they boil liquid through a porous mesh wick.</span>
-    <span class="facts">pore size = flow vs capillary pumping · k ≈ 10⁻¹³–10⁻¹² m² · meshes differ &lt;10× → must be repeatable</span></td>
+  <td class="t">0:20<span class="n">→0:55</span></td>
+  <td class="what">What the test IS</td>
+  <td class="say"><span class="lead">Let me say what the measurement actually is — everything after this is about doing it well.</span>
+    <span class="facts">water through the membrane at a KNOWN pressure · measure how much, over how long · repeat at a few pressures → out falls permeability, the one number that compares two meshes ·
+      <b>don't say "slope" yet</b> — slide 6 earns that</span></td>
 </tr>
 <tr>
-  <td class="t">1:15<span class="n">→2:10</span></td>
+  <td class="t">0:55<span class="n">→1:25</span></td>
+  <td class="what">Why it's hard</td>
+  <td class="say"><span class="lead">So why is that hard? Two reasons.</span>
+    <span class="facts">two-phase cooling wicks: pore size = flow vs capillary pumping · k ≈ 10⁻¹³–10⁻¹² m² · meshes differ &lt;10× → must be repeatable</span></td>
+</tr>
+<tr>
+  <td class="t">1:25<span class="n">→2:15</span></td>
   <td class="what">Two errors</td>
   <td class="say"><span class="lead">Today it's done by hand: hold the pressure with a valve, time the collection with a stopwatch.</span>
     <span class="facts">±3 kPa at 20 kPa = ±15%, and never recorded · hose transfer spills the same way = bias, not noise</span></td>
 </tr>
 <tr class="heart">
-  <td class="t">2:10<span class="n">→3:05</span></td>
+  <td class="t">2:15<span class="n">→3:10</span></td>
   <td class="what">The core idea</td>
   <td class="say"><span class="lead">Two different errors need two different fixes.</span>
     <span class="facts">timing → DELETE it, give the clock to the computer (solenoid on the same 20 Hz loop) ·
@@ -80,7 +87,7 @@
       regression averages out scatter, it can never undo bias</span></td>
 </tr>
 <tr>
-  <td class="t">3:05<span class="n">→4:05</span></td>
+  <td class="t">3:10<span class="n">→4:05</span></td>
   <td class="what">Darcy = slope</td>
   <td class="say"><span class="lead">You don't need membranes to read this: flow is proportional to pressure.</span>
     <span class="facts">slope IS the permeability · R² is a free physics check (flag under 0.98) ·
@@ -94,21 +101,21 @@
       if it drifts, the instrument is broken, not the membrane</span></td>
 </tr>
 <tr>
-  <td class="t">4:45<span class="n">→5:45</span></td>
+  <td class="t">4:45<span class="n">→5:40</span></td>
   <td class="what">The system</td>
   <td class="say"><span class="lead">The existing vessel is left untouched — everything attaches around it.</span>
     <span class="facts">servo on the ball valve · PID at 20 Hz · divider → 16-bit ADC · probe for temperature ·
       3-way solenoid diverter · ~$300 · vessel never modified</span></td>
 </tr>
 <tr>
-  <td class="t">5:45<span class="n">→6:55</span></td>
+  <td class="t">5:40<span class="n">→6:50</span></td>
   <td class="what">Validation<br><span class="n">— say “in simulation”</span></td>
   <td class="say"><span class="lead">These are all from simulation, running the exact production code against a modeled plant.</span>
     <span class="facts">±8 kPa disturbance → held to 0.21–0.69 kPa · 15 °C sweep → k constant to 5 sig figs while raw slope moved 39% ·
       reproduced a real hand-taken dataset: k 1.44e-12, pore 6.8 µm, R² 0.994</span></td>
 </tr>
 <tr>
-  <td class="t">6:55<span class="n">→7:45</span></td>
+  <td class="t">6:50<span class="n">→7:45</span></td>
   <td class="what">Trusted &amp; honest</td>
   <td class="say"><span class="lead">A word on discipline — being verifiable without hardware was a design goal.</span>
     <span class="facts">every line ran end-to-end before a part was bought · plainly: NOTHING has run on hardware yet,
@@ -124,7 +131,7 @@
 </table>
 
 <footer>
-  <span><b>Running long?</b> Trim slide 2, then slide 6 (leave its figure up — the picture does it). <b>Never cut ★.</b></span>
+  <span><b>Running long?</b> Trim slide 3, then slide 7 (leave its figure up — the picture does it). <b>Never cut ★.</b></span>
   <span><b>Running short?</b> Walk a dot on the fit; trace the two temperature curves by hand.</span>
   <span><b>Asked about safety?</b> Four software layers — and say plainly the relief valve is on order but not yet mounted, so today all of them need the controller alive.</span>
   <span><b>Lost?</b> Read the bold line of the next row.</span>

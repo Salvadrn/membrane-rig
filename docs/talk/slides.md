@@ -1,7 +1,9 @@
 <!--
 ENLACE 8-minute talk — slide content (canonical source).
 Direction: "Pizarra" (dark, high-contrast, one idea per slide). Gamma theme: onyx (b&w, bold, high contrast).
-Fed to Gamma verbatim (textMode: preserve, cardSplit: inputTextBreaks, "---" = card break). 10 cards (Gamma's max).
+Fed to Gamma verbatim (textMode: preserve, cardSplit: inputTextBreaks, "---" = card break). 11 cards.
+NOTE: a fresh generate caps at 10 cards, so card 2 ("What a permeability test is") was added in the
+Gamma editor rather than by regenerating — regenerating would also discard the figures already dropped in.
 
 DELIBERATELY SPARSE: Gamma scales type to fit, so fewer words = bigger, bolder text and room for a figure.
 The full argument lives in script.md (what Adrián says) — slides are the backdrop, not the script.
@@ -9,11 +11,11 @@ If you add text here, the type shrinks. Cut instead.
 
 Generated with imageOptions.source: placeholder — Gamma reserves an image area. Drop in the TALK figures
 from this folder (not the paper's — those are white-on-white and glare on a dark slide):
-  slide 4 core idea  -> talk_scatter_vs_bias.png
-  slide 5 Darcy      -> talk_fit.png
-  slide 6 checks     -> talk_temperature.png
-  slide 7 system     -> talk_system.png
-  slides 1-3, 8-10   -> text only; delete the placeholder.
+  slide 5 core idea  -> talk_scatter_vs_bias.png
+  slide 6 Darcy      -> talk_fit.png
+  slide 7 checks     -> talk_temperature.png
+  slide 8 system     -> talk_system.png
+  slides 1-4, 9-11   -> text only; delete the placeholder.
 Regenerate them with:  ./.venv/bin/python docs/talk/gen_talk_figs.py
 All numbers are from the paper (simulation). Keep in sync with docs/paper/.
 -->
@@ -29,13 +31,23 @@ Verified in simulation — not yet run on hardware
 
 ---
 
-# Why this is hard to measure
+# What a permeability test is
+
+Push water through the membrane at a **known pressure**.
+
+Measure how much comes out, and **for how long**.
+
+Repeat at a few pressures — out falls **permeability k**, the one number that lets you compare any two meshes.
+
+---
+
+# Why it's hard
 
 Two-phase cooling wicks live or die by **pore size** — flow versus capillary pumping.
 
-Permeability **k** is tiny: **10⁻¹³–10⁻¹² m²**.
+k is tiny: **10⁻¹³–10⁻¹² m²**, and competing meshes differ by **less than 10×**.
 
-Competing meshes differ by **less than 10×**, so it must be **repeatable**.
+So the answer has to be **repeatable**, not just roughly right.
 
 ---
 
