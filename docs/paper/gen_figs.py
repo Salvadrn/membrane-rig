@@ -2,6 +2,12 @@ import os
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+# Geometric sans to match the talk deck's Montserrat. Montserrat itself is not
+# installed on this Mac; Avenir is the closest available equivalent (geometric,
+# high x-height, so it holds up small — Futura's x-height is too low for axis
+# labels). DejaVu Sans is the fallback if this ever runs elsewhere.
+plt.rcParams["font.family"] = ["Avenir", "Montserrat", "DejaVu Sans"]
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 
 OUT = os.path.dirname(os.path.abspath(__file__))
@@ -275,8 +281,6 @@ a1.legend(loc="upper left", fontsize=12.5, frameon=False)
 for (x0, x1) in spans:
     a1.text((x0 + x1) / 2, 3.5, "COLLECT 60 s", ha="center", fontsize=11.5,
             color="#2f6b2f")
-a1.text(spans[0][0] - 9 if spans else 10, 3.5, "stabilize", ha="right",
-        fontsize=11.5, color="#666")
 a1.text(3, 34, "band = setpoint ± 10 %\nshaded = collecting",
         fontsize=11.5, color="#555", va="top")
 
