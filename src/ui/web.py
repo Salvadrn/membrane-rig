@@ -390,12 +390,22 @@ PAGE = r"""<!doctype html>
   .card h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px}
   label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
   input{width:100%;background:#0d1117;border:1px solid var(--line);color:var(--ink);
-        border-radius:7px;padding:8px 10px;font:inherit}
+        border-radius:7px;padding:10px;min-height:44px;font:inherit}
+  /* Focus must be obvious without a mouse. The UA ring is not dependable here:
+     every control paints its own dark background, so define it. */
+  :focus-visible{outline:3px solid var(--acc);outline-offset:2px;border-radius:7px}
+  /* Available to a screen reader, invisible on screen. */
+  .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+      clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .hint{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;
+        border-radius:50%;border:1px solid var(--muted);color:var(--muted);
+        font-size:11px;font-weight:700;cursor:help;vertical-align:middle}
+  .hint:hover,.hint:focus{color:var(--ink);border-color:var(--ink)}
   input.over{border-color:var(--bad);background:#2a1315}
   .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  button{width:100%;margin-top:14px;padding:10px;border:0;border-radius:8px;font:inherit;
-         font-weight:600;cursor:pointer;color:#fff;background:var(--acc)}
+  button{width:100%;margin-top:14px;padding:12px;min-height:44px;border:0;border-radius:8px;
+         font:inherit;font-weight:600;cursor:pointer;color:#fff;background:var(--acc)}
   button.stop{background:var(--bad)}
   button.ghost{background:#21262d;color:var(--ink);border:1px solid var(--line)}
   button:disabled{opacity:.45;cursor:not-allowed}
@@ -413,15 +423,32 @@ PAGE = r"""<!doctype html>
   .meta{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin:10px 0}
   .meta b{color:var(--ink);font-weight:600}
   canvas{width:100%;height:280px;display:block;margin-top:8px}
+  /* The chart's two lines were told apart only by colour and dash pattern, with
+     nothing on the page saying which was which. */
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:2px}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .legend .ln{display:inline-block;width:22px;height:0;border-top-width:3px}
+  .legend .meas{border-top-style:solid;border-top-color:var(--acc)}
+  .legend .targ{border-top-style:dashed;border-top-color:#8b949e}
   table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
   th,td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}
   th:first-child,td:first-child{text-align:left}
-  td a{color:var(--acc);text-decoration:none;margin-right:8px}
+  /* Download links sat at 15px tall — fine with a mouse, a poke in the dark on a
+     phone. Padded into a real target without changing how they read. */
+  td a{color:var(--acc);text-decoration:none;display:inline-block;
+       padding:12px 10px 12px 0;min-height:44px}
   td a:hover{text-decoration:underline}
-  .hbtn{width:auto;margin:0;padding:5px 12px;font-size:12px}
-  .xbtn{width:auto;margin:0;padding:3px 8px;font-size:12px;background:#21262d;color:var(--muted);
-        border:1px solid var(--line);margin-left:4px}
+  .hbtn{width:auto;margin:0;padding:10px 14px;min-height:44px;font-size:12px}
+  /* Row actions were 25x27 px, which is a coin-flip on a phone — and delete sat
+     flush against the arrows, so a near-miss destroyed a queued experiment.
+     44 px targets, and delete is pushed away from the movement controls. */
+  .xbtn{width:auto;margin:0;padding:8px 12px;min-width:44px;min-height:44px;font-size:13px;
+        background:#21262d;color:var(--muted);border:1px solid var(--line);margin-left:6px}
   .xbtn:hover{color:var(--ink)}
+  .xbtn.del{margin-left:18px;border-color:#5a2326;color:#f0a0a0}
+  .xbtn.del:hover{background:#3a0d0d;color:#fff}
+  .xbtn.confirming{background:var(--bad);color:#fff;border-color:var(--bad)}
+  .acts-cell{text-align:right;white-space:nowrap}
   .fault{background:#3a0d0d;border:1px solid var(--bad);color:#ffb3ad;padding:8px 12px;
          border-radius:8px;margin-bottom:12px;display:none}
   .warnbox{background:#3a2d00;border:1px solid var(--warn);color:#f0d48a;padding:8px 12px;
@@ -435,8 +462,32 @@ PAGE = r"""<!doctype html>
   .raisedtag{display:inline-block;padding:2px 7px;border-radius:999px;font-size:11px;
              font-weight:600;background:#3a2d00;color:var(--warn);border:1px solid var(--warn)}
   .queue td{vertical-align:middle}
+  /* On a phone the 9-column queue scrolled sideways with the row actions parked
+     off-screen and every name broken to one word per line. Below 700px each row
+     becomes a stacked card instead: the name reads on one line and the buttons
+     are where you can see them. Each cell carries its column name via data-th. */
+  @media(max-width:700px){
+    .queue thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    .queue,.queue tbody,.queue tr,.queue td{display:block;width:100%}
+    .queue tr{border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+              margin-bottom:10px;background:var(--panel)}
+    .queue tr.next{border-color:var(--acc)}
+    .queue tr.next td{background:transparent}
+    .queue td{border:0;padding:3px 0;text-align:left;white-space:normal}
+    .queue td::before{content:attr(data-th) " ";color:var(--muted);font-size:12px}
+    .queue td.nm{font-size:16px;font-weight:600;padding-bottom:6px}
+    .queue td.nm::before{content:""}
+    .queue td.acts-cell{text-align:left;white-space:normal;padding-top:10px}
+    .queue td.acts-cell::before{content:""}
+    .xbtn{margin-left:0;margin-right:8px;margin-top:6px}
+    .xbtn.del{margin-left:0;float:right}
+  }
   .queue tr.next td{background:#131c26}
-  details summary{cursor:pointer;color:var(--muted);font-size:12px;margin-top:14px}
+  details summary{cursor:pointer;color:var(--muted);font-size:12px;margin-top:14px;
+                  padding:8px 0;min-height:32px}
+  .glossary dl{margin:6px 0 0;font-size:12px;color:var(--muted)}
+  .glossary dt{color:var(--ink);font-weight:600;margin-top:9px}
+  .glossary dd{margin:2px 0 0}
   .err{color:var(--bad);font-size:12px;margin-top:6px;min-height:16px}
 
   /* --- safety bar -----------------------------------------------------------
@@ -464,6 +515,13 @@ PAGE = r"""<!doctype html>
   body.stale .stalebar{display:block}
 
   /* --- held-at-ceiling alarm ------------------------------------------------ */
+  .nextstep{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin:14px 18px 0;
+            padding:11px 14px;border-radius:9px;background:#12191f;
+            border:1px solid var(--line);border-left:3px solid var(--acc);font-size:14px}
+  .nextstep[hidden]{display:none}
+  .ns-k{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+        color:var(--acc);flex:0 0 auto}
+  .nextstep b{color:var(--ink)}
   .held{display:none;border-radius:10px;padding:14px;margin:14px 18px 0;
         border:1px solid var(--warn);background:#2a2000}
   .held.runaway{border-color:var(--bad);background:#2f1113}
@@ -481,23 +539,34 @@ PAGE = r"""<!doctype html>
 <body>
 <header><h1>Membrane Permeability Rig</h1><span class="mode" id="mode"></span></header>
 
-<div class="safetybar">
+<div class="safetybar" role="region" aria-label="Rig status and stop control">
   <div class="now">
     <span class="nowv" id="barPv">–</span><span class="nowu u"></span>
   </div>
   <span class="pill st-idle" id="barPhase">idle</span>
+  <span id="barLive" class="sr" aria-live="polite"></span>
   <span class="spacer"></span>
   <button class="estop" id="stopBtn">■ Stop &amp; shut feed</button>
   <div class="barnote" id="barNote">Stop shuts the feed valve and routes permeate to waste.
     It does not vent the cell — and the supply valve still has to be closed by hand.</div>
-  <div class="stalebar" id="staleBar">⚠ No answer from the rig — the readings below are the
+  <div class="stalebar" id="staleBar" role="alert">⚠ No answer from the rig — the readings below are the
     last ones received and may be out of date.</div>
+</div>
+
+<!-- One line telling whoever opens this page what to do next. The rig is a cycle
+     — set the limit, queue a test, run it, read the cylinder, fit — and a flat
+     board of controls gives a newcomer no way to tell which control is the one
+     for right now. Derived entirely from state already on screen; it never
+     becomes the only place something is said. -->
+<div class="nextstep" id="nextStep" hidden>
+  <span class="ns-k" id="nsKicker">Next</span>
+  <span id="nsText"></span>
 </div>
 
 <!-- Directly under the safety bar, not down in the playlist card: when the rig is
      held it is waiting on a decision, and a remote operator must not have to go
      looking for the buttons that make it. Hidden until held. -->
-<div class="held" id="heldBox">
+<div class="held" id="heldBox" role="group" aria-labelledby="heldTitle">
   <h3 id="heldTitle">–</h3>
   <div class="rec" id="heldRec"></div>
   <div class="facts" id="heldFacts"></div>
@@ -505,7 +574,8 @@ PAGE = r"""<!doctype html>
     <button id="hRetry">↻ Retry this point</button>
     <div class="raisewrap">
       <button class="ghost" id="hRaise">▲ Raise ceiling</button>
-      <input id="hRaiseVal" type="number" step="1" placeholder="new"/>
+      <input id="hRaiseVal" type="number" step="1" placeholder="new"
+             aria-label="New ceiling pressure"/>
     </div>
     <button class="ghost" id="hStop">■ Stop the run</button>
   </div>
@@ -524,25 +594,53 @@ PAGE = r"""<!doctype html>
       <b>setpoint + <span id="marginTxt">–</span></b>, so a low-pressure test can never
       drift up to the global limit.</div>
     </div>
-    <label>Specimen limit (<span class="u"></span>) — what this mesh tolerates</label>
+    <label for="meshLimit">Specimen limit (<span class="u"></span>) — what this mesh tolerates</label>
     <input id="meshLimit" type="number" step="1" placeholder="e.g. 65"/>
     <button class="ghost" id="saveLimit" style="margin-top:8px">Save limit</button>
 
-    <label style="margin-top:18px">Name</label>
+    <label for="expLabel" style="margin-top:18px">Name</label>
     <input id="expLabel" placeholder="e.g. 60 mesh — point 1"/>
-    <label>Pressure (<span class="u"></span>) — comma-separated for a multi-point item</label>
+    <label for="expSp">Pressure (<span class="u"></span>) — comma-separated for a multi-point item</label>
     <input id="expSp" placeholder="20"/>
     <div class="row2">
-      <div><label>Collection (s)</label><input id="expCollect" type="number" step="1"/></div>
-      <div><label>Dwell (s)</label><input id="expDwell" type="number" step="1"/></div>
+      <div><label for="expCollect">Collection (s)</label>
+           <input id="expCollect" type="number" step="1"/></div>
+      <div><label for="expDwell">Dwell (s) <span class="hint" tabindex="0"
+             title="How long the pressure must sit inside the tolerance band before
+collection starts.">?</span></label>
+           <input id="expDwell" type="number" step="1"/></div>
     </div>
-    <label>Tolerance band (± %)</label><input id="expTol" type="number" step="0.1"/>
+    <label for="expTol">Tolerance band (± %) <span class="hint" tabindex="0"
+      title="How far the pressure may wander from the target and still count as
+holding steady.">?</span></label>
+    <input id="expTol" type="number" step="0.1"/>
     <button id="addBtn">+ Add to playlist</button>
     <div class="err" id="addErr"></div>
 
+    <details class="glossary">
+      <summary>What these words mean</summary>
+      <dl>
+        <dt>Setpoint / target</dt><dd>The pressure you are asking the rig to hold
+          across the specimen for this test.</dd>
+        <dt>Tolerance band</dt><dd>How far the pressure may wander from the target and
+          still count as holding steady.</dd>
+        <dt>Dwell</dt><dd>How long it must hold steady before collection starts, so you
+          measure flow at a settled pressure and not during the approach.</dd>
+        <dt>Collection</dt><dd>How long permeate is routed to the cylinder. Volume ÷ this
+          time is the flow rate.</dd>
+        <dt>Diverter</dt><dd>The valve deciding where permeate goes: to <b>waste</b> while
+          the pressure settles, to the <b>cylinder</b> once it is being measured.</dd>
+        <dt>Ceiling / held</dt><dd>The pressure a run is not allowed to pass. Reaching it
+          shuts the feed and parks the rig, waiting for you — that is “held”.</dd>
+        <dt>Permeability (k)</dt><dd>What the whole experiment is for: how easily liquid
+          passes through this specimen. It comes from the slope of flow against
+          pressure across several tests, so one test is never enough.</dd>
+      </dl>
+    </details>
+
     <details>
       <summary>Single run without the playlist (advanced)</summary>
-      <label>Setpoints (comma-separated)</label><input id="setpoints"/>
+      <label for="setpoints">Setpoints (comma-separated)</label><input id="setpoints"/>
       <div class="row"><input id="kp" type="number" step="0.1" title="Kp"/>
         <input id="ki" type="number" step="0.1" title="Ki"/><input id="kd" type="number" step="0.01" title="Kd"/></div>
       <div class="bandnote">PID gains Kp / Ki / Kd</div>
@@ -551,8 +649,8 @@ PAGE = r"""<!doctype html>
   </div>
 
   <div class="card">
-    <div class="fault" id="faultBox"></div>
-    <div class="warnbox" id="closeWarn"></div>
+    <div class="fault" id="faultBox" role="alert"></div>
+    <div class="warnbox" id="closeWarn" role="alert"></div>
     <div class="big">
       <div><div class="v"><span id="pv">–</span><span style="font-size:18px" class="u"></span></div></div>
       <div class="sp">setpoint <b id="spv">–</b> · valve <b id="valve">–</b>% · <span id="phasePill" class="pill st-idle">idle</span></div>
@@ -566,7 +664,13 @@ PAGE = r"""<!doctype html>
       <span id="collectWrap" style="display:none">collect left <b id="cleft">–</b>s</span>
       <span>abort above <b id="ceil">–</b> <span class="u"></span></span>
     </div>
-    <canvas id="chart" width="900" height="280"></canvas>
+    <canvas id="chart" width="900" height="280" role="img"
+            aria-label="Live chart of measured pressure against the target over time.
+The readings above give the same values as text."></canvas>
+    <div class="legend">
+      <span><i class="ln meas"></i>measured pressure</span>
+      <span><i class="ln targ"></i>target (setpoint)</span>
+    </div>
     <div class="tscroll"><table id="results"><thead><tr>
       <th>Setpoint</th><th>Mean</th><th>Std</th><th>Min</th><th>Max</th><th>In-band</th><th>n</th><th></th>
     </tr></thead><tbody></tbody></table></div>
@@ -622,6 +726,13 @@ const $=id=>document.getElementById(id);
 let U="kPa", CUTOFF=0, LIMIT=0, MODE="sim", wasFinished=false, plSig="";
 
 function fmt(x,d=2){return (x==null||x==="")?"–":Number(x).toFixed(d);}
+// Operator-typed text (labels, notes) goes into innerHTML in several places. It
+// used to be pasted raw on the grounds that only the person at the bench could
+// type it — but the playlist is a file that outlives the session, the rig is now
+// reachable over the tunnel, and whoever reads the queue is no longer whoever
+// filled it in. Escape it.
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,
+  c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function toDisp(vk){return U==="psi"? vk/6.894757293168361 : vk;}
 async function post(url,body){
   const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},
@@ -696,9 +807,11 @@ $("startBtn").onclick=async()=>{
     kp:parseFloat($("kp").value), ki:parseFloat($("ki").value), kd:parseFloat($("kd").value)});
   if(!r.ok) alert("Could not start: "+(r.data.error||""));
 };
-// The stop control in the safety bar. While the rig is held at the ceiling the
-// run has to end through /recover/stop: /stop would end it without clearing the
-// held state, leaving a stale alarm on screen for a run that is already over.
+// The stop control in the safety bar. While the rig is held at the ceiling it
+// ends the run through /recover/stop, the call meant for that state: it leaves
+// the held state deliberately rather than relying on the teardown to do it.
+// (Plain /stop also clears it — _end_run calls _exit_held — so this is about
+// saying what we mean, not about routing around a bug.)
 let HELD=false;
 $("stopBtn").onclick=async()=>{
   if(!confirm("Stop the run?\n\nThis shuts the feed valve and routes permeate to waste. "+
@@ -714,12 +827,17 @@ $("stopBtn").onclick=async()=>{
 // unexpected (no alarm object, a severity we don't know, retry_advised missing)
 // is treated as "runaway": Retry off, Stop primary. Absence must degrade to the
 // cautious side, because the remote operator cannot see the vessel.
+let heldSpoken="";
 function renderHeld(s){
   const box=$("heldBox"), a=s.held_alarm;
-  if(!s.held){ box.style.display="none"; return; }
+  if(!s.held){ box.style.display="none"; box.removeAttribute("aria-live"); heldSpoken=""; return; }
   box.style.display="block";
   const runaway=!a || a.severity!=="overshoot" || a.retry_advised!==true;
   box.className="held"+(runaway?" runaway":"");
+  // Announce it, and let the machine flag pick how hard to interrupt: a runaway
+  // is worth cutting across whatever the screen reader was saying; a normal
+  // overshoot is not. Same flag that drives the button — never the prose.
+  box.setAttribute("aria-live",runaway?"assertive":"polite");
   const u=(a&&a.units)||U;
   $("heldTitle").textContent=runaway
     ? "⛔ Held at the ceiling — do not retry"
@@ -732,7 +850,7 @@ function renderHeld(s){
     `<span>ceiling <b>${fmt(a.ceiling)} ${u}</b> (${a.ceiling_source||"–"})</span>`+
     `<span>setpoint <b>${a.setpoint==null?"–":fmt(a.setpoint)+" "+u}</b></span>`+
     `<span>hit <b>${a.retry_n}</b> of max <b>${a.retry_max}</b></span>`+
-    `<span>layer <b>${a.layer||"–"}</b></span>`:"";
+    `<span>layer <b>${esc(a.layer)||"–"}</b></span>`:"";
   // Retry: driven by the machine flag alone.
   const rt=$("hRetry");
   rt.disabled=runaway;
@@ -789,36 +907,96 @@ async function loadPlaylist(force){
     const isNext=it.id===d.next_id;
     const tr=document.createElement("tr");
     if(isNext) tr.className="next";
+    const nm=esc(it.label)||"–";
     const acts=
-      `<button class="xbtn" data-up="${it.id}">↑</button>`+
-      `<button class="xbtn" data-down="${it.id}">↓</button>`+
-      (it.status==="pending"?`<button class="xbtn" data-skip="${it.id}">skip</button>`:
-                             `<button class="xbtn" data-requeue="${it.id}">re-run</button>`)+
-      `<button class="xbtn" data-del="${it.id}">✕</button>`;
+      `<button class="xbtn" data-up="${it.id}" aria-label="Move ${nm} earlier">↑</button>`+
+      `<button class="xbtn" data-down="${it.id}" aria-label="Move ${nm} later">↓</button>`+
+      (it.status==="pending"
+        ?`<button class="xbtn" data-skip="${it.id}" aria-label="Skip ${nm}">skip</button>`
+        :`<button class="xbtn" data-requeue="${it.id}" aria-label="Re-run ${nm}">re-run</button>`)+
+      `<button class="xbtn del" data-del="${it.id}" aria-label="Delete ${nm}">✕ delete</button>`;
     tr.innerHTML=
-      `<td>${isNext?"▶":""} ${n+1}</td>`+
-      `<td>${it.label||"–"}</td>`+
-      `<td>${it.setpoints.join(", ")} ${U}</td>`+
-      `<td>${it.collection_s}s</td>`+
-      `<td><span class="pill st-${it.status}">${it.status}</span>`+
+      `<td data-th="#">${isNext?"▶":""} ${n+1}</td>`+
+      `<td class="nm" data-th="Name">${nm}</td>`+
+      `<td data-th="Pressure">${it.setpoints.join(", ")} ${U}</td>`+
+      `<td data-th="Collect">${it.collection_s}s</td>`+
+      `<td data-th="Status"><span class="pill st-${it.status}">${it.status}</span>`+
         // A raised-ceiling run is left out of the combined fit, so the queue has
         // to say which rows those are — otherwise the fit silently has fewer
         // points than the table shows and nobody can tell which ones went.
         (it.ceiling_raised?` <span class="raisedtag" title="Ran above the declared `+
           `ceiling — excluded from the combined fit">▲ raised</span>`:"")+
-        (it.note?` <span style="color:var(--bad);font-size:11px">${it.note}</span>`:"")+`</td>`+
-      `<td>${r0.mean_kpa!=null?fmt(toDisp(r0.mean_kpa)):"–"}</td>`+
-      `<td>${r0.volume_ml?fmt(r0.volume_ml,0)+" mL":"–"}</td>`+
-      `<td>${r0.flow_m3s?Number(r0.flow_m3s).toExponential(3):"–"}</td>`+
-      `<td style="text-align:right;white-space:nowrap">${acts}</td>`;
+        (it.note?` <span style="color:var(--bad);font-size:11px">${esc(it.note)}</span>`:"")+`</td>`+
+      `<td data-th="Mean">${r0.mean_kpa!=null?fmt(toDisp(r0.mean_kpa))+" "+U:"–"}</td>`+
+      `<td data-th="Volume">${r0.volume_ml?fmt(r0.volume_ml,0)+" mL":"–"}</td>`+
+      `<td data-th="Flow Q">${r0.flow_m3s?Number(r0.flow_m3s).toExponential(3)+" m³/s":"–"}</td>`+
+      `<td class="acts-cell" data-th="">${acts}</td>`;
     tb.appendChild(tr);
   });
   tb.querySelectorAll("[data-up]").forEach(b=>b.onclick=async()=>{await post("/playlist/move",{id:b.dataset.up,delta:-1});loadPlaylist(true);});
   tb.querySelectorAll("[data-down]").forEach(b=>b.onclick=async()=>{await post("/playlist/move",{id:b.dataset.down,delta:1});loadPlaylist(true);});
-  tb.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{await post("/playlist/remove",{id:b.dataset.del});loadPlaylist(true);});
+  // Delete asks twice, in place. Not a native confirm(): on a phone it is ugly
+  // and some webviews suppress it outright, which would turn "are you sure?"
+  // into a silent deletion. The button becomes its own confirmation, announces
+  // itself, and backs out on blur or after a few seconds so it cannot sit armed.
+  tb.querySelectorAll("[data-del]").forEach(b=>{
+    let armed=false, t=null;
+    const disarm=()=>{armed=false; clearTimeout(t); b.classList.remove("confirming");
+                      b.textContent="✕ delete"; b.setAttribute("aria-label","Delete "+b.dataset.nm);};
+    b.dataset.nm=b.getAttribute("aria-label").replace(/^Delete /,"");
+    b.onblur=disarm;
+    b.onclick=async()=>{
+      if(!armed){
+        armed=true; b.classList.add("confirming"); b.textContent="✕ really delete?";
+        b.setAttribute("aria-label","Confirm deleting "+b.dataset.nm+". Press again to delete.");
+        t=setTimeout(disarm,4000);
+        return;
+      }
+      disarm();
+      await post("/playlist/remove",{id:b.dataset.del});
+      loadPlaylist(true);
+    };
+  });
   tb.querySelectorAll("[data-skip]").forEach(b=>b.onclick=async()=>{await post("/playlist/skip",{id:b.dataset.skip});loadPlaylist(true);});
   tb.querySelectorAll("[data-requeue]").forEach(b=>b.onclick=async()=>{await post("/playlist/requeue",{id:b.dataset.requeue});loadPlaylist(true);});
   renderGate(d);
+  renderNextStep(d);
+}
+
+// What the operator should do now, picked from the state the page already has.
+// Deliberately silent while something is running or held — the safety bar and
+// the alarm own the screen then, and a suggestion would be competing noise.
+function renderNextStep(d){
+  const el=$("nextStep"), txt=$("nsText");
+  const running=d.items.some(i=>i.status==="running");
+  if(running || HELD){ el.hidden=true; return; }
+  const nxt=d.items.find(i=>i.id===d.next_id);
+  const needsVol=d.items.find(i=>i.needs_volume);
+  const done=d.counts.done;
+  let msg="";
+  if(!d.membrane_limit)
+    msg="<b>Start here:</b> tell the rig what this specimen can take, in "+
+        "“Specimen limit”, then save it. Nothing can be queued above that.";
+  else if(needsVol)
+    msg="<b>Read the cylinder</b> for “"+esc(needsVol.label||"the last test")+"”, type the "+
+        "millilitres below, and empty it before the next run.";
+  else if(!d.counts.total)
+    msg="<b>Add your first test:</b> give it a name and a pressure on the left, "+
+        "then “Add to playlist”.";
+  else if(nxt)
+    msg="<b>Ready to run</b> “"+esc(nxt.label||"the next test")+"” at "+
+        nxt.setpoints.join(", ")+" "+U+". Press <b>Play next experiment</b> when the "+
+        "cylinder is empty and in place.";
+  else if(done>=2)
+    msg="<b>All tests are done.</b> Fit Q vs ΔP across the whole playlist to get "+
+        "permeability for this specimen.";
+  else if(done===1)
+    msg="<b>One test is done.</b> Add at least one more pressure — permeability comes "+
+        "from the slope through several points, not from one.";
+  else
+    msg="Nothing left pending. Re-queue a test or add a new one.";
+  txt.innerHTML=msg;
+  el.hidden=false;
 }
 
 // The pause between experiments: read the cylinder, then press play.
@@ -846,10 +1024,10 @@ function renderGate(d){
     }
   } else if(last && last.status==="failed"){
     title=`✗ “${last.label||"experiment"}” did not complete`;
-    body=(last.note||"")+" — check the rig before continuing.";
+    body=esc(last.note||"")+" — check the rig before continuing.";
   }
   if(nxt){
-    body+=`${body?"<br>":""}<b style="color:var(--ink)">Next up:</b> “${nxt.label||"experiment"}” at `+
+    body+=`${body?"<br>":""}<b style="color:var(--ink)">Next up:</b> “${esc(nxt.label)||"experiment"}” at `+
           `${nxt.setpoints.join(", ")} ${U} for ${nxt.collection_s}s. Press play when you are ready.`;
   } else {
     body+=`${body?"<br>":""}<b style="color:var(--ink)">Playlist finished</b> — nothing pending. `+
@@ -1001,7 +1179,7 @@ $("refreshRuns").onclick=loadRuns;
 // screen looking live. Next to the rig you notice; over the tunnel you cannot,
 // and a frozen page reading "60 kPa, collecting" is the worst thing this UI can
 // do. Two misses (~1 s) flips the page into a visibly stale state.
-let missed=0, lastTs=null, sameTs=0, isStale=false;
+let missed=0, lastTs=null, sameTs=0, isStale=false, lastSpoken="";
 // Two ways the page can stop being truthful, and they need OPPOSITE handling of
 // the stop button:
 //   linkDown=true  — we cannot reach the rig at all. A press could not arrive,
@@ -1082,6 +1260,14 @@ async function poll(){
       else if(s.held){ bp.className="pill st-fault"; bp.textContent="held"; }
       else { bp.className=phaseClass(s.phase); bp.textContent=s.phase; }
       $("stopBtn").disabled=!(s.running||s.held);
+      // Announce the state only when it CHANGES. The pressure updates twice a
+      // second; piping that into a live region would make the page unusable
+      // with a screen reader instead of more accessible.
+      const spoken=bp.textContent;
+      if(spoken!==lastSpoken){
+        lastSpoken=spoken;
+        $("barLive").textContent=`Rig ${spoken}, ${fmt(s.pressure_disp)} ${U}`;
+      }
     }
     renderHeld(s);
     $("nowWrap").style.display=(s.running&&s.item_label)?"inline":"none";
