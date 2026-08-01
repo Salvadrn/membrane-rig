@@ -52,6 +52,40 @@ The #1 failure mode of DIY servo-valve actuators is the printed part twisting.
 - Ventilation slots (Pi 4 runs warm); cable entry through bottom/side notches or
   glands so splashes can't run down wires into the box; splash lid on top.
 
+### Where the transducer goes is a measurement decision, not a convenience
+
+The rig is not one vessel with a membrane in it. It is a **chain of separate
+pieces**: air line → **water tank** → **dip tube** reaching the tank's bottom →
+line carrying the **existing manometer** → **membrane holder** → cylinder.
+(Topology from Adrián's description of the bench; the drawing in
+`wiring_fluidos.html` still shows the old single-vessel version and is flagged
+there as under revision.)
+
+That chain has a consequence worth getting right the first time. Everything
+between the tank and the membrane — dip tube, fittings, tubing — carries the
+full permeate flow and drops pressure doing it, and that drop **grows with Q**:
+
+| Dip tube ID | 5 mL/s | 15 mL/s | 30 mL/s |
+|---|---|---|---|
+| 3 mm | 0.7 kPa | 7.9 kPa | **26.6 kPa** |
+| 4 mm | 0.2 | 2.0 | 6.8 |
+| 6 mm | 0.05 | 0.3 | 1.0 |
+
+Against a 35 kPa setpoint, and in turbulent flow it scales as roughly Q^1.75 —
+so it is **not** a constant offset. It bends the Darcy line exactly the way the
+diverter's orifice does (§ Stage 10.5 in `COMMISSIONING.md`), and `R² ≥ 0.98`
+will not catch it.
+
+**So: tee the transducer as close to the membrane holder's inlet as possible —
+the existing manometer position is right.** Measured there, every loss above is
+*upstream* of the reading and simply means the tank sits a little higher; the
+transducer still reports the pressure the membrane actually sees. Measured on
+the **tank** instead, all of it lands between the sensor and the specimen and
+biases `k` with a curvature nobody will see in the fit.
+
+This retroactively settles the BOM's "or mount at the existing manometer port"
+option: it is not merely the cheaper choice, it is the correct one.
+
 ### The specimen mounts at the BASE flange — and the permeate line runs down
 
 Confirmed from a photo of the bench: the membrane is clamped in the **bolted
