@@ -212,8 +212,62 @@ def fig_system():
     save(fig, "talk_system.png")
 
 
+# ========================================================= 5. what the test is ==
+# Slide 2, for the half of the room that has never seen this experiment. Concept
+# only — no electronics, no PID (that is the system figure's job): pressure in,
+# membrane, water out, measured over a known time.
+def fig_test_concept():
+    fig, ax = plt.subplots(figsize=(6.8, 5.4))
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 100)
+    ax.axis("off")
+
+    # --- pressure arrow in ---
+    ax.annotate("", xy=(37, 86), xytext=(37, 99),
+                arrowprops=dict(arrowstyle="-|>", color=WARN, lw=3.4,
+                                shrinkA=0, shrinkB=0, mutation_scale=22))
+    ax.text(43, 94, "known\npressure", fontsize=17, color=WARN,
+            fontweight="bold", va="center", linespacing=1.3)
+
+    # --- vessel + water ---
+    ax.add_patch(plt.Rectangle((16, 46), 42, 40, fill=False, ec=INK, lw=2.4))
+    ax.add_patch(plt.Rectangle((16.9, 46), 40.2, 33, fc=DATA, alpha=0.20, lw=0))
+    ax.text(37, 65, "water", fontsize=15, color=DATA, ha="center")
+
+    # --- the specimen: the whole point of the experiment ---
+    # "xx" reads as woven mesh; a dense "///" fill made it look like a plank
+    ax.add_patch(plt.Rectangle((16, 43.2), 42, 2.8, fc="none",
+                               ec=WARN, lw=2.0, hatch="xx"))
+    ax.annotate("the membrane", xy=(58, 44.2), xytext=(63, 44.2),
+                textcoords="data", fontsize=17, color=WARN, fontweight="bold",
+                va="center",
+                arrowprops=dict(arrowstyle="-", color=WARN, lw=1.6,
+                                shrinkA=2, shrinkB=4))
+
+    # --- flow out ---
+    ax.annotate("", xy=(37, 31), xytext=(37, 42),
+                arrowprops=dict(arrowstyle="-|>", color=DATA, lw=3.0,
+                                shrinkA=0, shrinkB=0, mutation_scale=20))
+
+    # --- graduated cylinder ---
+    ax.add_patch(plt.Rectangle((27, 5), 20, 26, fill=False, ec=INK, lw=2.4))
+    ax.add_patch(plt.Rectangle((27.9, 5), 18.2, 13, fc=DATA, alpha=0.35, lw=0))
+    for y in (10, 14, 18, 22, 26):                    # graduation marks
+        ax.plot([27, 31], [y, y], color=DIM, lw=1.3)
+    ax.annotate("how much water,\nand for how long", xy=(47, 15), xytext=(53, 15),
+                textcoords="data", fontsize=17, color=INK, va="center",
+                linespacing=1.35,
+                arrowprops=dict(arrowstyle="-", color=DIM, lw=1.6,
+                                shrinkA=2, shrinkB=4))
+
+    ax.text(50, -3, "repeat at a few pressures", fontsize=14.5, color=DIM,
+            ha="center", style="italic")
+    save(fig, "talk_test_concept.png")
+
+
 if __name__ == "__main__":
     print("talk figures ->")
+    fig_test_concept()
     fig_fit()
     fig_temperature()
     fig_scatter_vs_bias()

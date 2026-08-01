@@ -13,12 +13,13 @@
 
 | Slide | Figure |
 |---|---|
+| 2 · what a permeability test is | `talk_test_concept.png` |
 | 5 · the core idea | `talk_scatter_vs_bias.png` |
 | 6 · Darcy as a slope | `talk_fit.png` |
 | 7 · it checks itself | `talk_temperature.png` |
 | 8 · the system | `talk_system.png` |
 
-Slides 1–4 and 9–11 are text only — delete their placeholders. Regenerate with `./.venv/bin/python docs/talk/gen_talk_figs.py`.
+Slides 1, 3–4 and 9–11 are text only — delete their placeholders. Regenerate with `./.venv/bin/python docs/talk/gen_talk_figs.py`.
 
 ---
 
@@ -26,6 +27,7 @@ Slides 1–4 and 9–11 are text only — delete their placeholders. Regenerate 
 "This summer I built an instrument that automates a membrane-permeability test. One line before I start: everything I'll show is **verified in simulation** — the rig itself hasn't run on hardware yet. I'll come back to why that's deliberate."
 
 ### 2 · What a permeability test is — 0:20–0:55
+> _FIGURE: talk_test_concept.png_
 "Let me say what the measurement actually is, because everything after this is about doing it well. You clamp a membrane in a vessel, push water through it at a **known pressure**, and measure how much comes out and over how long. Then you repeat that at a few different pressures. Out of that relationship falls a single number — the **permeability** — and that number is what lets you say this mesh is better than that one. That's the whole experiment."
 > _Don't say "the slope" here — slide 6 earns that. This slide is WHAT you do; slide 6 is how the number comes out._
 

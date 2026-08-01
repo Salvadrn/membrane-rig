@@ -33,7 +33,7 @@ minimal — legible from the back of a lecture hall.
 read from the back of the room in the ~8 seconds the audience spares while also listening. And the
 paper's are black-on-white — a white rectangle on a dark slide glares in a darkened room.
 
-`gen_talk_figs.py` (in this folder) draws four purpose-built ones: transparent background, light
+`gen_talk_figs.py` (in this folder) draws five purpose-built ones: transparent background, light
 ink, large type, one idea each. It is **separate from `../paper/gen_figs.py` on purpose** — that one
 feeds the .docx and must keep its white background. Don't merge them.
 
@@ -46,12 +46,13 @@ AI-generated art, nothing fabricated. Drop these into the Gamma editor:
 
 | Slide | Figure | The one idea |
 |---|---|---|
+| 2 · what a permeability test is | `talk_test_concept.png` | pressure in, membrane, water out — measured over a known time |
 | 5 · the core idea | `talk_scatter_vs_bias.png` | scatter the fit survives vs bias it can't undo (schematic) |
 | 6 · Darcy as a slope | `talk_fit.png` | the line, the points, k and R² |
 | 7 · it checks itself | `talk_temperature.png` | raw slope +39%, k dead flat |
 | 8 · the system | `talk_system.png` | just the two loops — pressure, and collection timing |
 
-Slides 1–4 and 9–11 are text only — delete their placeholders.
+Slides 1, 3–4 and 9–11 are text only — delete their placeholders.
 
 **Slide 2 was added in the Gamma editor, not by regenerating.** Two reasons: a fresh `generate`
 caps at 10 cards, and regenerating mints a new deck URL and would discard the figures already

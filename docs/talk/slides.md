@@ -11,11 +11,12 @@ If you add text here, the type shrinks. Cut instead.
 
 Generated with imageOptions.source: placeholder — Gamma reserves an image area. Drop in the TALK figures
 from this folder (not the paper's — those are white-on-white and glare on a dark slide):
+  slide 2 what it is -> talk_test_concept.png
   slide 5 core idea  -> talk_scatter_vs_bias.png
   slide 6 Darcy      -> talk_fit.png
   slide 7 checks     -> talk_temperature.png
   slide 8 system     -> talk_system.png
-  slides 1-4, 9-11   -> text only; delete the placeholder.
+  slides 1, 3-4, 9-11 -> text only; delete the placeholder.
 Regenerate them with:  ./.venv/bin/python docs/talk/gen_talk_figs.py
 All numbers are from the paper (simulation). Keep in sync with docs/paper/.
 -->
