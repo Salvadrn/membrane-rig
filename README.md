@@ -186,7 +186,8 @@ All parameters live in `config.yaml` — nothing requires editing code. Highligh
 | `test.tolerance_pct/dwell_s/collection_s` | stabilisation band, dwell, collection time |
 | `test.setpoints` | the sequence to run (also editable in the UI) |
 | `sim.*` | plant model gains + simulated permeate flow for sim mode |
-| `membrane.area_cm2/thickness_mm/viscosity_pa_s/label` | geometry + fluid props for the Darcy calc |
+| `membrane.area_cm2/thickness_mm/label` | specimen geometry for the Darcy calc. **Viscosity is not set here** — see the row below |
+| `temperature.source/manual_c/w1_id` | water temperature, and with it the **viscosity**, which is *derived* from it via the Vogel correlation on every run — never read from config. A `membrane.viscosity_pa_s` key is silently ignored; a different fluid needs a code change, not a config change |
 | `analysis.auto_plot/title` | auto-generate the Q-vs-ΔP plot when a run finishes |
 
 Values entered in the web UI (setpoints, tolerance, dwell, collection, PID gains)
