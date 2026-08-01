@@ -341,6 +341,10 @@ def fig_test_concept():
 # failure the rig is actually exposed to. R2 values are computed from the
 # plotted points, not invented.
 def fig_darcy_check():
+    """Replicates, the way the bench actually gives them: the same pressure run
+    several times, across several pressures. The bad panel is deliberately just
+    as REPEATABLE as the good one — its clusters are equally tight — so the
+    figure makes the point that reproducible is not the same as correct."""
     def ols_r2(xs, ys):
         n = len(xs)
         mx, my = sum(xs) / n, sum(ys) / n
@@ -352,39 +356,52 @@ def fig_darcy_check():
         return a, b, 1 - ss_res / ss_tot
 
     P = [20, 30, 40, 50, 60]
-    good = [1.02 * p + 0.6 for p in P]                    # a line, faint noise
-    good = [g + d for g, d in zip(good, (0.5, -0.4, 0.3, -0.5, 0.4))]
-    # Flow that stops keeping up: the mesh blinding, or turbulence setting in.
-    # A GENTLE bend is not enough — with five points a mild curve still fits a
-    # line at R2 > 0.99, which is exactly why R2 alone is a coarse check.
-    bad = [21.0, 31.5, 40.0, 45.0, 47.0]
+    JIT = (-1.9, -0.65, 0.65, 1.9)                # replicate spread, same setpoint
+    GOOD_MEAN = [21.0, 31.2, 41.0, 51.3, 61.0]    # on a line
+    BAD_MEAN = [21.0, 31.5, 40.0, 45.0, 47.0]     # flow stops keeping up
 
-    fig, axes = plt.subplots(1, 2, figsize=(10.6, 4.8))
-    for ax, ys, title, colour, verdict in (
-        (axes[0], good, "Follows Darcy's law", GOOD, "the slope is the permeability"),
-        (axes[1], bad, "Something is wrong", WARN, "below 0.98 — flagged, don't report a k"),
+    def spread(means):
+        xs, ys = [], []
+        for p, m in zip(P, means):
+            for k, j in enumerate(JIT):
+                xs.append(p)
+                ys.append(m + j * (1.0 if k % 2 else 0.85))
+        return xs, ys
+
+    fig, axes = plt.subplots(1, 2, figsize=(10.8, 4.9))
+    for ax, means, title, colour, verdict in (
+        (axes[0], GOOD_MEAN, "Follows Darcy's law", GOOD,
+         "the slope is the permeability"),
+        (axes[1], BAD_MEAN, "Something is wrong", WARN,
+         "below 0.98 — flagged, don't report a k"),
     ):
-        a, b, r2 = ols_r2(P, ys)
+        xs, ys = spread(means)
+        a, b, r2 = ols_r2(xs, ys)
         fx = [14, 66]
         ax.plot(fx, [a + b * x for x in fx], color=DIM, lw=2.2, ls="--",
                 alpha=0.9, zorder=1)
-        ax.scatter(P, ys, s=200, color=colour, edgecolor="white",
-                   linewidth=2.0, zorder=3)
+        ax.scatter(xs, ys, s=110, color=colour, edgecolor="white",
+                   linewidth=1.5, alpha=0.92, zorder=3)
         ax.set_title(title, color=colour, fontsize=19, fontweight="bold", pad=10)
-        ax.text(0.05, 0.93, f"R² = {r2:.3f}", transform=ax.transAxes,
+        ax.text(0.04, 0.95, f"R² = {r2:.3f}", transform=ax.transAxes,
                 fontsize=19, color=colour, fontweight="bold", va="top")
         ax.text(0.5, -0.155, verdict, transform=ax.transAxes, fontsize=14.5,
                 color=INK, ha="center")
         ax.set_xlim(14, 66)
-        ax.set_ylim(0, 72)
+        ax.set_ylim(8, 70)
         ax.set_xlabel("pressure", fontsize=13.5, color=DIM)
         bare(ax, keep_ticks=False)
     axes[0].set_ylabel("flow", fontsize=13.5, color=DIM)
-    axes[1].annotate("flow stops\nkeeping up",
-                     xy=(56, bad[4] - 2), xytext=(34, 16), fontsize=14.5,
-                     color=WARN, linespacing=1.3,
-                     arrowprops=dict(arrowstyle="-|>", color=WARN, lw=1.8,
-                                     shrinkA=4, shrinkB=6, mutation_scale=14))
+
+    # name what a column is, once
+    axes[0].annotate("same pressure,\nrun several times", xy=(21.6, 21.0),
+                     xytext=(29, 14), fontsize=13, color=DIM, linespacing=1.3,
+                     arrowprops=dict(arrowstyle="-|>", color=DIM, lw=1.5,
+                                     shrinkA=3, shrinkB=6, mutation_scale=13))
+    axes[1].annotate("just as repeatable —\nand still wrong", xy=(56, 45.5),
+                     xytext=(30, 15), fontsize=13.5, color=WARN, linespacing=1.3,
+                     arrowprops=dict(arrowstyle="-|>", color=WARN, lw=1.7,
+                                     shrinkA=3, shrinkB=8, mutation_scale=14))
     fig.subplots_adjust(wspace=0.16)
     save(fig, "talk_darcy_check.png")
 
