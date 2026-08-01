@@ -88,6 +88,6 @@ reserved image area on the three figure slides.
 - **Language: English** — matches the paper and the UCSD venue. If Adrián presents in Spanish,
   flip both `slides.md` and `script.md` and regenerate.
 - **Every number is from simulation.** They trace to `docs/paper/`; keep them in sync if the paper
-  changes. The golden rule is said out loud on the title and slide 8 — that's deliberate.
-- **Slide 2 (Kwangsoo context)** is written from the paper's one-liner; enrich it once Adrián
+  changes. The golden rule is said out loud on the title and slide 9 — that's deliberate.
+- **Slide 3 (Kwangsoo context)** is written from the paper's one-liner; enrich it once Adrián
   gives the device / research question / where his measurement fits.
