@@ -78,9 +78,11 @@ async function handleIngest(request, env) {
   }
 
   const record = { ...payload, received_at_ms: Date.now() };
-  // The Pi may push while offline-buffered, so expiration is generous; staleness
-  // is decided on read from received_at_ms, not by the key disappearing.
-  await env.RIG_STATUS.put(KEY, JSON.stringify(record), { expirationTtl: 86400 });
+  // No TTL, on purpose. Staleness is decided on read from received_at_ms; if the
+  // key expired instead, a rig silent for a day would report "never_seen" — a lie
+  // that hides the ONE thing this Worker exists to say: how long ago the last
+  // beat was. (The first version had a 24 h TTL; the 2026-07-31 audit caught it.)
+  await env.RIG_STATUS.put(KEY, JSON.stringify(record));
   console.log({ event: "ingest_ok", state: payload.state ?? null });
   return json({ ok: true });
 }

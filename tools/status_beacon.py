@@ -51,21 +51,47 @@ SECRET = os.environ.get("RIG_INGEST_SECRET", "")
 POST_PERIOD_S = 5.0  # the Worker calls the rig stale after 20 s, i.e. three missed beats
 HTTP_TIMEOUT_S = 4.0  # under the period, so a hung request cannot stack up beats
 
-# Only these keys leave the Pi. An allow-list rather than forwarding the whole
-# status blob: the app's status is Control's to extend, and a field added there
-# should not silently start being published to the internet.
-FIELDS = (
-    "state",
-    "pressure_kpa",
-    "setpoint_kpa",
-    "run_ceiling_kpa",
-    "run_ceiling_source",
-    "temperature_c",
-    "temperature_source",
-    "diverter",
-    "fault",
-    "ts",
-)
+# Only these keys leave the Pi, TRANSLATED from the app's real /status names.
+# An explicit map rather than forwarding the blob, for two reasons: a field
+# Control adds later should not silently start being published to the internet,
+# and the published names are the Worker page's contract — the audit of
+# 2026-07-31 caught the first version of this file allow-listing names the app
+# never returns (state/temperature_c/diverter), which silently published
+# nothing. If a lookup here starts missing, the beacon says so on stderr
+# instead of dropping the field quietly.
+PASSTHROUGH = ("pressure_kpa", "setpoint_kpa", "run_ceiling_kpa",
+               "run_ceiling_source", "fault", "ts")
+
+
+def translate(payload: dict) -> dict:
+    out = {}
+    missing = []
+    for k in PASSTHROUGH:
+        if k in payload:
+            out[k] = payload[k]
+        else:
+            missing.append(k)
+    # phase is the app's name; "held" outranks it because the page's one job is
+    # to say whether a human is being waited on.
+    if payload.get("held"):
+        out["state"] = "held"
+    elif "phase" in payload:
+        out["state"] = payload["phase"]
+    else:
+        missing.append("phase")
+    if "water_temp_c" in payload:
+        out["temperature_c"] = payload["water_temp_c"]
+    else:
+        missing.append("water_temp_c")
+    if "diverter_measured" in payload:
+        out["diverter"] = "collecting" if payload["diverter_measured"] else "waste"
+    else:
+        missing.append("diverter_measured")
+    if missing:
+        print(f"[beacon] /status is missing expected keys: {missing} — "
+              "the app's status shape changed; update translate()",
+              file=sys.stderr, flush=True)
+    return out
 
 
 def fetch_status() -> dict | None:
@@ -78,7 +104,7 @@ def fetch_status() -> dict | None:
     if not isinstance(payload, dict):
         print("[beacon] status endpoint did not return an object", file=sys.stderr, flush=True)
         return None
-    return {k: payload[k] for k in FIELDS if k in payload}
+    return translate(payload)
 
 
 def push(body: dict) -> None:
