@@ -842,7 +842,21 @@ function renderHeld(s){
   const box=$("heldBox"), a=s.held_alarm;
   if(!s.held){ box.style.display="none"; box.removeAttribute("aria-live"); heldSpoken=""; return; }
   box.style.display="block";
-  const runaway=!a || a.severity!=="overshoot" || a.retry_advised!==true;
+  // Three states, not two. `severity` says what happened and is frozen at the
+  // trip; `retry_advised` says whether the button would do anything and is
+  // refreshed every tick, so it flips to true on its own as the cell bleeds
+  // below the ceiling.
+  //   runaway  — the dangerous one, or anything we cannot read. Go and look.
+  //   waiting  — an ordinary overshoot whose retry is only blocked for now.
+  //              Painting this red would send someone to the lab for something
+  //              that clears itself in seconds, and cry wolf against the alarm
+  //              that matters.
+  //   ready    — ordinary overshoot, retry live.
+  // The fail-safe is unchanged: only an explicitly known pair is treated as
+  // benign; a severity we do not recognise or a missing flag is still runaway.
+  const known=!!a && a.severity==="overshoot";
+  const runaway=!known || (a.retry_advised!==true && a.retry_advised!==false);
+  const waiting=known && a.retry_advised===false;
   box.className="held"+(runaway?" runaway":"");
   // Announce it, and let the machine flag pick how hard to interrupt: a runaway
   // is worth cutting across whatever the screen reader was saying; a normal
@@ -851,20 +865,26 @@ function renderHeld(s){
   const u=(a&&a.units)||U;
   $("heldTitle").textContent=runaway
     ? "⛔ Held at the ceiling — do not retry"
-    : "⏸ Held at the ceiling — waiting for you";
+    : waiting
+      ? "⏳ Held at the ceiling — waiting for the pressure to fall"
+      : "⏸ Held at the ceiling — waiting for you";
   $("heldRec").textContent=(a&&a.recommendation)||
     "The rig stopped at its ceiling and the feed is shut. No detail came through, "+
     "so treat this as the unsafe case: check the rig before doing anything.";
   $("heldFacts").innerHTML=a?
+    // pressure_now is refreshed every tick while held, so the operator can watch
+    // the cell bleed down instead of guessing whether anything is happening.
+    (a.pressure_now!=null?`<span>now <b>${fmt(a.pressure_now)} ${u}</b></span>`:"")+
     `<span>reached <b>${fmt(a.pressure_reached)} ${u}</b></span>`+
     `<span>ceiling <b>${fmt(a.ceiling)} ${u}</b> (${a.ceiling_source||"–"})</span>`+
     `<span>setpoint <b>${a.setpoint==null?"–":fmt(a.setpoint)+" "+u}</b></span>`+
     `<span>hit <b>${a.retry_n}</b> of max <b>${a.retry_max}</b></span>`+
     `<span>layer <b>${esc(a.layer)||"–"}</b></span>`:"";
-  // Retry: driven by the machine flag alone.
+  // Retry: driven by the machine flag alone. In the waiting state it re-enables
+  // itself on a later tick — nothing for the operator to do but watch.
   const rt=$("hRetry");
-  rt.disabled=runaway;
-  rt.className=runaway?"ghost":"";
+  rt.disabled=runaway||waiting;
+  rt.className=(runaway||waiting)?"ghost":"";
   // Raise: born disabled — raise_max <= ceiling means config has it switched off.
   const canRaise=!!a && a.raise_max>a.ceiling;
   $("hRaise").disabled=!canRaise;
@@ -872,6 +892,15 @@ function renderHeld(s){
   if(canRaise && !$("hRaiseVal").value) $("hRaiseVal").value=a.raise_max;
   let why=[];
   if(runaway) why.push("Retry is disabled: retrying would repeat the excursion.");
+  // Say WHY the button is dead and that it will come back by itself. Without
+  // this the operator taps a button that looks available, nothing happens, and
+  // three taps later the run is gone with "physical problem" — which is exactly
+  // the trap the control layer just closed.
+  else if(waiting) why.push(a.retry_blocked_reason
+    ? "Retry is waiting: "+a.retry_blocked_reason+". It re-enables itself once the "+
+      "pressure is below the ceiling — you do not have to do anything."
+    : "Retry is not available yet; it re-enables itself once the pressure has "+
+      "fallen below the ceiling.");
   if(!canRaise) why.push("Raising the ceiling is switched off in the rig's config "+
                          "(safety.operator_raise_max = 0).");
   else why.push(`You may raise up to ${fmt(a.raise_max)} ${u}. A raised run is tagged and `+

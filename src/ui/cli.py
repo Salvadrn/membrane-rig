@@ -37,11 +37,21 @@ def _print_held(st: dict, u: str) -> None:
 def _resolve_held(ctl, st: dict, u: str) -> None:
     """Ask the operator what to do. Only offered on a real terminal."""
     a = st.get("held_alarm") or {}
-    retry_ok = a.get("severity") == "overshoot" and a.get("retry_advised") is True
+    known = a.get("severity") == "overshoot"
+    retry_ok = known and a.get("retry_advised") is True
+    # Retry can be off for two very different reasons, and telling the operator
+    # the wrong one is costly: "go and check the rig" for a cell that is simply
+    # still bleeding down wastes a trip, and blurs the warning that matters.
+    waiting = known and a.get("retry_advised") is False
     raise_ok = bool(a) and (a.get("raise_max") or 0) > (a.get("ceiling") or 0)
     opts = []
     if retry_ok:
         opts.append("[r] retry this point")
+    elif waiting:
+        why = a.get("retry_blocked_reason") or "the pressure is still at or above the ceiling"
+        print(f"  Retry is not available yet — {why}.")
+        print("  It becomes available on its own once the pressure falls; re-run this "
+              "command, or use the web page, to pick it up then.")
     else:
         print("  Retry is NOT advised here — retrying would repeat the excursion.")
     if raise_ok:
