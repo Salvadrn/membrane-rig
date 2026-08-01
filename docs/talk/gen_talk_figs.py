@@ -217,66 +217,87 @@ def fig_system():
 # only — no electronics, no PID (that is the system figure's job): pressure in,
 # membrane, water out, measured over a known time.
 def fig_test_concept():
-    """THIS rig, not a generic filter cartoon: air-over-water in a stainless
-    vessel, with the specimen clamped in the BOLTED FLANGE AT THE BASE (Adrián
-    confirmed from the bench — the paper's "mid-plane" wording was wrong).
-    Compressed air presses on the water column; permeate leaves underneath."""
-    fig, ax = plt.subplots(figsize=(7.0, 5.8))
+    """THE ACTUAL PLUMBING, per Adrián at the bench — not one vessel with a
+    membrane inside it (two earlier drafts got that wrong, including one drawn
+    faithfully from the paper's own wording):
+
+        air hose -> water TANK, air injected above the water
+                    a dip tube runs from the top down to the tank floor
+                 -> line with the pressure GAUGE
+                 -> MESH HOLDER, where the specimen actually lives
+                 -> graduated cylinder
+
+    The tank and the holder are separate pieces joined by tubing. Left to right,
+    so it reads in the order the water travels."""
+    fig, ax = plt.subplots(figsize=(9.4, 5.0))
     ax.set_xlim(0, 100)
-    ax.set_ylim(-4, 100)
+    ax.set_ylim(0, 100)
     ax.axis("off")
 
-    VX0, VX1 = 22, 54          # vessel walls
-    BASE = 30                  # the bolted base flange
+    LINE_Y = 88                      # the tube running across the top
 
-    # --- compressed air in ---
-    ax.annotate("", xy=(38, 86), xytext=(38, 99),
-                arrowprops=dict(arrowstyle="-|>", color=WARN, lw=3.2,
-                                shrinkA=0, shrinkB=0, mutation_scale=20))
-    ax.text(43, 95, "compressed air", fontsize=16, color=WARN,
+    # ---------------- water tank ----------------
+    TX0, TX1, TY0, TY1 = 5, 27, 34, 78
+    ax.add_patch(plt.Rectangle((TX0, TY0), TX1 - TX0, TY1 - TY0,
+                               fill=False, ec=INK, lw=2.4))
+    ax.add_patch(plt.Rectangle((TX0 + 0.9, TY0), TX1 - TX0 - 1.8, 30,
+                               fc=DATA, alpha=0.22, lw=0))
+    ax.plot([TX0 + 0.9, TX1 - 0.9], [TY0 + 30, TY0 + 30], color=DATA, lw=1.8,
+            alpha=0.85)
+    ax.text(21, 70, "air", fontsize=13.5, color=DIM, ha="center")
+    ax.text(21, 48, "water", fontsize=15, color=DATA, ha="center")
+    ax.text(16, 28, "tank", fontsize=15, color=INK, ha="center")
+    ax.text(16, 22, "(tube reaches the floor)", fontsize=12, color=DIM,
+            ha="center")
+
+    # air injected in
+    ax.annotate("", xy=(23, TY1 - 1), xytext=(23, 97),
+                arrowprops=dict(arrowstyle="-|>", color=WARN, lw=3.0,
+                                shrinkA=0, shrinkB=0, mutation_scale=19))
+    ax.text(25.5, 96, "compressed air", fontsize=15.5, color=WARN,
             fontweight="bold", va="center")
 
-    # --- vessel: air pressing on the water column ---
-    ax.add_patch(plt.Rectangle((VX0, BASE + 4), VX1 - VX0, 56,
-                               fill=False, ec=INK, lw=2.4))
-    ax.add_patch(plt.Rectangle((VX0 + 0.9, BASE + 4), VX1 - VX0 - 1.8, 30,
-                               fc=DATA, alpha=0.22, lw=0))
-    ax.plot([VX0 + 0.9, VX1 - 0.9], [BASE + 34, BASE + 34], color=DATA,
-            lw=1.8, alpha=0.85)
-    ax.text(38, 78, "air", fontsize=15, color=DIM, ha="center")
-    ax.text(38, 48, "water", fontsize=15.5, color=DATA, ha="center")
+    # dip tube: down to the floor, so pressure pushes water UP and out
+    ax.plot([12, 12], [LINE_Y, TY0 + 3], color=DATA, lw=2.2)
+    ax.annotate("", xy=(12, TY0 + 8), xytext=(12, TY0 + 3),
+                arrowprops=dict(arrowstyle="-|>", color=DATA, lw=2.2,
+                                shrinkA=0, shrinkB=0, mutation_scale=15))
+    # ---------------- line across, with the gauge ----------------
+    ax.plot([12, 62], [LINE_Y, LINE_Y], color=INK, lw=2.4)
+    from matplotlib.patches import Ellipse          # axes are not equal-aspect
+    ax.add_patch(Ellipse((38, LINE_Y), 5.6, 5.6 * (9.4 / 5.0),
+                         fill=False, ec=INK, lw=2.2))
+    ax.plot([38, 39.4], [LINE_Y, LINE_Y + 3.6], color=INK, lw=1.8)
+    ax.text(38, LINE_Y - 9.5, "pressure gauge", fontsize=14.5, color=INK,
+            ha="center")
 
-    # --- bolted base flange, with the specimen clamped in it ---
-    for x in (VX0 - 4.6, VX1 + 0.6):                       # flange ears
-        ax.add_patch(plt.Rectangle((x, BASE - 0.8), 4.0, 5.2,
-                                   fc="none", ec=DIM, lw=1.8))
-    ax.add_patch(plt.Rectangle((VX0, BASE + 0.6), VX1 - VX0, 3.4,
+    # ---------------- mesh holder ----------------
+    HX0, HX1, HY0, HY1 = 62, 86, 52, 74
+    ax.plot([62, 62], [LINE_Y, HY1], color=INK, lw=2.4)
+    ax.add_patch(plt.Rectangle((HX0, HY0), HX1 - HX0, HY1 - HY0,
+                               fill=False, ec=INK, lw=2.4))
+    ax.add_patch(plt.Rectangle((HX0, 61.5), HX1 - HX0, 3.4,
                                fc="none", ec=WARN, lw=2.0, hatch="xx"))
-    ax.annotate("the membrane,\nbolted in at the base",
-                xy=(VX1 + 5.0, BASE + 2.2), xytext=(63, BASE + 2.2),
-                textcoords="data", fontsize=16, color=WARN, fontweight="bold",
-                va="center", linespacing=1.3,
+    ax.text(74, 78.5, "mesh holder", fontsize=15, color=INK, ha="center")
+    ax.annotate("the membrane", xy=(HX1, 63.2), xytext=(89, 63.2),
+                textcoords="data", fontsize=15.5, color=WARN,
+                fontweight="bold", va="center",
                 arrowprops=dict(arrowstyle="-", color=WARN, lw=1.6,
                                 shrinkA=2, shrinkB=4))
 
-    # --- permeate falls straight through ---
-    ax.annotate("", xy=(38, 22), xytext=(38, 29),
+    # ---------------- down to the cylinder ----------------
+    ax.annotate("", xy=(74, 40), xytext=(74, 51),
                 arrowprops=dict(arrowstyle="-|>", color=DATA, lw=2.8,
                                 shrinkA=0, shrinkB=0, mutation_scale=18))
+    ax.add_patch(plt.Rectangle((65, 14), 18, 25, fill=False, ec=INK, lw=2.4))
+    ax.add_patch(plt.Rectangle((65.9, 14), 16.2, 11, fc=DATA, alpha=0.35, lw=0))
+    for y in (18, 22, 26, 30, 34):
+        ax.plot([65, 68.5], [y, y], color=DIM, lw=1.3)
+    ax.text(74, 8, "how much water,\nand for how long", fontsize=15,
+            color=INK, ha="center", va="top", linespacing=1.35)
 
-    # --- graduated cylinder ---
-    ax.add_patch(plt.Rectangle((28, -1), 20, 23, fill=False, ec=INK, lw=2.4))
-    ax.add_patch(plt.Rectangle((28.9, -1), 18.2, 11, fc=DATA, alpha=0.35, lw=0))
-    for y in (3, 7, 11, 15, 19):
-        ax.plot([28, 31.5], [y, y], color=DIM, lw=1.3)
-    ax.annotate("how much water,\nand for how long",
-                xy=(48, 9), xytext=(53, 9), textcoords="data",
-                fontsize=16, color=INK, va="center", linespacing=1.35,
-                arrowprops=dict(arrowstyle="-", color=DIM, lw=1.6,
-                                shrinkA=2, shrinkB=4))
-
-    ax.text(11, 62, "repeat at\na few\npressures", fontsize=14.5, color=DIM,
-            ha="center", style="italic", linespacing=1.35)
+    ax.text(45, 13, "repeat at a few pressures", fontsize=14.5, color=DIM,
+            ha="center", style="italic")
     save(fig, "talk_test_concept.png")
 
 
