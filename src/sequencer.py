@@ -77,8 +77,20 @@ class _Accum:
     lo: float = math.inf
     hi: float = -math.inf
     in_band: int = 0
+    dropped: int = 0
 
     def add(self, x: float, in_band: bool) -> None:
+        # A non-finite reading carries no information, and letting one in poisons
+        # EVERYTHING downstream silently: mean_kpa becomes NaN while std_kpa shows
+        # 0.0 (max(0.0, nan) == 0.0) and success stays True, so the row looks fine
+        # — then that point turns the whole campaign's fit into NaN and the UI
+        # renders it as "k 0.000e+0, R2 0.00000". Safety tolerates isolated bad
+        # reads by design (fault_grace_reads), and pid.update / _plant_watchdog
+        # already guard the same raw pressure; this was the one consumer that
+        # didn't. Drop the sample and count it so the result can say so.
+        if not math.isfinite(x):
+            self.dropped += 1
+            return
         self.n += 1
         self.total += x
         self.total_sq += x * x
@@ -173,6 +185,10 @@ class Sequencer:
     def _finalize(self, success: bool, note: str) -> None:
         sp = self._current()
         a = self._acc
+        if a.dropped:
+            # provenance: the mean is honest, but say what it was built from
+            note = (f"{note}; {a.dropped} non-finite sample(s) dropped"
+                    if note else f"{a.dropped} non-finite sample(s) dropped")
         if a.n > 0:
             mean = a.total / a.n
             var = max(0.0, a.total_sq / a.n - mean * mean)

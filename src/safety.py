@@ -68,17 +68,23 @@ class SafetyMonitor:
         self._raw_repeat = 0
         self.max_pressure = self.hard_max
         self.limit_name = "safety cutoff"
+        ceiling = None
+        name = None
         if self.overshoot_margin > 0 and setpoints_kpa:
             ceiling = max(setpoints_kpa) + self.overshoot_margin
             name = "run ceiling"
-            # A fault must never push the mesh past its declared limit, so the
-            # specimen limit clamps the ceiling too (not just the global cutoff).
-            if specimen_limit_kpa and specimen_limit_kpa > 0 and specimen_limit_kpa < ceiling:
+        # The specimen limit clamps INDEPENDENTLY of the margin. Setting
+        # overshoot_margin = 0 disables the per-run ceiling, but the mesh's
+        # declared limit is not the run's to waive — folding this into the branch
+        # above meant margin = 0 silently dropped it and let the cutoff sit at 80
+        # on a 65 kPa specimen, contradicting this docstring.
+        if specimen_limit_kpa and specimen_limit_kpa > 0:
+            if ceiling is None or specimen_limit_kpa < ceiling:
                 ceiling = specimen_limit_kpa
                 name = "specimen limit"
-            if ceiling < self.hard_max:
-                self.max_pressure = ceiling
-                self.limit_name = name
+        if ceiling is not None and ceiling < self.hard_max:
+            self.max_pressure = ceiling
+            self.limit_name = name
         return self.max_pressure
 
     def disarm(self) -> None:

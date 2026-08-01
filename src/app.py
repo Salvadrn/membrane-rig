@@ -14,6 +14,7 @@ reads the shared, lock-protected `status` snapshot.
 from __future__ import annotations
 
 import json
+import math
 import threading
 import time
 from collections import deque
@@ -693,6 +694,14 @@ class RigController:
         sample that could not be tested anyway. Lock held."""
         if self._wd_hold_ticks <= 0:
             return None
+        # A non-finite reading is a GAP, not a sample: without this, one NaN taken
+        # as the baseline makes every later `pressure - baseline` comparison NaN
+        # (never >= min_rise), so _wd_rose can never latch and the watchdog
+        # false-fires "plant unresponsive" for the rest of the run — even while
+        # pressure is climbing perfectly well. Same contract as pid.update and
+        # _Accum.add: an unusable read advances nothing.
+        if not math.isfinite(pressure):
+            return None
         if command >= self._wd_valve_pct:
             if self._wd_open_p is None:
                 self._wd_open_p = pressure
@@ -757,7 +766,8 @@ class RigController:
             return self.safety.max_pressure          # no raise possible
         return min(configured, self.pressure_limit_kpa(), self.cfg.safety.max_pressure_kpa)
 
-    def _retry_possible(self, severity: Optional[str] = None) -> tuple:
+    def _retry_possible(self, severity: Optional[str] = None,
+                        pressure: Optional[float] = None) -> tuple:
         """SINGLE SOURCE OF TRUTH for the alarm's `retry_advised`: "would the Retry
         button do anything if it were tapped?". The UI keys the button off this
         flag alone and must never re-derive the policy in JS — if it looks alive,
@@ -777,7 +787,34 @@ class RigController:
         if severity == "runaway":
             return False, ("pressure is still rising with the valve commanded shut — "
                            "check the rig instead of retrying")
+        # Retrying while pressure is STILL above the ceiling cannot work: the very
+        # next tick re-trips OVERPRESSURE, burns a retry, and re-holds — the button
+        # appears to do nothing, and three taps end the run for "a physical
+        # problem" when nothing physical is wrong. The cell only bleeds down
+        # through the membrane (~0.05 kPa/s), so this can take tens of seconds.
+        # Gate it, and let it come alive on its own as pressure falls.
+        if pressure is not None:
+            if not math.isfinite(pressure):
+                return False, "the sensor reading is not usable right now"
+            if pressure >= self.safety.max_pressure:
+                u = self.cfg.units
+                return False, (f"pressure is still at {self.cfg.disp(pressure):.1f} {u}, "
+                               f"at or above the {self.cfg.disp(self.safety.max_pressure):.1f} "
+                               f"{u} ceiling — wait for it to bleed down")
         return True, ""
+
+    def _refresh_held_alarm(self, pressure: float) -> None:
+        """Re-evaluate the DYNAMIC parts of a live alarm each held tick. Pressure
+        bleeds down while the rig waits, so the Retry button has to come alive by
+        itself once retrying could actually succeed — a frozen alarm would either
+        block retry forever or invite a tap that cannot work. `severity` stays
+        frozen on purpose: it describes the moment of the hit. Lock held."""
+        if not self._held_alarm:
+            return
+        ok, why = self._retry_possible(self._held_alarm.get("severity"), pressure)
+        self._held_alarm["retry_advised"] = ok
+        self._held_alarm["retry_blocked_reason"] = why
+        self._held_alarm["pressure_now"] = round(self.cfg.disp(pressure), 2)
 
     def _enter_held(self, now: float, pressure: float, reason: str) -> None:
         """Stop to safe at the run ceiling and wait for the operator instead of
@@ -804,7 +841,7 @@ class RigController:
         # status["held"] — the UI is guaranteed a COMPLETE alarm whenever held is
         # true, so a missing field can safely be treated as "assume the worst".
         sp_kpa = self.sequencer.current_setpoint_kpa()
-        retry_ok, retry_why = self._retry_possible(severity)
+        retry_ok, retry_why = self._retry_possible(severity, pressure)
         if not retry_ok and retry_why and not runaway:
             advice = f"{advice} {retry_why.capitalize()}."
         self._held_alarm = {
@@ -817,8 +854,10 @@ class RigController:
             "retry_n": self._hold_count,
             "retry_max": self._retry_max,
             "raise_max": round(d(cap), 2),
-            "severity": severity,          # tone of the screen
+            "severity": severity,          # tone of the screen (frozen at the hit)
             "retry_advised": retry_ok,     # the Retry button keys off THIS alone
+            "retry_blocked_reason": retry_why,   # why it is off, refreshed each tick
+            "pressure_now": round(d(pressure), 2),
             "recommendation": advice,
             "units": self.cfg.units,
         }
@@ -861,6 +900,17 @@ class RigController:
             if self._hold_count >= self._retry_max:
                 return {"ok": False, "error": f"no retries left "
                                               f"({self._hold_count}/{self._retry_max})"}
+            # Refuse while pressure is still at/above the ceiling: the retry would
+            # re-trip on the next tick and burn the budget for nothing. This one IS
+            # enforced (unlike the runaway advisory) because no operator action can
+            # make it work — only time.
+            p_now = self.status.get("pressure_kpa")
+            if p_now is not None and math.isfinite(p_now) and p_now >= self.safety.max_pressure:
+                u = self.cfg.units
+                return {"ok": False,
+                        "error": (f"pressure is still {self.cfg.disp(p_now):.1f} {u}, at or "
+                                  f"above the {self.cfg.disp(self.safety.max_pressure):.1f} {u} "
+                                  f"ceiling — wait for it to bleed down before retrying")}
             # NOTE: a "runaway" classification is not rejected here on purpose —
             # see _retry_possible. The UI hides the button; an operator who went
             # and fixed the rig is not hard-blocked by a heuristic.
@@ -1073,6 +1123,7 @@ class RigController:
                         f"overpressure: {pressure:.1f} kPa reached the global cutoff "
                         f"{self.safety.hard_max:.1f} kPa while held", now, pressure)
                 else:
+                    self._refresh_held_alarm(pressure)
                     self._update_status(pressure, None, 0.0, False,
                                         self.sequencer.phase, self._final_index,
                                         self._final_total, now - self._run_start, 0.0,
