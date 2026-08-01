@@ -766,12 +766,40 @@ async function loadConfig(){
 }
 
 // --- pressure guard in the field itself -------------------------------------
+// Warn while the operator types, using the bounds the control layer PUBLISHES
+// rather than a copy of its policy. The rule used to be hard-coded here as
+// "> LIMIT", which quietly missed the other half of check_setpoints(): a
+// setpoint of 0 or below was rejected only on submit. Inclusivity comes from
+// the payload too, so the edge (exactly the specimen limit is allowed) is not
+// something this file has to guess.
+//
+// This is a preview, never a gate. check_setpoints() stays the authority: if the
+// server refuses, its wording is what gets shown, not this one.
+let BOUNDS=null;
+function boundsCheck(v){
+  const u=(BOUNDS&&BOUNDS.units)||U;
+  if(!BOUNDS)
+    return v<=LIMIT ? null : `${v} ${u} is above the ${LIMIT} ${u} limit for this specimen.`;
+  if(BOUNDS.min!=null){
+    const bad=BOUNDS.min_inclusive ? v<BOUNDS.min : v<=BOUNDS.min;
+    // Phrased without echoing the value: "0 kPa must be above 0 kPa" is true and
+    // unreadable.
+    if(bad) return `Pressure must be above ${fmt(BOUNDS.min,0)} ${u}.`;
+  }
+  if(BOUNDS.max!=null){
+    const bad=BOUNDS.max_inclusive ? v>BOUNDS.max : v>=BOUNDS.max;
+    if(bad) return `${v} ${u} is above the ${fmt(BOUNDS.max,0)} ${u} limit for this specimen.`;
+  }
+  return null;
+}
 function checkSp(){
-  const over=$("expSp").value.split(",").map(s=>parseFloat(s.trim()))
-              .filter(x=>!isNaN(x)).some(x=>x>LIMIT);
-  $("expSp").classList.toggle("over",over);
-  $("addErr").textContent=over?("Above the "+LIMIT+" "+U+" limit for this specimen."):"";
-  return !over;
+  const vals=$("expSp").value.split(",").map(s=>parseFloat(s.trim())).filter(x=>!isNaN(x));
+  let problem=null;
+  for(const v of vals){ problem=boundsCheck(v); if(problem) break; }
+  $("expSp").classList.toggle("over",!!problem);
+  $("expSp").setAttribute("aria-invalid",problem?"true":"false");
+  $("addErr").textContent=problem?(problem+" Change it before adding."):"";
+  return !problem;
 }
 $("expSp").oninput=checkSp;
 
@@ -935,6 +963,10 @@ async function loadPlaylist(force){
                                             (i.results||[]).map(r=>r.volume_ml)]))+d.limit;
   if(!force && sig===plSig) return;
   plSig=sig;
+  // `max` follows the specimen limit, which the operator can tighten mid-session,
+  // so re-read the bounds on every playlist refresh and re-check what is already
+  // typed — a value that was fine a moment ago may not be now.
+  if(d.setpoint_bounds){ BOUNDS=d.setpoint_bounds; checkSp(); }
   LIMIT=d.limit; $("limitTxt").textContent=d.limit;
   if(d.membrane_limit!=null && !$("meshLimit").value) $("meshLimit").value=d.membrane_limit;
   const c=d.counts;
