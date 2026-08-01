@@ -42,25 +42,31 @@ ax.axis("off")
 # --- relief valve: SPECIFIED BUT NOT FITTED ---
 # Drawn greyed out rather than deleted: a reader looking for the hardware-only
 # layer has to SEE that there isn't one, not merely fail to find it.
-box(ax, 17, 64, 16, 6.5, "relief valve\nNOT FITTED", fc="#f4f4f4", ec="#9a9a9a", fs=7.5)
-ax.text(34.5, 67.2, "no mechanical layer — nothing protects a dead controller",
+box(ax, 13, 64, 16, 6.5, "relief valve\nON ORDER,\nNOT FITTED", fc="#f4f4f4", ec="#9a9a9a", fs=7.5)
+ax.text(30.5, 67.2, "no mechanical layer — nothing protects a dead controller",
         fontsize=7.5, color="#9a9a9a", va="center")
 
 # --- process row ---
-box(ax, 1, 52, 13, 7, "compressed\nair supply", fc="#eef3fb", ec=FLUID)
-box(ax, 18, 51, 15, 9, "ball valve\n+ servo\n(quarter turn)", fc="#eef3fb", ec=FLUID)
-box(ax, 37, 49, 18, 12, "pressure vessel\nair over water\n———\nmembrane specimen",
-    fc="#eef3fb", ec=FLUID)
-box(ax, 59, 51, 13, 8, "3-way\ndiverter", fc="#eef3fb", ec=FLUID)
+# The apparatus is a CHAIN, not one vessel: the tank holds the water, a dip
+# tube carries it out, and the specimen lives in a separate holder downstream.
+box(ax, 1, 52, 11, 7, "compressed\nair supply", fc="#eef3fb", ec=FLUID, fs=7.8)
+box(ax, 15, 50.5, 12, 10, "ball valve\n+ servo\n(quarter turn)",
+    fc="#eef3fb", ec=FLUID, fs=7.8)
+box(ax, 30, 49, 13, 12, "water tank\nair over water\n———\ndip tube\nto the floor",
+    fc="#eef3fb", ec=FLUID, fs=7.5)
+box(ax, 46, 50.5, 12, 10, "mesh holder\n———\nmembrane\n~1 cm²",
+    fc="#eef3fb", ec=FLUID, fs=7.8)
+box(ax, 61, 51.5, 11, 8, "3-way\ndiverter", fc="#eef3fb", ec=FLUID, fs=7.8)
 box(ax, 76, 55.5, 22, 6, "waste", fc="#f7f7f7", ec=FLUID)
 box(ax, 76, 46, 22, 7, "graduated\ncontainer", fc="#f7f7f7", ec=FLUID)
 
-arrow(ax, (14, 55.5), (18, 55.5), FLUID)
-arrow(ax, (33, 55.5), (37, 55.5), FLUID)
-arrow(ax, (55, 55), (59, 55), FLUID)
-arrow(ax, (72, 56.5), (76, 58.5), FLUID)
-arrow(ax, (72, 53.5), (76, 49.5), FLUID)
-arrow(ax, (25, 60), (25, 64), "#9a9a9a", ls="--")
+arrow(ax, (12, 55.5), (15, 55.5), FLUID)
+arrow(ax, (27, 55.5), (30, 55.5), FLUID)
+arrow(ax, (43, 55), (46, 55), FLUID)
+arrow(ax, (58, 55.5), (61, 55.5), FLUID)
+arrow(ax, (72, 57), (76, 58.5), FLUID)
+arrow(ax, (72, 54), (76, 49.5), FLUID)
+arrow(ax, (21, 60.5), (21, 64), "#9a9a9a", ls="--")
 
 # --- measurement chain ---
 box(ax, 37, 36, 18, 8, "pressure transducer\n0–103 kPa, 0.5–4.5 V",
@@ -69,14 +75,15 @@ box(ax, 37, 25, 18, 8, "voltage divider 10 k / 22 k\n↓\nADS1115  16-bit ADC",
     fc="#fffbe8", ec=SIG, fs=8)
 box(ax, 76, 34, 22, 8, "DS18B20\nwater temperature", fc="#fffbe8", ec=SIG, fs=8)
 
-arrow(ax, (46, 49), (46, 44), SIG, ls=DASH)
-arrow(ax, (46, 36), (46, 33), SIG, ls=DASH)
-line(ax, (46, 25), (46, 23), SIG, ls=DASH)
+arrow(ax, (44.5, 54), (44.5, 44), SIG, ls=DASH)
+ax.text(45.6, 48.5, "at the holder inlet", fontsize=7, color=SIG, ha="left")
+arrow(ax, (44.5, 36), (44.5, 33), SIG, ls=DASH)
+line(ax, (44.5, 25), (44.5, 23), SIG, ls=DASH)
 arrow(ax, (87, 46), (87, 42), SIG, ls=DASH)
 line(ax, (87, 34), (87, 23), SIG, ls=DASH)
-line(ax, (87, 23), (46, 23), SIG, ls=DASH)
-arrow(ax, (46, 23), (30, 23), SIG, ls=DASH)
-ax.text(35.5, 24.2, "I²C", fontsize=7.5, color=SIG, ha="center")
+line(ax, (87, 23), (44.5, 23), SIG, ls=DASH)
+arrow(ax, (44.5, 23), (30, 23), SIG, ls=DASH)
+ax.text(37, 24.2, "I²C", fontsize=7.5, color=SIG, ha="center")
 ax.text(89, 28, "1-Wire", fontsize=7.5, color=SIG, ha="left", va="center")
 
 # --- controller and command paths ---
@@ -87,13 +94,13 @@ box(ax, 58, 13, 16, 7, "MOSFET driver\n12 V", fc="#f2ecec", ec=CTRL, fs=8)
 box(ax, 78, 4, 20, 13, "browser\nlaptop / phone\n———\nlive data, setpoints,\nrun history",
     fc="#f7f7f7", ec=CTRL, fs=8)
 
-arrow(ax, (25, 24), (25, 51), CTRL)
-ax.text(23.5, 40, "servo pulse\n(pigpio)", fontsize=7.5, color=CTRL,
+arrow(ax, (21, 24), (21, 50.5), CTRL)
+ax.text(19.5, 40, "servo pulse\n(pigpio)", fontsize=7.5, color=CTRL,
         ha="right", va="center")
 arrow(ax, (30, 16.5), (58, 16.5), CTRL)
 ax.text(44, 17.8, "GPIO", fontsize=7.5, color=CTRL, ha="center")
-arrow(ax, (66, 20), (66, 51), CTRL)
-ax.text(67.5, 32, "solenoid\ndrive", fontsize=7.5, color=CTRL, ha="left", va="center")
+arrow(ax, (66.5, 20), (66.5, 51.5), CTRL)
+ax.text(68, 32, "solenoid\ndrive", fontsize=7.5, color=CTRL, ha="left", va="center")
 arrow(ax, (30, 10), (78, 10), CTRL, ls=DOT)
 ax.text(54, 8.2, "HTTP  (LAN or authenticated tunnel)", fontsize=7.5,
         color=CTRL, ha="center")
@@ -260,27 +267,29 @@ for i in range(1, len(t) + 1):
                         color="#dbe6f5", zorder=0.5)
         seg_start = i if i < len(t) else seg_start
 
-a1.plot(t, sp, color="#888", lw=1.0, ls=(0, (4, 2)), label="setpoint")
-a1.plot(t, p, color=FLUID, lw=1.1, label="measured pressure")
-a1.set_ylabel("pressure (kPa)", fontsize=9)
+a1.plot(t, sp, color="#888", lw=1.3, ls=(0, (4, 2)), label="setpoint")
+a1.plot(t, p, color=FLUID, lw=1.4, label="measured pressure")
+a1.set_ylabel("pressure (kPa)", fontsize=14)
 a1.set_ylim(0, 70)
-a1.legend(loc="upper left", fontsize=8, frameon=False)
+a1.legend(loc="upper left", fontsize=12.5, frameon=False)
 for (x0, x1) in spans:
-    a1.text((x0 + x1) / 2, 3.5, "COLLECT 60 s", ha="center", fontsize=7.3,
+    a1.text((x0 + x1) / 2, 3.5, "COLLECT 60 s", ha="center", fontsize=11.5,
             color="#2f6b2f")
 a1.text(spans[0][0] - 9 if spans else 10, 3.5, "stabilize", ha="right",
-        fontsize=7.3, color="#666")
-a1.text(2, 47, "band = setpoint ± 10 %\nshaded = diverter → measurement container",
-        fontsize=7.6, color="#555", va="top")
+        fontsize=11.5, color="#666")
+a1.text(3, 34, "band = setpoint ± 10 %\nshaded = collecting",
+        fontsize=11.5, color="#555", va="top")
 
-a2.plot(t, u, color=CTRL, lw=1.0)
-a2.set_ylabel("valve command (%)", fontsize=9)
-a2.set_xlabel("time (s)", fontsize=9)
+a2.plot(t, u, color=CTRL, lw=1.3)
+a2.set_ylabel("valve command (%)", fontsize=14)
+a2.set_xlabel("time (s)", fontsize=14)
 a2.set_ylim(0, 45)
-a2.text(0.02, 0.94, "PID counter-modulates against the ±8 kPa / 25 s supply wobble",
-        transform=a2.transAxes, ha="left", va="top", fontsize=7.6, color=CTRL)
+a2.text(0.02, 0.97, "PID counter-modulates against\nthe ±8 kPa / 25 s supply wobble",
+        transform=a2.transAxes, ha="left", va="top", fontsize=12, color=CTRL,
+        linespacing=1.3)
 for a in (a1, a2):
     a.grid(color="#eceff2", lw=0.7)
+    a.tick_params(labelsize=13)
     a.spines["top"].set_visible(False)
     a.spines["right"].set_visible(False)
 
