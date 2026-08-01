@@ -715,12 +715,12 @@ Stated plainly so nobody assumes coverage that was not given.
 1. **Nothing below has been executed.** Every expected value is derived from
    `config.yaml`, the drivers or a datasheet. The rig has no cable connected and the
    Pi has never had the software installed.
-2. **There is no tool for the valve-authority sweep or for `servo_close_us`.**
-   `ASSEMBLY.md` build-order steps 2 and 3 both require moving the servo and reading
-   pressure, and the only ways to move the servo today are to run a full PID test or
-   to write ad-hoc Python. `tools/noise_floor.py` exists precisely because a check
-   with no runnable procedure does not get run; these two need the same treatment
-   (and the tool must build **only** the valve, never the full HAL).
+2. ~~There is no tool for the valve-authority sweep or for `servo_close_us`.~~
+   **CLOSED** — `tools/valve_calib.py` now covers both: `--sweep` for the authority
+   sweep and `--close` for the seating pulse. It builds **only** the valve (plus the
+   sensor for the sweep), gates on a typed confirmation naming the decoupling
+   requirement, and always releases through `close()`. Neither has been run on
+   hardware yet.
 3. **There is no manual diverter control** either — no UI button, no CLI flag. Check
    7.5 needs a few lines of Python against `GpioDiverter`.
 4. **The frozen-signal detector cannot be triggered by any obvious physical action.**
@@ -729,16 +729,23 @@ Stated plainly so nobody assumes coverage that was not given.
    reads — long before the frozen counter reaches 10. Only a *constant, plausible*
    value fires it, which is why 10.5 is written as a proposal. Verifying that it
    fires belongs in a software test, and **this repo has no test suite at all.**
-5. **`ASSEMBLY.md`'s "First safety checks" opens with two checks that cannot be
-   performed:** *"Relief valve set below the vessel's limit"* and *"Servo power loss:
-   confirm the relief covers that case"*. The relief was not bought. The document
-   still names it as the hardware failsafe, and so do `CLAUDE.md`, `README.md`, the
-   role files and the talk deck, while `config.yaml` says the opposite. **That
-   contradiction should be resolved in the docs, not silently absorbed here.**
+5. **The relief valve is on order, but not fitted — so the two checks that depend
+   on it still cannot be performed.** It was dropped, then reinstated on 2026-07-31
+   when the rig became something operated remotely: with nobody in front of it,
+   "shut the supply by hand" is a sentence with no one to execute it. Status is
+   being confirmed with Roxanne.
+
+   The documentation contradiction that used to sit here **is resolved** —
+   `ASSEMBLY.md`, `CLAUDE.md`, `README.md`, the role files and the talk deck all now
+   describe the current state. What has *not* changed is the physical rig: **ordered
+   is not installed.** Until the part is mounted and set, no layer acts without the
+   controller, and the air regulator's setting — still unrecorded — is the only
+   physical bound on a runaway. Do not let a line on a purchase order read as
+   protection.
 6. **Breakaway torque at "0.5–1 bar in the vessel"** (`ASSEMBLY.md`) is **above the
    entire pressure ladder** — 50–100 kPa against a 65 kPa specimen limit and an
    80 kPa global cutoff, on a vessel whose rating is not documented anywhere, with no
-   mechanical relief and no software running. Stage 6.4 asks for the torque *at the
+   mechanical relief fitted and no software running. Stage 6.4 asks for the torque *at the
    regulator setting the rig will actually run*, because stem torque tracks the ΔP
    across the ball, which the regulator sets — not the vessel pressure. **That is a
    deliberate departure from `ASSEMBLY.md` and needs Adrián's OK.**

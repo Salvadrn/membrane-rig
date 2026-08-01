@@ -24,12 +24,14 @@ temperature, no controller, no PID.
 SAFETY — read before running either mode:
 
   * **Decouple the servo from the valve stem for `--sweep` the first time.**
-    Constructing ServoValve drives to `servo_min_us` (700 µs) immediately. If
-    the coupling is already fitted and 700 µs lies past the mechanical stop,
-    that stalls the servo against the valve.
-  * There is **no mechanical relief valve** on this rig, so the supply pressure
-    is the only thing bounding a runaway. Know the regulator setting before
-    admitting air, and keep a hand on the panel valve.
+    Constructing ServoValve drives to the 0 % end immediately — `servo_min_us`
+    normally, `servo_max_us` when `valve.invert` is set, since _apply() flips
+    frac. The banner prints whichever applies. If the coupling is already fitted
+    and that pulse lies past the mechanical stop, it stalls the servo.
+  * The mechanical relief valve is **on order but not fitted**, so until it is
+    mounted and set the supply pressure is the only thing bounding a runaway.
+    Know the regulator setting before admitting air, and keep a hand on the
+    panel valve.
   * `--close` needs the supply ON and someone watching flow. Step down until
     flow stops, then add a small margin. Do NOT jam the servo into the
     mechanical stop: that position is held for as long as the rig sits idle,
@@ -60,8 +62,15 @@ BANNER = """
 """
 
 
+def safe_end_us(v) -> int:
+    """The pulse ServoValve drives to on construction — i.e. command 0 %.
+    _apply() flips frac when invert is set, so the safe end is servo_max_us
+    there, not servo_min_us."""
+    return int(v.servo_max_us if v.invert else v.servo_min_us)
+
+
 def confirm(cfg) -> None:
-    print(BANNER.format(us=cfg.valve.servo_min_us))
+    print(BANNER.format(us=safe_end_us(cfg.valve)))
     if input("type 'move' to continue: ").strip() != "move":
         print("aborted — nothing was driven.")
         raise SystemExit(1)
@@ -103,7 +112,10 @@ def sweep(cfg, args) -> int:
             valve.set_command(cmd)
             time.sleep(args.dwell)
             p = read_mean(sensor)
+            # mirror _apply(): invert flips frac before mapping to a pulse
             frac = cmd / 100.0
+            if v.invert:
+                frac = 1.0 - frac
             us = v.servo_min_us + frac * (v.servo_max_us - v.servo_min_us)
             rows.append((cmd, us, p))
             print(f"  {cmd:6.1f} %   {us:7.0f} us   {p:8.2f} kPa")
@@ -143,7 +155,7 @@ def sweep(cfg, args) -> int:
 
 def close_calib(cfg, args) -> int:
     v = cfg.valve
-    start = int(v.servo_max_us if v.invert else v.servo_min_us)
+    start = safe_end_us(v)
     direction = 1 if v.invert else -1
     print(f"\nseat calibration: stepping {'up' if direction > 0 else 'down'} from "
           f"{start} us in {args.step_us} us steps")

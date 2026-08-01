@@ -18,12 +18,12 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 | Fuente 12 V 3 A | llegó 2026-07-27. **⚠ Su barril NUNCA se midió y los archivos no coinciden**: este inventario decía "asumido 5.5×2.1 (`B013OVYRZU`)" pero `BOM.csv` compró **`B01C010YJI`** — son dos piezas distintas. Ver el bloqueo abajo |
 | Protoboard 830 + jumpers | confirmado por Adrián 2026-07-27 |
 | Cable 22AWG stranded | confirmado por Adrián 2026-07-27 |
-| UBEC 12 V→6 V 3 A | confirmado por Adrián. Ojo: el BOM dice 6 V y `ASSEMBLY.md` menciona 6.8 V en el criterio de par — ver "Discrepancias abiertas" |
+| UBEC 12 V→6 V 3 A | confirmado por Adrián. Jumper a **6 V** (no tiene posición de 6.8 V). Las bandas de par están rederivadas a 6 V en `ASSEMBLY.md` |
 | Servo DS3218 | confirmado por Adrián. **No energizar todavía** (ver bloqueos) |
 | ADS1115 ADC (HiLetgo) | confirmado por Adrián. El "hilego" del chat era esta pieza |
 | Kit de resistencias 1 % | confirmado por Adrián; verificado que trae 22 kΩ (por eso el divisor es 10k/22k y no 10k/20k) |
 | Sonda DS18B20 waterproof | llegó 2026-07-27; era el item #4 del pedido. Desbloquea la cadena de temperatura completa |
-| **Transductor 0–15 PSI, 0.5–4.5 V, G1/4** | llegó 2026-07-27; item #1, el prioritario. **Cierra la cadena de sensado completa**: transductor → divisor 10k/22k → ADS1115 → Pi. Para MONTARLO en el rig falta el adaptador G1/4 → Swagelok (estado desconocido) |
+| **Transductor 0–15 PSI, 0.5–4.5 V, G1/4** | llegó 2026-07-27; item #1, el prioritario. **Cierra la cadena de sensado completa**: transductor → divisor 10k/22k → ADS1115 → Pi. Para MONTARLO en el rig hace falta el adaptador G1/4 → Swagelok — **la orden de McMaster ya llegó**, falta confirmar si lo incluye |
 | Kit de capacitores electrolíticos (470 / 1000 µF) | llegó 2026-07-27; item #8. **No desbloquea nada todavía**: van al riel de 12 V, que sigue trabado por el fusible |
 | **Solenoide 3 vías 231Y-6-12VDC** | llegó; item #2. **⚠ Orificio de 1.5 mm, Cv 0.09–0.21 — puede estrangular la medición.** Ver "El diverter puede invalidar la medición" abajo. No energizar: falta el 1N5819 |
 | Termorretráctil 650 pzas 2:1 | llegó; item #9. **Cierra el hueco de "no hay con qué aislar"** — ver la nota de herramientas |
@@ -75,9 +75,11 @@ bloquean ni el fusible ni el diodo. Con lo que ya hay en la mano:
    ls /sys/bus/w1/devices/                 # debe aparecer un 28-…
    ```
 
-   Gotcha del driver: `Ds18b20` resuelve la ruta `/sys/bus/w1/devices/28-*` **una
-   sola vez al construirse**, así que conectar la sonda con la app corriendo no
-   sirve — hay que reiniciar la app. Y cuando la sonda quede montada en el chorro
+   Ya no hace falta reiniciar la app si la sonda aparece tarde: el driver
+   **reintenta resolver la ruta en cada lectura** (antes la resolvía una sola vez
+   al construirse y quedaba muerta toda la sesión — carrera de arranque real con
+   systemd). También **rechaza el 85.000 °C** de power-on-reset del DS18B20, que
+   llega con CRC válido y dejaría `k` un 66 % baja. Cuando la sonda quede en el chorro
    de permeato hay que cambiar `temperature.source` de `manual` a `probe` en
    `config.yaml`; hoy sigue en `manual`, que reporta ruido simulado, no medición.
 
@@ -338,7 +340,9 @@ probeta que existe, no rediseñar sobre un número simulado.
 
 ## Discrepancias abiertas
 
-- **UBEC 6 V vs 6.8 V.** `BOM.csv` y `ASSEMBLY.md:88` dicen 6 V; `ASSEMBLY.md:40`
-  y `:62` y `.claude/roles/hardware.md:32` usan 6.8 V para el criterio de par
-  ("≤1.0 N·m → DS3218 pelón"). Ese umbral de 1.0 N·m es un valor **derivado** de
-  suponer 6.8 V: a 6 V hay menos par y el umbral debe apretarse. En revisión.
+- ~~UBEC 6 V vs 6.8 V.~~ **RESUELTO.** El Hobbywing UBEC-3A solo entrega 5 V o
+  6 V por jumper: no existe posición de 6.8 V, así que la doc pedía una tensión
+  que la pieza no puede dar. Las bandas de par se rederivaron **a 6 V** (calado
+  2.00 N·m interpolado del datasheet): **≤0.95 pelón · 0.95–1.42 con reducción
+  2:1 · >1.42 servo mayor**. Corregido en `ASSEMBLY.md`, `gen_bom.py` y
+  `.claude/roles/hardware.md`.
