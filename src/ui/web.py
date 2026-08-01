@@ -249,6 +249,16 @@ def create_app(cfg: Config) -> FastAPI:
 
     @app.post("/playlist/remove")
     def playlist_remove(req: IdRequest) -> JSONResponse:
+        # Deleting the item that is running would drop the record the controller
+        # is still writing into — the run keeps going with nowhere to land its
+        # results. `skip` and `requeue` already refuse this; so does this now.
+        # The guard belongs here rather than on the button: the page is not the
+        # only caller (curl, a stale second tab), and a rule enforced only in
+        # the UI is not enforced.
+        item = ctl.playlist.get(req.id)
+        if item is not None and item.status == "running":
+            return JSONResponse({"ok": False, "error": "cannot delete a running experiment"},
+                                status_code=400)
         ok = ctl.playlist.remove(req.id)
         return JSONResponse({"ok": ok}, status_code=200 if ok else 400)
 
@@ -971,7 +981,10 @@ function renderNextStep(d){
   const running=d.items.some(i=>i.status==="running");
   if(running || HELD){ el.hidden=true; return; }
   const nxt=d.items.find(i=>i.id===d.next_id);
-  const needsVol=d.items.find(i=>i.needs_volume);
+  // Same trap as the gate: name the experiment that actually ran, not the first
+  // one in the queue that happens to be missing a volume.
+  const ran=lastRunItem(d);
+  const needsVol=(ran && ran.needs_volume) ? ran : d.items.find(i=>i.needs_volume);
   const done=d.counts.done;
   let msg="";
   if(!d.membrane_limit)
@@ -999,11 +1012,29 @@ function renderNextStep(d){
   el.hidden=false;
 }
 
+// WHICH experiment just ran — not "the last terminal one in queue order", which
+// is a different item as soon as anything runs out of order. Re-queue an early
+// item and run it again and the queue scan lands on a LATER finished item: the
+// gate would then label the cylinder reading with the wrong experiment and post
+// the volume onto its results, corrupting k for both. The controller already
+// knows the answer and publishes it as status.item_id, which survives the end of
+// the run; the queue scan stays only as a fallback for the first paint, before
+// the first poll has told us anything.
+let CURRENT_ITEM_ID=null;
+function lastRunItem(d){
+  if(CURRENT_ITEM_ID){
+    const it=d.items.find(i=>i.id===CURRENT_ITEM_ID);
+    if(it && (it.status==="done"||it.status==="failed")) return it;
+    if(it) return null;   // it is running or re-queued: nothing finished to show
+  }
+  return [...d.items].reverse().find(i=>i.status==="done"||i.status==="failed");
+}
+
 // The pause between experiments: read the cylinder, then press play.
 function renderGate(d){
   const box=$("gateBox"), running=d.items.find(i=>i.status==="running");
   const nxt=d.items.find(i=>i.id===d.next_id);
-  const last=[...d.items].reverse().find(i=>i.status==="done"||i.status==="failed");
+  const last=lastRunItem(d);
   if(running){ box.style.display="none"; return; }
   if(!last && !nxt){ box.style.display="none"; return; }
   box.style.display="block";
@@ -1250,6 +1281,7 @@ async function poll(){
         ? " ("+s.run_ceiling_source+")" : "");
     // safety bar mirrors the live reading and the state
     HELD=!!s.held;
+    CURRENT_ITEM_ID=s.item_id||null;
     $("barPv").textContent=fmt(s.pressure_disp);
     // While stale the bar is owned by setStale: overwriting it here would put a
     // healthy-looking phase back on a page whose numbers are known to be frozen,

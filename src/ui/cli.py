@@ -16,6 +16,64 @@ from ..app import RigController
 from ..config import Config
 
 
+def _print_held(st: dict, u: str) -> None:
+    """Announce a run parked at its ceiling, and say what to do about it."""
+    a = st.get("held_alarm") or {}
+    print("\n\n" + "=" * 68)
+    print("  RIG HELD AT THE CEILING — the feed is shut and it is waiting for you")
+    print("=" * 68)
+    if a:
+        print(f"  reached {a.get('pressure_reached')} {u} · ceiling {a.get('ceiling')} {u} "
+              f"({a.get('ceiling_source')}) · setpoint {a.get('setpoint')} {u}")
+        print(f"  hit {a.get('retry_n')} of max {a.get('retry_max')} · layer: {a.get('layer')}")
+    # Same rule as the web page: the machine flag decides, never the prose, and
+    # anything unexpected is treated as the dangerous case.
+    print("\n  " + (a.get("recommendation")
+                    or "No detail came through. Treat this as the unsafe case and "
+                       "check the rig before doing anything."))
+    print()
+
+
+def _resolve_held(ctl, st: dict, u: str) -> None:
+    """Ask the operator what to do. Only offered on a real terminal."""
+    a = st.get("held_alarm") or {}
+    retry_ok = a.get("severity") == "overshoot" and a.get("retry_advised") is True
+    raise_ok = bool(a) and (a.get("raise_max") or 0) > (a.get("ceiling") or 0)
+    opts = []
+    if retry_ok:
+        opts.append("[r] retry this point")
+    else:
+        print("  Retry is NOT advised here — retrying would repeat the excursion.")
+    if raise_ok:
+        opts.append(f"[a] raise the ceiling (up to {a.get('raise_max')} {u})")
+    opts.append("[s] stop the run")
+    print("  " + "   ".join(opts))
+    while True:
+        try:
+            choice = input("  choice> ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print("\n  Leaving the rig held; it is safe and waiting.")
+            return
+        if choice == "s":
+            res = ctl.recover_stop()
+        elif choice == "r" and retry_ok:
+            res = ctl.recover_retry()
+        elif choice == "a" and raise_ok:
+            try:
+                v = float(input(f"  new ceiling in {u}> ").strip())
+            except (ValueError, EOFError):
+                print("  Not a number.")
+                continue
+            res = ctl.recover_raise(v)
+        else:
+            print("  Pick one of the options shown.")
+            continue
+        if res.get("ok"):
+            print(f"  → {res.get('action')}\n")
+            return
+        print(f"  ! {res.get('error')}")
+
+
 def run(cfg: Config, setpoints=None) -> int:
     ctl = RigController(cfg)
     stopping = {"v": False}
@@ -36,13 +94,33 @@ def run(cfg: Config, setpoints=None) -> int:
     u = cfg.units
     print(f"Run {res['run_name']} started — setpoints {sp_disp} {u} "
           f"(mode={cfg.mode}). Ctrl+C to stop.\n")
+    was_held = False
     try:
         while True:
             st = ctl.get_status()
             if st["fault"]:
                 print(f"\n!! FAULT: {st['fault']}")
+            # A held run keeps `running` true and `finished` false, so without
+            # this the loop would print a normal-looking status line for ever
+            # while the rig sat waiting for a decision nobody knew it wanted.
+            # Over SSH this line is the whole instrument.
+            if st.get("held") and not was_held:
+                was_held = True
+                _print_held(st, u)
+                if sys.stdin.isatty():
+                    _resolve_held(ctl, st, u)
+                else:
+                    # No terminal to ask (systemd): say so and keep waiting. The
+                    # feed is shut, so waiting is safe — and deciding at a safety
+                    # boundary with nobody watching is exactly what the rig is
+                    # built not to do.
+                    print("   No terminal attached — the rig will wait. Resolve it from "
+                          "the web UI, or re-run this from a shell.\n")
+            elif not st.get("held"):
+                was_held = False
+            phase = "HELD" if st.get("held") else st["phase"]
             line = (
-                f"[{st['phase']:<11}] {st['index']+ (0 if st['phase']=='done' else 1)}/{st['total']} "
+                f"[{phase:<11}] {st['index']+ (0 if st['phase']=='done' else 1)}/{st['total']} "
                 f"P={st['pressure_disp']:6.2f}{u} "
                 f"SP={st['setpoint_disp'] if st['setpoint_disp'] is not None else '  -  '} "
                 f"valve={st['valve_command']:5.1f}% "
