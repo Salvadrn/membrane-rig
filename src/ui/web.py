@@ -469,6 +469,13 @@ PAGE = r"""<!doctype html>
   .limitbox b{color:var(--ink)}
   .gate{background:#0d1e33;border:1px solid var(--acc);border-radius:9px;padding:14px;margin-bottom:14px;display:none}
   .gate h3{margin:0 0 6px;font-size:14px}
+  .editbar{display:flex;gap:10px;align-items:center;justify-content:space-between;
+           flex-wrap:wrap;margin-top:16px;padding:9px 12px;border-radius:8px;
+           background:#0d1e33;border:1px solid var(--acc);font-size:12px;color:var(--muted)}
+  .editbar[hidden]{display:none}
+  .editbar b{color:var(--ink)}
+  /* The row being edited, so nobody loses track of which one the form is for. */
+  .queue tr.editing{outline:2px solid var(--acc);outline-offset:-2px}
   .raisedtag{display:inline-block;padding:2px 7px;border-radius:999px;font-size:11px;
              font-weight:600;background:#3a2d00;color:var(--warn);border:1px solid var(--warn)}
   .queue td{vertical-align:middle}
@@ -607,6 +614,11 @@ PAGE = r"""<!doctype html>
     <label for="meshLimit">Specimen limit (<span class="u"></span>) — what this mesh tolerates</label>
     <input id="meshLimit" type="number" step="1" placeholder="e.g. 65"/>
     <button class="ghost" id="saveLimit" style="margin-top:8px">Save limit</button>
+
+    <div class="editbar" id="editBar" hidden>
+      <span>Editing <b id="editWhat">–</b> — it keeps its place in the queue.</span>
+      <button class="hbtn ghost" id="editCancel">Cancel</button>
+    </div>
 
     <label for="expLabel" style="margin-top:18px">Name</label>
     <input id="expLabel" placeholder="e.g. 60 mesh — point 1"/>
@@ -810,15 +822,55 @@ $("saveLimit").onclick=async()=>{
   else alert(r.data.error||"could not set the limit");
 };
 
+// --- editing a queued experiment ---------------------------------------------
+// POST /playlist/edit existed from the start and nothing ever called it, so
+// fixing a typo meant deleting the experiment and re-typing it — which also
+// dropped it to the back of the queue.
+//
+// The form on the left becomes the editor rather than growing a second one in
+// the row. Two reasons, and the first is a trap: the poll rebuilds the queue's
+// tbody whenever the playlist signature changes, so inputs living inside a row
+// get wiped from under whoever is typing. The form is never re-rendered by the
+// poll. The second is that this form already carries the live bounds check, so
+// an edit is validated exactly like an add instead of needing its own copy.
+let EDIT_ID=null;
+function setEditing(it){
+  EDIT_ID=it?it.id:null;
+  $("editBar").hidden=!it;
+  $("addBtn").textContent=it?"Save changes":"+ Add to playlist";
+  if(it){
+    $("editWhat").textContent=it.label||"this experiment";
+    $("expLabel").value=it.label||"";
+    $("expSp").value=(it.setpoints||[]).join(", ");
+    $("expCollect").value=it.collection_s;
+    $("expDwell").value=it.dwell_s;
+    $("expTol").value=it.tolerance_pct;
+    checkSp();
+    $("expLabel").scrollIntoView({behavior:"smooth",block:"center"});
+    $("expLabel").focus();
+  }else{
+    $("addErr").textContent="";
+    $("expSp").value=""; checkSp();
+  }
+}
+$("editCancel").onclick=()=>setEditing(null);
+
 $("addBtn").onclick=async()=>{
   if(!checkSp()) return;
   const sp=$("expSp").value.split(",").map(s=>parseFloat(s.trim())).filter(x=>!isNaN(x));
   if(!sp.length){ $("addErr").textContent="Enter at least one pressure."; return; }
-  const r=await post("/playlist/add",{
+  const body={
     label:$("expLabel").value, setpoints:sp,
     collection_s:parseFloat($("expCollect").value)||null,
     dwell_s:parseFloat($("expDwell").value)||null,
-    tolerance_pct:parseFloat($("expTol").value)||null});
+    tolerance_pct:parseFloat($("expTol").value)||null};
+  if(EDIT_ID){
+    const r=await post("/playlist/edit",{id:EDIT_ID,...body});
+    if(r.ok){ setEditing(null); loadPlaylist(true); }
+    else $("addErr").textContent=r.data.error||"could not save the changes";
+    return;
+  }
+  const r=await post("/playlist/add",body);
   if(r.ok){ $("addErr").textContent=""; $("expSp").value=""; loadPlaylist(true); }
   else $("addErr").textContent=r.data.error||"could not add";
 };
@@ -972,16 +1024,30 @@ async function loadPlaylist(force){
   const c=d.counts;
   $("plCounts").textContent=`${c.done} done · ${c.pending} pending · ${c.total} total`;
   $("emptyNote").style.display=c.total?"none":"block";
+  // Drop out of edit mode by itself if the target stopped being editable — it
+  // was deleted, or it started running while the form sat open. Saving then
+  // would fail on the server anyway; better to not leave a form claiming to
+  // edit something that is gone.
+  if(EDIT_ID){
+    const t=d.items.find(i=>i.id===EDIT_ID);
+    if(!t || t.status!=="pending") setEditing(null);
+  }
   const tb=$("queueTable").querySelector("tbody"); tb.innerHTML="";
   d.items.forEach((it,n)=>{
     const r0=(it.results||[])[0]||{};
     const isNext=it.id===d.next_id;
     const tr=document.createElement("tr");
     if(isNext) tr.className="next";
+    if(it.id===EDIT_ID) tr.className=(tr.className+" editing").trim();
     const nm=esc(it.label)||"–";
     const acts=
       `<button class="xbtn" data-up="${it.id}" aria-label="Move ${nm} earlier">↑</button>`+
       `<button class="xbtn" data-down="${it.id}" aria-label="Move ${nm} later">↓</button>`+
+      // Edit only on a pending item: the server refuses to edit one that is
+      // running, and one that has already produced results would silently
+      // disagree with the numbers next to it.
+      (it.status==="pending"
+        ?`<button class="xbtn" data-edit="${it.id}" aria-label="Edit ${nm}">edit</button>`:"")+
       (it.status==="pending"
         ?`<button class="xbtn" data-skip="${it.id}" aria-label="Skip ${nm}">skip</button>`
         :`<button class="xbtn" data-requeue="${it.id}" aria-label="Re-run ${nm}">re-run</button>`)+
@@ -1027,6 +1093,10 @@ async function loadPlaylist(force){
       await post("/playlist/remove",{id:b.dataset.del});
       loadPlaylist(true);
     };
+  });
+  tb.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{
+    setEditing(d.items.find(i=>i.id===b.dataset.edit));
+    loadPlaylist(true);
   });
   tb.querySelectorAll("[data-skip]").forEach(b=>b.onclick=async()=>{await post("/playlist/skip",{id:b.dataset.skip});loadPlaylist(true);});
   tb.querySelectorAll("[data-requeue]").forEach(b=>b.onclick=async()=>{await post("/playlist/requeue",{id:b.dataset.requeue});loadPlaylist(true);});
