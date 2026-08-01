@@ -217,87 +217,120 @@ def fig_system():
 # only — no electronics, no PID (that is the system figure's job): pressure in,
 # membrane, water out, measured over a known time.
 def fig_test_concept():
-    """THE ACTUAL PLUMBING, per Adrián at the bench — not one vessel with a
-    membrane inside it (two earlier drafts got that wrong, including one drawn
-    faithfully from the paper's own wording):
+    """The real flow path, per Adrián at the bench:
 
         air hose -> water TANK, air injected above the water
                     a dip tube runs from the top down to the tank floor
                  -> line with the pressure GAUGE
-                 -> MESH HOLDER, where the specimen actually lives
+                 -> CYLINDRICAL mesh holder; the specimen is only ~1 cm square
                  -> graduated cylinder
 
-    The tank and the holder are separate pieces joined by tubing. Left to right,
-    so it reads in the order the water travels."""
-    fig, ax = plt.subplots(figsize=(9.4, 5.0))
+    The tank and the holder are separate pieces joined by tubing. The specimen
+    gets a zoom callout because at holder scale it is nearly invisible — and how
+    small it is, is part of why the measurement is delicate."""
+    from matplotlib.patches import Ellipse
+
+    FIGW, FIGH = 9.6, 5.4
+    fig, ax = plt.subplots(figsize=(FIGW, FIGH))
     ax.set_xlim(0, 100)
     ax.set_ylim(0, 100)
     ax.axis("off")
+    ASPECT = FIGW / FIGH          # to make round things round on unequal axes
 
-    LINE_Y = 88                      # the tube running across the top
+    def cylinder(x, w, y0, y1, ec=INK, lw=2.2, cap=0.19):
+        """Vertical cylinder seen from the side: body + elliptical caps."""
+        eh = w * (FIGW / (FIGH * 100)) * 100 * cap     # cap height in data units
+        ax.plot([x, x], [y0, y1], color=ec, lw=lw)
+        ax.plot([x + w, x + w], [y0, y1], color=ec, lw=lw)
+        ax.add_patch(Ellipse((x + w / 2, y1), w, eh, fill=False, ec=ec, lw=lw))
+        ax.add_patch(Ellipse((x + w / 2, y0), w, eh, fill=False, ec=ec, lw=lw,
+                             alpha=0.45))
+        return eh
+
+    LINE_Y = 90
 
     # ---------------- water tank ----------------
-    TX0, TX1, TY0, TY1 = 5, 27, 34, 78
-    ax.add_patch(plt.Rectangle((TX0, TY0), TX1 - TX0, TY1 - TY0,
-                               fill=False, ec=INK, lw=2.4))
-    ax.add_patch(plt.Rectangle((TX0 + 0.9, TY0), TX1 - TX0 - 1.8, 30,
-                               fc=DATA, alpha=0.22, lw=0))
-    ax.plot([TX0 + 0.9, TX1 - 0.9], [TY0 + 30, TY0 + 30], color=DATA, lw=1.8,
-            alpha=0.85)
-    ax.text(21, 70, "air", fontsize=13.5, color=DIM, ha="center")
-    ax.text(21, 48, "water", fontsize=15, color=DATA, ha="center")
-    ax.text(16, 28, "tank", fontsize=15, color=INK, ha="center")
-    ax.text(16, 22, "(tube reaches the floor)", fontsize=12, color=DIM,
-            ha="center")
+    TX, TW, TY0, TY1 = 6, 21, 34, 74
+    cylinder(TX, TW, TY0, TY1)
+    ax.add_patch(plt.Rectangle((TX, TY0), TW, 26, fc=DATA, alpha=0.18, lw=0))
+    ax.add_patch(Ellipse((TX + TW / 2, TY0 + 26), TW, TW * 0.055 * 100 * 0.30 / 100 * 100 * 0,
+                         fill=False, lw=0))                      # (no cap on the water line)
+    ax.plot([TX, TX + TW], [TY0 + 26, TY0 + 26], color=DATA, lw=1.8, alpha=0.9)
+    ax.text(TX + TW / 2, 63.5, "air", fontsize=13.5, color=DIM, ha="center")
+    ax.text(TX + TW / 2, 46, "water", fontsize=15, color=DATA, ha="center")
+    ax.text(TX + TW / 2, 25, "tank", fontsize=15.5, color=INK, ha="center")
 
-    # air injected in
-    ax.annotate("", xy=(23, TY1 - 1), xytext=(23, 97),
+    ax.annotate("", xy=(TX + TW - 4, TY1 + 1), xytext=(TX + TW - 4, 98),
                 arrowprops=dict(arrowstyle="-|>", color=WARN, lw=3.0,
                                 shrinkA=0, shrinkB=0, mutation_scale=19))
-    ax.text(25.5, 96, "compressed air", fontsize=15.5, color=WARN,
+    ax.text(TX + TW - 1.5, 97, "compressed air", fontsize=15.5, color=WARN,
             fontweight="bold", va="center")
 
-    # dip tube: down to the floor, so pressure pushes water UP and out
-    ax.plot([12, 12], [LINE_Y, TY0 + 3], color=DATA, lw=2.2)
-    ax.annotate("", xy=(12, TY0 + 8), xytext=(12, TY0 + 3),
+    # dip tube: reaches the floor, so the air pushes water up and out
+    DIP = TX + 5
+    ax.plot([DIP, DIP], [LINE_Y, TY0 + 4], color=DATA, lw=2.2)
+    ax.annotate("", xy=(DIP, TY0 + 11), xytext=(DIP, TY0 + 4),
                 arrowprops=dict(arrowstyle="-|>", color=DATA, lw=2.2,
-                                shrinkA=0, shrinkB=0, mutation_scale=15))
-    # ---------------- line across, with the gauge ----------------
-    ax.plot([12, 62], [LINE_Y, LINE_Y], color=INK, lw=2.4)
-    from matplotlib.patches import Ellipse          # axes are not equal-aspect
-    ax.add_patch(Ellipse((38, LINE_Y), 5.6, 5.6 * (9.4 / 5.0),
-                         fill=False, ec=INK, lw=2.2))
-    ax.plot([38, 39.4], [LINE_Y, LINE_Y + 3.6], color=INK, lw=1.8)
-    ax.text(38, LINE_Y - 9.5, "pressure gauge", fontsize=14.5, color=INK,
+                                shrinkA=0, shrinkB=0, mutation_scale=14))
+    ax.text(TX + TW / 2, 19, "tube reaches the floor", fontsize=11.5,
+            color=DIM, ha="center")
+
+    # ---------------- line + gauge ----------------
+    HX, HW = 52, 15                                   # holder geometry
+    ax.plot([DIP, HX + HW / 2], [LINE_Y, LINE_Y], color=INK, lw=2.3)
+    GR = 4.6
+    ax.add_patch(Ellipse((36, LINE_Y), GR * 2, GR * 2 * ASPECT,
+                         fc="none", ec=INK, lw=2.2))
+    ax.plot([36, 37.4], [LINE_Y, LINE_Y + 5.4], color=INK, lw=1.8)
+    ax.add_patch(Ellipse((36, LINE_Y), 1.1, 1.1 * ASPECT, fc=INK, lw=0))
+    ax.text(36, LINE_Y - 12, "pressure gauge", fontsize=14.5, color=INK,
             ha="center")
 
-    # ---------------- mesh holder ----------------
-    HX0, HX1, HY0, HY1 = 62, 86, 52, 74
-    ax.plot([62, 62], [LINE_Y, HY1], color=INK, lw=2.4)
-    ax.add_patch(plt.Rectangle((HX0, HY0), HX1 - HX0, HY1 - HY0,
-                               fill=False, ec=INK, lw=2.4))
-    ax.add_patch(plt.Rectangle((HX0, 61.5), HX1 - HX0, 3.4,
-                               fc="none", ec=WARN, lw=2.0, hatch="xx"))
-    ax.text(74, 78.5, "mesh holder", fontsize=15, color=INK, ha="center")
-    ax.annotate("the membrane", xy=(HX1, 63.2), xytext=(89, 63.2),
-                textcoords="data", fontsize=15.5, color=WARN,
-                fontweight="bold", va="center",
-                arrowprops=dict(arrowstyle="-", color=WARN, lw=1.6,
-                                shrinkA=2, shrinkB=4))
+    # ---------------- cylindrical mesh holder ----------------
+    HY0, HY1 = 52, 70
+    ax.plot([HX + HW / 2, HX + HW / 2], [LINE_Y, HY1], color=INK, lw=2.3)
+    cylinder(HX, HW, HY0, HY1)
+    MESH_Y = 60.5
+    ax.plot([HX, HX + HW], [MESH_Y, MESH_Y], color=WARN, lw=3.4)
+    ax.text(HX - 2.5, 66, "mesh\nholder", fontsize=15, color=INK,
+            ha="right", va="center", linespacing=1.3)
 
-    # ---------------- down to the cylinder ----------------
-    ax.annotate("", xy=(74, 40), xytext=(74, 51),
+    # ---------------- zoom callout: the specimen is tiny ----------------
+    ZX, ZY, ZR = 84, 62, 10.5
+    ax.plot([HX + HW, ZX - ZR * 0.86], [MESH_Y + 0.6, ZY + ZR * 0.5],
+            color=DIM, lw=1.1, ls=(0, (4, 3)))
+    ax.plot([HX + HW, ZX - ZR * 0.86], [MESH_Y - 0.6, ZY - ZR * 0.5],
+            color=DIM, lw=1.1, ls=(0, (4, 3)))
+    zoom = Ellipse((ZX, ZY), ZR * 2, ZR * 2 * ASPECT, fc="none", ec=WARN, lw=2.4)
+    ax.add_patch(zoom)
+    for i in range(-4, 5):                            # the weave, magnified
+        off = i * 2.05
+        h, = ax.plot([ZX - ZR, ZX + ZR], [ZY + off * ASPECT, ZY + off * ASPECT],
+                     color=WARN, lw=1.5, alpha=0.85)
+        v, = ax.plot([ZX + off, ZX + off], [ZY - ZR * ASPECT, ZY + ZR * ASPECT],
+                     color=WARN, lw=1.5, alpha=0.85)
+        h.set_clip_path(zoom)
+        v.set_clip_path(zoom)
+    ax.text(ZX, ZY - ZR * ASPECT - 5, "the membrane", fontsize=15.5, color=WARN,
+            fontweight="bold", ha="center")
+    ax.text(ZX, ZY - ZR * ASPECT - 11, "about 1 cm square", fontsize=13,
+            color=DIM, ha="center")
+
+    # ---------------- graduated cylinder ----------------
+    ax.annotate("", xy=(HX + HW / 2, 42), xytext=(HX + HW / 2, 51),
                 arrowprops=dict(arrowstyle="-|>", color=DATA, lw=2.8,
                                 shrinkA=0, shrinkB=0, mutation_scale=18))
-    ax.add_patch(plt.Rectangle((65, 14), 18, 25, fill=False, ec=INK, lw=2.4))
-    ax.add_patch(plt.Rectangle((65.9, 14), 16.2, 11, fc=DATA, alpha=0.35, lw=0))
-    for y in (18, 22, 26, 30, 34):
-        ax.plot([65, 68.5], [y, y], color=DIM, lw=1.3)
-    ax.text(74, 8, "how much water,\nand for how long", fontsize=15,
+    CX, CW = HX - 2, 19
+    ax.add_patch(plt.Rectangle((CX, 16), CW, 25, fill=False, ec=INK, lw=2.3))
+    ax.add_patch(plt.Rectangle((CX + 0.9, 16), CW - 1.8, 11, fc=DATA,
+                               alpha=0.35, lw=0))
+    for y in (20, 24, 28, 32, 36):
+        ax.plot([CX, CX + 3.6], [y, y], color=DIM, lw=1.3)
+    ax.text(CX + CW / 2, 11, "how much water,\nand for how long", fontsize=14.5,
             color=INK, ha="center", va="top", linespacing=1.35)
 
-    ax.text(45, 13, "repeat at a few pressures", fontsize=14.5, color=DIM,
-            ha="center", style="italic")
+    ax.text(30, 8, "repeat at a\nfew pressures", fontsize=14, color=DIM,
+            ha="center", va="top", style="italic", linespacing=1.3)
     save(fig, "talk_test_concept.png")
 
 
