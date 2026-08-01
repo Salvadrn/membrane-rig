@@ -57,7 +57,7 @@ BANNER = """
     - the servo is DECOUPLED from the valve stem, or you have already
       verified {us} us is inside the stem's travel
     - the servo is powered from the UBEC (6 V), never the Pi rail
-    - you know the air regulator setting; there is NO relief valve
+    - you know the air regulator setting (the relief is on order, NOT fitted)
 ========================================================================
 """
 

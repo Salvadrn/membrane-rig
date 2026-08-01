@@ -52,6 +52,26 @@ The #1 failure mode of DIY servo-valve actuators is the printed part twisting.
 - Ventilation slots (Pi 4 runs warm); cable entry through bottom/side notches or
   glands so splashes can't run down wires into the box; splash lid on top.
 
+### The specimen mounts at the BASE flange — and the permeate line runs down
+
+Confirmed from a photo of the bench: the membrane is clamped in the **bolted
+flange at the bottom of the vessel**, and permeate leaves **beneath it**. (An
+earlier description of a "mid-plane flange" was wrong; it survived a long time
+because no amount of reading the code can tell you where a mesh is bolted.)
+
+Two consequences for the plumbing:
+
+- **Route the permeate line downhill** to the diverter and the container. Every
+  metre of vertical rise is `ρgh` = **9.81 kPa** of back pressure, and at a
+  35 kPa setpoint even half a metre eats 14 % of the driving pressure.
+- **But be precise about what that costs.** A static column is a *constant*
+  offset — it does not depend on Q — so it shifts the intercept of the Q-vs-ΔP
+  fit and **does not bias `k`**. This is the opposite of the diverter's orifice,
+  whose drop goes as Q² and therefore *bends* the line (see § Stage 10.5 in
+  `COMMISSIONING.md`). The risk from a rising permeate line is operability, not
+  accuracy: enough rise and there is no flow left to measure at the low
+  setpoints.
+
 ### 4. (optional) DS18B20 probe clip
 Holds the waterproof probe in the permeate stream inside the waste container
 (fresh permeate = the water temperature you want). A simple printed clip on the
@@ -69,7 +89,7 @@ assembly moves as a unit.
    **Do NOT do this at "0.5–1 bar in the vessel", as this document used to say.**
    That is 50–100 kPa: above the 65 kPa specimen limit, at or above the 80 kPa
    global cutoff, on a vessel whose pressure rating is written nowhere in this
-   repo, with **no relief valve** and no software running to abort. It also
+   repo, with **no relief valve fitted** and no software running to abort. It also
    measured the wrong thing. What loads the ball is the **ΔP across it**, which
    the regulator sets — not the pressure sitting in the vessel.
 
