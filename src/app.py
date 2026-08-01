@@ -168,6 +168,23 @@ class RigController:
             limit = min(limit, pl)
         return limit
 
+    def setpoint_bounds(self) -> dict:
+        """The bounds a setpoint must satisfy, in DISPLAY units — the same rule
+        check_setpoints() enforces, published as DATA so a client can warn while
+        the operator types instead of hard-coding the policy and drifting from it.
+        `min` is EXCLUSIVE (a setpoint must be strictly above it); `max` is
+        INCLUSIVE. Both are stated so neither side has to guess at the edge.
+        `max` is live: it tracks the specimen limit, which the operator can tighten
+        mid-session. check_setpoints() remains the authority — this is the
+        preview, not a second gate."""
+        return {
+            "min": 0.0,
+            "min_inclusive": False,
+            "max": round(self.cfg.disp(self.pressure_limit_kpa()), 2),
+            "max_inclusive": True,
+            "units": self.cfg.units,
+        }
+
     def check_setpoints(self, setpoints_kpa: List[float]) -> Optional[str]:
         """None if every setpoint is safe to run, else the reason it is not."""
         if not setpoints_kpa:
@@ -367,6 +384,8 @@ class RigController:
             "next_id": nxt.id if nxt else None,
             "units": self.cfg.units,
             "limit": round(self.cfg.disp(limit_kpa), 2),
+            # the same rule check_setpoints() enforces, as data (see setpoint_bounds)
+            "setpoint_bounds": self.setpoint_bounds(),
             "membrane_limit": (round(self.cfg.disp(self.playlist.membrane_limit_kpa), 2)
                                if self.playlist.membrane_limit_kpa else None),
             "safety_cutoff": round(self.cfg.disp(self.cfg.safety.max_pressure_kpa), 2),
