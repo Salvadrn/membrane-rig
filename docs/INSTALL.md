@@ -70,7 +70,7 @@ nano config.yaml
 ## 6. Test
 
 ```bash
-./.venv/bin/python run.py web --host 0.0.0.0
+./.venv/bin/python run.py web        # binds 127.0.0.1; add --host 0.0.0.0 to serve the LAN
 ```
 
 From your laptop: **http://membrane-rig.local:8000** — you should see the live
@@ -91,7 +91,7 @@ After=network-online.target pigpiod.service
 
 [Service]
 WorkingDirectory=/home/pi/membrane-rig
-ExecStart=/home/pi/membrane-rig/.venv/bin/python run.py web --hardware --host 0.0.0.0
+ExecStart=/home/pi/membrane-rig/.venv/bin/python run.py web --hardware
 Restart=always
 User=pi
 

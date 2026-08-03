@@ -49,7 +49,8 @@ valve shut).
 - **ADS1115** ADC over I2C — the Pi has no analog input. 16-bit, plenty for a
   4–20 mA or 0.5–4.5 V transducer.
 - **Web UI** (FastAPI, single self-contained page) as the primary interface — the
-  Pi runs headless in the lab, you reach it from a laptop/phone on the LAN, and
+  Pi runs headless in the lab, you reach it from a laptop/phone (through the
+  tunnel, or on the LAN if you opt in with `--host`), and
   the **live pressure chart** lets you *watch* the loop settle into the band. A
   thin **CLI** covers SSH/tuning. No external/CDN assets, so it works on an
   offline lab network.
@@ -268,7 +269,7 @@ valve/linkage behaves the opposite way (applies to both types).
 sudo systemctl enable --now pigpiod          # pigpio daemon for PWM
 sudo raspi-config    # enable I2C
 pip install -r requirements.txt
-python run.py web --hardware --host 0.0.0.0   # serves to the whole network
+python run.py web --hardware                  # binds 127.0.0.1 (see below)
 ```
 
 ---
@@ -276,8 +277,10 @@ python run.py web --hardware --host 0.0.0.0   # serves to the whole network
 ## Connecting the Pi to your computer (real-time view)
 
 The web UI **is** the real-time view: the Pi runs the server, and any computer (or
-phone) on the same network watches the live pressure chart, the current run, and
+phone) that can reach it watches the live pressure chart, the current run, and
 the whole **data history** in a browser — no software to install on the laptop.
+The server binds to **127.0.0.1** by default, so "can reach it" means through the
+tunnel, or on the LAN only if you pass `--host 0.0.0.0` on purpose.
 
 **Cross-platform.** Because you operate it through a browser, the viewing/control
 side works identically on **macOS, Windows, Linux, iOS and Android** — it's just a
@@ -289,12 +292,30 @@ Pi-only drivers (`pigpio`, `adafruit-circuitpython-ads1x15`, `gpiozero`) are
 platform-gated so they aren't installed or imported off the Pi.
 
 ```bash
-# on the Pi:
+# on the Pi — binds 127.0.0.1 by default, so nothing on the LAN can reach it:
+python run.py web --port 8000
+# to serve the LAN as well, opt in explicitly (the server prints a warning):
 python run.py web --host 0.0.0.0 --port 8000
-# on your laptop, open:
+# then, on your laptop:
 http://raspberrypi.local:8000        # mDNS name (macOS/Windows/Linux)
 #   or  http://<pi-ip>:8000          # find it on the Pi with:  hostname -I
 ```
+
+**The UI has a login.** One account, cookie session, password hashed with PBKDF2
+and stored outside the repo (`~/.membrane-rig/auth`); set it up with
+`tools/set_password.py`. Be clear about what it does and doesn't buy you: over
+the lab LAN the app speaks plain HTTP, so the password and cookie travel in the
+clear. It stops casual access, which is the real problem in a shared lab; it does
+not stop anyone sniffing the network. That is why the intended route is the
+Cloudflare tunnel, which brings TLS. Full setup and reasoning in
+[`docs/REMOTE_ACCESS.md`](docs/REMOTE_ACCESS.md).
+
+> **`POST /stop` and `POST /recover/stop` deliberately need no account.** With no
+> mechanical relief fitted, a servo that does not close on power loss, and a
+> control valve whose handle has been removed, `/stop` is one of only two things
+> that can halt pressurisation — and the other requires standing at the panel.
+> Everything else needs a session, including `/recover/raise`, which lifts a
+> safety ceiling.
 
 Three ways to link them — pick by your lab:
 
@@ -315,7 +336,7 @@ Three ways to link them — pick by your lab:
 After=network-online.target pigpiod.service
 [Service]
 WorkingDirectory=/home/pi/membrane-rig
-ExecStart=/home/pi/membrane-rig/.venv/bin/python run.py web --hardware --host 0.0.0.0
+ExecStart=/home/pi/membrane-rig/.venv/bin/python run.py web --hardware
 Restart=always
 User=pi
 [Install]
