@@ -19,18 +19,24 @@ in REMOTE_ACCESS.md too, because that doc currently promises this file has none.
 from __future__ import annotations
 
 import argparse
+import hashlib
+import hmac
 import json
 import re
+import secrets
+import sys
+import time
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
 from typing import Dict, List, Optional
 import uvicorn
 
 from ..app import RigController
 from ..config import Config
+from .auth import AUTH_PATH, hash_password, read_auth
 
 # runs are named run_YYYYMMDD_HHMMSS — validate against this to block traversal
 RUN_RE = re.compile(r"^run_\d{8}_\d{6}$")
@@ -133,14 +139,173 @@ class RaiseRequest(BaseModel):
     ceiling: float
 
 
+class LoginRequest(BaseModel):
+    password: str
+
+
+# --- authentication ----------------------------------------------------------
+# One account, a cookie session, and a short list of endpoints that stay open.
+#
+# WHAT STAYS OPEN, AND WHY IT IS EXACTLY THIS LIST (agreed by Control, Hardware
+# and this session; see docs/REMOTE_ACCESS.md):
+#   POST /stop and POST /recover/stop — stopping is monotonic towards safe. It
+#   shuts the feed and routes permeate to waste, and Control verified there is
+#   no phase from which stopping leaves the rig worse. It matters more than
+#   convenience: the relief valve is not fitted, the servo does not seal when it
+#   loses power, and the ball valve's handle was removed so the servo can turn
+#   the stem — so /stop is one of only TWO things that can stop pressurisation,
+#   and the other one requires standing in the lab. A login prompt between a
+#   person and the stop button is the trade not to make.
+# Everything else needs a session. In particular /recover/retry re-pressurises
+# the cell, and /recover/raise RAISES A SAFETY CEILING — the rule is that this
+# UI only ever tightens, and raising is the one thing that loosens.
+# /auth is open on purpose: it is how the page tells "signed out" apart from
+# "rig unreachable", and it reveals nothing about the rig — only whether an
+# account exists and whether this browser holds a session.
+OPEN_PATHS = {"/login", "/logout", "/auth", "/stop", "/recover/stop"}
+
+SESSION_COOKIE = "rig_session"
+SESSION_MAX_AGE = 12 * 3600          # a lab day; renewed on use
+BEACON_HEADER = "x-rig-token"
+
+
+class Sessions:
+    """In-memory sessions. Deliberately not signed cookies: a dict of random
+    tokens has no crypto to get wrong, and losing sessions on restart is a
+    cheap price. Single uvicorn process, so there is nothing to share.
+
+    The rate limit is GLOBAL, not per-IP, and that is not laziness. Cloudflared
+    runs ON the Pi and connects to localhost, so every remote user arrives from
+    127.0.0.1 — a per-IP counter would lump them into one bucket anyway while
+    looking like it distinguished them. There is one account, so one bucket is
+    the honest model. Do not "improve" this into a per-IP limiter.
+    """
+
+    def __init__(self) -> None:
+        self._tokens: Dict[str, float] = {}
+        self._fails = 0
+        self._blocked_until = 0.0
+
+    def issue(self) -> str:
+        token = secrets.token_urlsafe(32)
+        self._tokens[token] = time.time() + SESSION_MAX_AGE
+        self._fails = 0
+        return token
+
+    def valid(self, token: Optional[str]) -> bool:
+        if not token:
+            return False
+        expiry = self._tokens.get(token)
+        if expiry is None:
+            return False
+        if expiry < time.time():
+            self._tokens.pop(token, None)
+            return False
+        self._tokens[token] = time.time() + SESSION_MAX_AGE   # renew on use
+        return True
+
+    def drop(self, token: Optional[str]) -> None:
+        if token:
+            self._tokens.pop(token, None)
+
+    def throttle_left(self) -> float:
+        return max(0.0, self._blocked_until - time.time())
+
+    def record_failure(self) -> None:
+        self._fails += 1
+        # Escalating, capped at a minute: enough to make guessing hopeless,
+        # short enough that a fat-fingered operator is not locked out of a rig
+        # that may be holding pressure.
+        if self._fails >= 3:
+            self._blocked_until = time.time() + min(60.0, 2.0 ** (self._fails - 2))
+
+
 def create_app(cfg: Config) -> FastAPI:
     app = FastAPI(title="Membrane Rig")
     ctl = RigController(cfg)
     runs_dir = Path(cfg.logging.dir)
 
+    sessions = Sessions()
+
     @app.on_event("shutdown")
     def _shutdown() -> None:
         ctl.shutdown()
+
+    def _authed(request: Request) -> bool:
+        creds = read_auth()
+        if not creds.get("PBKDF2_HASH"):
+            # No account provisioned yet. Refusing everything would brick a
+            # fresh Pi; the page says loudly that the rig is unprotected and
+            # names the tool that fixes it.
+            return True
+        if sessions.valid(request.cookies.get(SESSION_COOKIE)):
+            return True
+        # The beacon polls /status from the Pi itself and has no session. It
+        # carries a token from the same 600 file instead. NOT an exemption by
+        # source address: cloudflared connects from localhost, so trusting
+        # 127.0.0.1 would exempt every remote user through the tunnel — the
+        # exact population this login exists for.
+        token = creds.get("BEACON_TOKEN")
+        supplied = request.headers.get(BEACON_HEADER)
+        if (request.url.path == "/status" and token and supplied
+                and hmac.compare_digest(token, supplied)):
+            return True
+        return False
+
+    @app.middleware("http")
+    async def require_session(request: Request, call_next):
+        path = request.url.path
+        if path in OPEN_PATHS or _authed(request):
+            return await call_next(request)
+        if path == "/":
+            return HTMLResponse(LOGIN_PAGE)
+        return JSONResponse({"ok": False, "error": "not signed in",
+                             "auth_required": True}, status_code=401)
+
+    @app.post("/login")
+    def login(req: LoginRequest, request: Request) -> JSONResponse:
+        creds = read_auth()
+        if not creds.get("PBKDF2_HASH"):
+            return JSONResponse({"ok": False, "error":
+                                 "No account is set on this rig yet. On the Pi, run "
+                                 "tools/set_password.py."}, status_code=400)
+        wait = sessions.throttle_left()
+        if wait > 0:
+            return JSONResponse({"ok": False, "error":
+                                 f"Too many failed attempts. Wait {wait:.0f} s and try again."},
+                                status_code=429)
+        salt = bytes.fromhex(creds.get("PBKDF2_SALT", ""))
+        iters = int(creds.get("PBKDF2_ITER", 600000))
+        candidate = hash_password(req.password, salt, iters)
+        if not hmac.compare_digest(candidate, creds.get("PBKDF2_HASH", "")):
+            sessions.record_failure()
+            return JSONResponse({"ok": False, "error": "That password is not right."},
+                                status_code=401)
+        token = sessions.issue()
+        res = JSONResponse({"ok": True})
+        # `Secure` only when the connection actually is HTTPS. Setting it
+        # unconditionally would break sign-in over the lab LAN, where this is
+        # served as plain HTTP — the browser would simply never send the cookie
+        # back, and the failure looks like "the password does not work".
+        res.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="lax",
+                       secure=request.url.scheme == "https", max_age=SESSION_MAX_AGE,
+                       path="/")
+        return res
+
+    @app.post("/logout")
+    def logout(request: Request) -> JSONResponse:
+        sessions.drop(request.cookies.get(SESSION_COOKIE))
+        res = JSONResponse({"ok": True})
+        res.delete_cookie(SESSION_COOKIE, path="/")
+        return res
+
+    @app.get("/auth", response_class=JSONResponse)
+    def auth_state(request: Request) -> dict:
+        """Lets the page tell 'signed out' apart from 'rig unreachable' — two
+        states that must not look alike when the page is the only instrument."""
+        creds = read_auth()
+        return {"configured": bool(creds.get("PBKDF2_HASH")),
+                "signed_in": sessions.valid(request.cookies.get(SESSION_COOKIE))}
 
     @app.get("/", response_class=HTMLResponse)
     def index() -> str:
@@ -360,7 +525,12 @@ def create_app(cfg: Config) -> FastAPI:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Membrane rig web UI")
     ap.add_argument("--config", default="config.yaml")
-    ap.add_argument("--host", default="0.0.0.0")
+    # Localhost by default. This used to bind 0.0.0.0, which put a rig that had
+    # no login at all on the whole campus network. There is a login now, but it
+    # travels in the clear over plain HTTP, so the LAN is still the weak path:
+    # reach the rig through the Cloudflare tunnel, which brings TLS. Binding
+    # wide is now a deliberate --host 0.0.0.0, not the default nobody chose.
+    ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8000)
     ap.add_argument("--sim", action="store_true")
     ap.add_argument("--hardware", action="store_true")
@@ -370,12 +540,81 @@ def main(argv=None) -> int:
         cfg.mode = "sim"
     if args.hardware:
         cfg.mode = "hardware"
+    if not read_auth().get("PBKDF2_HASH"):
+        print(f"WARNING: no account is set ({AUTH_PATH} has no password), so this "
+              f"rig is UNPROTECTED.\n         Run: python tools/set_password.py",
+              file=sys.stderr)
+    if args.host not in ("127.0.0.1", "localhost", "::1"):
+        print(f"WARNING: serving on {args.host} exposes the rig to the network. "
+              f"The login is sent in the clear\n         over plain HTTP — prefer the "
+              f"tunnel (docs/REMOTE_ACCESS.md).", file=sys.stderr)
     app = create_app(cfg)
     uvicorn.run(app, host=args.host, port=args.port, log_level="warning")
     return 0
 
 
 # --- self-contained page (no CDNs; hand-rolled canvas chart) -----------------
+LOGIN_PAGE = r"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Membrane Rig — sign in</title>
+<style>
+  :root{--bg:#0e1116;--panel:#161b22;--ink:#e6edf3;--muted:#8b949e;--acc:#2f81f7;
+        --bad:#f85149;--warn:#d29922;--line:#30363d}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+       padding:20px;font:14px/1.45 system-ui,Segoe UI,Roboto,sans-serif;
+       background:var(--bg);color:var(--ink)}
+  .box{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);
+       border-radius:10px;padding:22px}
+  h1{font-size:17px;margin:0 0 4px}
+  .sub{font-size:13px;color:var(--muted);margin-bottom:18px}
+  label{display:block;font-size:12px;color:var(--muted);margin:14px 0 4px}
+  input{width:100%;background:#0d1117;border:1px solid var(--line);color:var(--ink);
+        border-radius:7px;padding:10px;min-height:44px;font:inherit}
+  :focus-visible{outline:3px solid var(--acc);outline-offset:2px;border-radius:7px}
+  button{width:100%;margin-top:16px;padding:12px;min-height:44px;border:0;border-radius:8px;
+         font:inherit;font-weight:600;cursor:pointer;color:#fff;background:var(--acc)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .err{color:var(--bad);font-size:13px;margin-top:12px;min-height:18px}
+  .note{font-size:12px;color:var(--muted);margin-top:16px;padding-top:14px;
+        border-top:1px solid var(--line)}
+  .note b{color:var(--ink)}
+</style></head>
+<body>
+<form class="box" id="f">
+  <h1>Membrane Permeability Rig</h1>
+  <div class="sub">Sign in to run the rig.</div>
+  <label for="pw">Password</label>
+  <input id="pw" type="password" autocomplete="current-password" autofocus/>
+  <button id="go" type="submit">Sign in</button>
+  <div class="err" id="err" role="alert"></div>
+  <div class="note">Stopping a run never needs a sign-in — if the rig is running
+    and something looks wrong, <b>the stop control works without one</b>. Forgotten the
+    password? On the Pi, run <b>tools/set_password.py</b> to set a new one.</div>
+</form>
+<script>
+const $=id=>document.getElementById(id);
+$("f").onsubmit=async(e)=>{
+  e.preventDefault();
+  const btn=$("go"), pw=$("pw").value;
+  if(!pw){ $("err").textContent="Enter the password."; return; }
+  btn.disabled=true; btn.textContent="Signing in…"; $("err").textContent="";
+  try{
+    const r=await fetch("/login",{method:"POST",headers:{"Content-Type":"application/json"},
+                                 body:JSON.stringify({password:pw})});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok && j.ok){ location.reload(); return; }
+    $("err").textContent=j.error||"Could not sign in.";
+  }catch(e){
+    $("err").textContent="Could not reach the rig. Check that it is powered and on the network.";
+  }
+  btn.disabled=false; btn.textContent="Sign in";
+};
+</script>
+</body></html>"""
+
+
 PAGE = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -1372,6 +1611,7 @@ async function poll(){
   let s;
   try{
     const r=await fetch("/status");
+    if(r.status===401){ const e=new Error("signed out"); e.authRequired=true; throw e; }
     if(!r.ok) throw new Error("HTTP "+r.status);
     s=await r.json();
     missed=0;
@@ -1388,6 +1628,17 @@ async function poll(){
                     "Stop still reaches the rig; use it.",false);
     else setStale(false);
   }catch(e){
+    // Three ways the page stops being able to speak for the rig, and they are
+    // NOT the same: the link is down, the loop is wedged, or the session ran
+    // out. Only the first means a press cannot arrive. Signed out still has a
+    // working connection, and stopping needs no session by design — so the one
+    // control that must survive everything does.
+    if(e && e.authRequired){
+      setStale(true,"Your session has ended. Sign in again to control the rig — "+
+                    "stopping still works without signing in.",false);
+      $("barPhase").textContent="signed out";
+      return;
+    }
     if(++missed>=2) setStale(true,"No answer from the rig — the readings below are the "+
                                   "last ones received and may be out of date.",true);
     return;

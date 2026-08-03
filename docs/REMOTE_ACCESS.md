@@ -17,11 +17,65 @@ account.)
 
 ## ⚠️ Security — this is non-negotiable
 
-The UI **controls a pressurised rig** (opens the air valve, runs sequences). The
-app has **no built-in login**. So you must put **Cloudflare Access** in front of
-the tunnel — a free auth gate that only lets *your* email(s) through. **Never
-expose the bare tunnel.** Without Access, anyone who learns the URL can drive
-your hardware.
+The UI **controls a pressurised rig** (opens the air valve, runs sequences).
+
+**The app now has its own login**, and you still want **Cloudflare Access** in
+front of the tunnel. They cover different things and neither replaces the other:
+Access keeps strangers off the URL entirely, and the app's login is what protects
+the rig on the **lab LAN**, which Access never sees. **Never expose the bare
+tunnel.**
+
+### Setting the account up (on the Pi, once)
+
+```bash
+./.venv/bin/python tools/set_password.py
+```
+
+Writes a PBKDF2 hash — never the password — to `~/.membrane-rig/auth` at mode
+600, outside the repo. The same run generates the **beacon token**, so
+provisioning is one step. Rotate the password by running it again; rotate only
+the beacon's token with `--rotate-token` (the beacon must then be restarted).
+`--show-token` prints the current token.
+
+If no account is set the rig serves normally and says so loudly at startup — a
+fresh Pi should tell you what to do, not lock you out of hardware.
+
+### What the login does and does not protect
+
+- **Over the tunnel: good.** Cloudflare terminates TLS, so the password and the
+  session cookie are encrypted, and the cookie is issued with `Secure`.
+- **On the lab LAN: partial, and know why.** The app speaks plain HTTP there, so
+  the password and cookie cross the network **in the clear** and anyone
+  capturing traffic can take them. It stops casual access — which is the problem
+  it was built for — and it does not stop someone sniffing the wire. That is why
+  the server now binds to **`127.0.0.1` by default** and the tunnel is the
+  intended path. `--host 0.0.0.0` still works and now prints a warning.
+- The cookie carries `Secure` only over HTTPS. It cannot be set unconditionally:
+  on a plain-HTTP LAN the browser would refuse to send it back and sign-in would
+  simply appear broken.
+
+### Stopping never needs an account
+
+`POST /stop` and `POST /recover/stop` are the only control paths that work
+without signing in, and that is deliberate — agreed by the control, hardware and
+interface sessions. Stopping only ever moves the rig towards safe: it shuts the
+feed and routes permeate to waste, and there is no phase from which stopping
+leaves it worse. It matters because of what this rig physically is right now:
+the relief valve is not fitted, the servo holds position rather than sealing when
+it loses power, and the ball valve's handle was removed so the servo can turn the
+stem. **`/stop` is one of only two things that can stop pressurisation, and the
+other one is a person standing at the panel.** A login prompt between someone and
+that button is the trade not to make.
+
+Everything else needs a session — including `POST /recover/retry`, which
+re-pressurises the cell, and `POST /recover/raise`, which **raises a safety
+ceiling**. This UI only ever tightens; raising is the one action that loosens, so
+it is never reachable without an account.
+
+If your session ends while the page is open, the readings dim and the page says
+so — but **Stop stays live**. "I cannot trust the screen", "I cannot reach the
+rig" and "I am not signed in" are three different states here, and only the
+middle one takes the stop button away.
 
 ## Setup (on the Pi, once it's running)
 
