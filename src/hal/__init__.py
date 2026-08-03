@@ -32,8 +32,11 @@ def build_hal(cfg):
         from .ds18b20 import Ds18b20Sensor
         temp = Ds18b20Sensor(cfg)
     else:
-        from .mock import MockTemperature
-        temp = MockTemperature(cfg)  # reports the configured manual temperature
+        # NOT MockTemperature: its ±0.02 °C of noise is right for sim and wrong
+        # here, where it would reach the CSV under the same field name as a probe
+        # reading and feed µ — and therefore k — while looking measured.
+        from .manual_temp import ManualTemperature
+        temp = ManualTemperature(cfg)
 
     return Ads1115Sensor(cfg), valve, GpioDiverter(cfg), temp, None
 

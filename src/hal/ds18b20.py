@@ -45,6 +45,8 @@ _POR_RAW = 85000  # milli-°C, exact
 
 
 class Ds18b20Sensor(TemperatureSensor):
+    source = "probe"
+
     def __init__(self, cfg) -> None:
         self._device = None
         self._w1_id = cfg.temperature.w1_id

@@ -60,7 +60,14 @@ class MockDiverter(DiverterValve):
 
 
 class MockTemperature(TemperatureSensor):
-    """Simulated bath: reports the configured manual temperature + tiny drift."""
+    """Simulated bath: the configured temperature plus a little drift.
+
+    The noise is legitimate HERE and only here — sim is modelling a real bath,
+    which really does wander. In hardware the same wobble would be fabricated
+    precision, so `mode: hardware` uses `ManualTemperature` instead, which
+    returns the configured value verbatim."""
+
+    source = "sim"
 
     def __init__(self, cfg) -> None:
         self._t = cfg.temperature.manual_c

@@ -76,6 +76,12 @@ class TemperatureSensor(ABC):
     DS18B20 takes ~750 ms), so the controller polls it in its own slow thread,
     never in the fast PID loop."""
 
+    #: Where the number came from: "probe" (measured), "manual" (configured by
+    #: hand) or "sim" (generated). µ is derived from this reading and k from µ,
+    #: so a configured value must never be presented as a measured one — and the
+    #: value itself cannot carry that distinction. Consumers should surface it.
+    source: str = "unknown"
+
     @abstractmethod
     def read_c(self) -> float:
         """Water temperature in °C, or NaN if the read failed."""
