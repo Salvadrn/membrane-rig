@@ -133,6 +133,12 @@ beaker rim works.
 One board (printed or plywood) carrying enclosure + strain reliefs, so the
 assembly moves as a unit.
 
+> **Specimen area is 0.64 cm² and that is confirmed** (Adrián, 2026-08-03:
+> 64 mm²). An earlier "~1 cm²" in conversation was loose talk, not a correction.
+> Worth stating because `A` is a *direct divisor* in `k = b·µ·L/A`: had the real
+> area been 1 cm², every published `k` would have been **36 % low**. Do not
+> re-open it on the strength of a rounded figure in prose.
+
 ## Measure before designing/buying (caliper on the bench)
 1. **Valve stem breakaway torque** — the make-or-break number. Handle off, turn
    the stem with a torque wrench (or a luggage scale on a known lever arm:
@@ -329,14 +335,32 @@ Before soldering:
 2. **Transducer** onto the manometer port (adapter). Two-point calibration —
    atmosphere plus one pressurised point.
 
-   **Calibrate against the Keller LEX1, not the dial gauge.** The bench already
-   has one (`−1…2 bar rel`, part `303030.0026`): a calibration-grade digital
-   instrument that covers the 35–40 kPa working range with 5× headroom and reads
-   without parallax. It is a better standard than anything in the BOM. Its output
-   is RS-485 (pins 1 GND / 3 +Supply / 4 A / 5 B), not 4–20 mA, so it cannot
-   serve as the loop sensor — but for calibration you read its display, which is
-   all this step needs. Fall back to the dial gauge only if the LEX1 is
-   unavailable.
+   **The reference is a water column, not the Keller LEX1.** The gauge already in
+   the line *is* a Keller LEX1 (`−1…2 bar rel`, part `303030.0026`) — the two are
+   the same instrument, not two devices. Adrián has ruled it out of the plan
+   (2026-08-03): reading it electrically needs a mating cable for the connector on
+   its back that the lab does not have, so **the transducer is the only pressure
+   channel.** Do not design around a second one.
+
+   That leaves the second calibration point without an instrument, so use the one
+   standard that needs no instrument at all: **a column of water.**
+   `P = ρgh` = **9.81 kPa per metre**, exact, traceable to a tape measure, and
+   free. Two metres of tubing held vertically is 19.6 kPa — comfortably inside the
+   working range.
+
+   | Height | Pressure |
+   |---|---|
+   | 0.5 m | 4.91 kPa |
+   | 1.0 m | 9.81 kPa |
+   | 2.0 m | 19.62 kPa |
+
+   Zero is atmosphere and needs nothing. Between the two you have a calibrated
+   span.
+
+   > **If the LEX1's display is legible where it sits, reading it by eye costs
+   > nothing and needs no cable.** That was ruled out along with the electrical
+   > path, but the two are separable: the cable was only ever needed for logging.
+   > Worth one look before falling back on tubing and a tape measure.
 
    Before this step, verify the electrical chain on the bench with nothing
    plumbed: powered from the Pi's 5 V, at atmosphere the transducer gives 0.500 V,
@@ -355,8 +379,8 @@ Before soldering:
    adapter stops being a blocker; if they do not, you now know the real thread
    instead of guessing, which is item 5 of "Measure before designing".
 
-   Note the trade if you do borrow the LEX1's port: the transducer takes the spot
-   the calibration reference occupies, so calibrate first, or tee it.
+   Since the LEX1 is out of the measurement plan, borrowing its port costs
+   nothing — there is no second channel to displace.
 
    ### Water temperature is not room temperature
 
