@@ -1,9 +1,11 @@
 # Assembly guide
 
-Air-over-water rig: compressed air (lab panel, yellow line) pressurises the
-stainless vessel through a **90° quarter-turn ball valve** (lever handle removed;
-a servo turns the stem). Water permeates the membrane; the 3-way solenoid routes
-permeate to waste or the graduated cylinder. See the BOM (`BOM.xlsx`) for parts.
+Air-over-water rig, built as a **chain of separate pieces** — not one vessel:
+compressed air (lab panel, yellow line) enters a stainless **water tank** through
+a **90° quarter-turn ball valve** (lever handle removed; a servo turns the stem);
+a dip tube carries the pressurised water out to a **separate membrane holder**;
+the 3-way solenoid then routes permeate to waste or to the graduated cylinder.
+Full chain in § "Where the transducer goes". See the BOM (`BOM.xlsx`) for parts.
 
 > **Verdict on servo-driving the ball valve** (researched): precision is *not*
 > the limit — the DS3218 holds ~0.5–1° (≈0.2° with a 2:1 reduction), far finer
@@ -99,12 +101,15 @@ noise against 35 kPa; a third of a metre of narrow tube is not.
 This retroactively settles the BOM's "or mount at the existing manometer port"
 option: it is not merely the cheaper choice, it is the correct one.
 
-### The specimen mounts at the BASE flange — and the permeate line runs down
+### The specimen sits in its own holder, clamped at the base — permeate runs down
 
-Confirmed from a photo of the bench: the membrane is clamped in the **bolted
-flange at the bottom of the vessel**, and permeate leaves **beneath it**. (An
-earlier description of a "mid-plane flange" was wrong; it survived a long time
-because no amount of reading the code can tell you where a mesh is bolted.)
+The membrane is **not** inside the water tank. It lives in the **separate
+cylindrical holder** downstream (~1 cm² specimen), clamped at that holder's
+**bolted base flange**, with permeate leaving **beneath it**. (Two earlier
+descriptions were wrong: a "mid-plane flange", and a single vessel with the mesh
+bolted into it. Both survived a long time because no amount of reading the code
+can tell you where a mesh is clamped — it took a photo and then a direct
+question.)
 
 Two consequences for the plumbing:
 
