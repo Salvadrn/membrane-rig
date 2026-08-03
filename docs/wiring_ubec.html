@@ -594,7 +594,7 @@
       <tr>
         <td>Se va la corriente a media corrida</td>
         <td><strong>NO cierra.</strong> Se queda donde iba.</td>
-        <td>Un servo no tiene resorte de retorno: sostiene por fricción. El failsafe real es la válvula de alivio mecánica (~90 kPa) y cerrar el suministro a mano. Está así a propósito en <code>servo_valve.py</code>.</td>
+        <td>Un servo no tiene resorte de retorno: sostiene por fricción. Está así a propósito en <code>servo_valve.py</code>. <strong>Y hoy nada cubre este caso automáticamente:</strong> la válvula de alivio mecánica (~90 kPa) está <strong>pedida pero NO montada</strong>, así que el único remedio es humano — <strong>cerrar la válvula del PANEL a mano</strong> (la de bola tiene el maneral quitado).</td>
       </tr>
       <tr>
         <td>Se zafa el hilo naranja (señal)</td>
