@@ -55,11 +55,12 @@ The #1 failure mode of DIY servo-valve actuators is the printed part twisting.
 ### Where the transducer goes is a measurement decision, not a convenience
 
 The rig is not one vessel with a membrane in it. It is a **chain of separate
-pieces**: air line → **water tank** → **dip tube** reaching the tank's bottom →
-line carrying the **existing manometer** → **membrane holder** → cylinder.
-(Topology from Adrián's description of the bench; the drawing in
-`wiring_fluidos.html` still shows the old single-vessel version and is flagged
-there as under revision.)
+pieces**, confirmed first-hand by Adrián:
+
+> air line → **water tank** (dip tube reaching its floor) → line carrying the
+> **existing manometer**, with a **tee whose other leg takes the transducer** →
+> **membrane holder** (cylindrical, ~1 cm² specimen) → **3-way diverter** →
+> waste while pressure stabilises, graduated cylinder while collecting.
 
 That chain has a consequence worth getting right the first time. Everything
 between the tank and the membrane — dip tube, fittings, tubing — carries the
@@ -76,12 +77,24 @@ so it is **not** a constant offset. It bends the Darcy line exactly the way the
 diverter's orifice does (§ Stage 10.5 in `COMMISSIONING.md`), and `R² ≥ 0.98`
 will not catch it.
 
-**So: tee the transducer as close to the membrane holder's inlet as possible —
-the existing manometer position is right.** Measured there, every loss above is
-*upstream* of the reading and simply means the tank sits a little higher; the
-transducer still reports the pressure the membrane actually sees. Measured on
-the **tank** instead, all of it lands between the sensor and the specimen and
-biases `k` with a curvature nobody will see in the fit.
+**The rig already has this right.** The tee sits in the line between tank and
+holder, so the transducer measures downstream of the dip tube: every loss above
+is *upstream* of the reading and simply means the tank runs a little higher,
+while the sensor still reports the pressure the membrane actually sees. Mounted
+on the **tank** instead, all of it would land between sensor and specimen and
+bias `k` with a curvature nobody sees in the fit.
+
+What *does* still count is whatever line remains **between the tee and the
+holder inlet** — that stretch is inside the measurement. It is small if kept
+short:
+
+| Run from tee to holder | 15 mL/s | 30 mL/s |
+|---|---|---|
+| 5 cm of 1/4" tube | 0.23 kPa | 0.76 kPa |
+| 30 cm of 1/4" tube | 1.36 kPa | 4.56 kPa |
+
+So: **tee as close to the holder as the fittings allow.** A few centimetres is
+noise against 35 kPa; a third of a metre of narrow tube is not.
 
 This retroactively settles the BOM's "or mount at the existing manometer port"
 option: it is not merely the cheaper choice, it is the correct one.
