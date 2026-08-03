@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Entry point.
 
-    python run.py web      [--config config.yaml] [--host 0.0.0.0] [--port 8000] [--sim|--hardware]
+    python run.py web      [--config config.yaml] [--host 127.0.0.1] [--port 8000] [--sim|--hardware]
     python run.py cli      [--config config.yaml] [--sim|--hardware]
     python run.py analyze  <data.csv> [--area-cm2 0.64] [--thickness-mm 0.117] [--viscosity 1e-3] [--out plot.png]
 
