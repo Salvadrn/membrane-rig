@@ -1261,6 +1261,11 @@ class RigController:
                         setpoint_kpa=seq.setpoint_kpa, pressure_kpa=pressure,
                         valve_command=command, diverter_measured=seq.diverter_measured,
                         in_band=seq.in_band, water_temp_c=self._water_temp_c,
+                        # per ROW, not once per run: a probe that stops answering
+                        # keeps its last value, so the pair (value, origin) can
+                        # change meaning mid-run and one label would misdescribe
+                        # every row on one side of that moment
+                        water_temp_source=self._temp_source,
                     )
                     self.history.append((round(elapsed, 2),
                                          round(self.cfg.disp(pressure), 3),
