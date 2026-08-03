@@ -144,28 +144,44 @@ class LoginRequest(BaseModel):
 
 
 # --- authentication ----------------------------------------------------------
-# One account, a cookie session, and a short list of endpoints that stay open.
+# One account, a cookie session, and EVERY rig path behind it — stopping too.
 #
-# WHAT STAYS OPEN, AND WHY IT IS EXACTLY THIS LIST (agreed by Control, Hardware
-# and this session; see docs/REMOTE_ACCESS.md):
-#   POST /stop and POST /recover/stop — stopping is monotonic towards safe. It
-#   shuts the feed and routes permeate to waste, and Control verified there is
-#   no phase from which stopping leaves the rig worse. It matters more than
-#   convenience: the relief valve is not fitted, the servo does not seal when it
-#   loses power, and the ball valve's handle was removed so the servo can turn
-#   the stem — so /stop is one of only TWO things that can stop pressurisation,
-#   and the other one requires standing in the lab. A login prompt between a
-#   person and the stop button is the trade not to make.
-# Everything else needs a session. In particular /recover/retry re-pressurises
-# the cell, and /recover/raise RAISES A SAFETY CEILING — the rule is that this
-# UI only ever tightens, and raising is the one thing that loosens.
+# THE POLICY, AND ITS HISTORY, BECAUSE THE HISTORY IS WHY IT LOOKS ODD:
+# The control, hardware and interface sessions jointly recommended exempting
+# POST /stop. Stopping only ever moves the rig towards safe; Control verified by
+# attack that there is no phase from which stopping leaves it worse; and
+# Hardware pointed out that with no relief valve fitted, a servo that does not
+# seal on power loss, and the ball valve's handle removed, /stop is one of only
+# two things that can stop pressurisation — the other being a person at the
+# panel. The recommendation was unanimous and the exemption was verified
+# harmless.
+#
+# Adrián was given that recommendation, and then Hardware's physical argument on
+# top of it, and chose the strict policy anyway on 2026-07-31: everything needs
+# an account, stopping included. That is deliberate, not a default nobody picked.
+# DO NOT "restore" the exemption because this comment makes it sound reasonable —
+# reopening it is a conversation with Adrián, not a commit.
+#
+# What the decision costs, so it is not rediscovered as a surprise: an operator
+# whose session has lapsed cannot stop from this page until they sign in. The
+# mitigations are load-bearing, not polish — the in-page sign-in overlay that
+# keeps you where you were, long sessions renewed on use, a rate limit that
+# delays but never locks out, and a banner naming the physical fallback (close
+# the panel valve by hand).
+#
 # /auth is open on purpose: it is how the page tells "signed out" apart from
 # "rig unreachable", and it reveals nothing about the rig — only whether an
 # account exists and whether this browser holds a session.
-OPEN_PATHS = {"/login", "/logout", "/auth", "/stop", "/recover/stop"}
+OPEN_PATHS = {"/login", "/logout", "/auth"}
 
 SESSION_COOKIE = "rig_session"
-SESSION_MAX_AGE = 12 * 3600          # a lab day; renewed on use
+# A week, renewed on every authenticated request. Long on purpose: with stopping
+# behind the login, a session that lapses mid-run is not an inconvenience, it is
+# the operator locked out of the stop button. Short expiry would buy nothing
+# here — the asset behind this login is a valve, not a bank account, and the
+# realistic threat is someone wandering onto the lab network, not a stolen
+# laptop being replayed days later.
+SESSION_MAX_AGE = 7 * 24 * 3600
 BEACON_HEADER = "x-rig-token"
 
 
@@ -213,9 +229,13 @@ class Sessions:
 
     def record_failure(self) -> None:
         self._fails += 1
-        # Escalating, capped at a minute: enough to make guessing hopeless,
-        # short enough that a fat-fingered operator is not locked out of a rig
-        # that may be holding pressure.
+        # Escalating delay, HARD-CAPPED at a minute, and never a durable
+        # lockout. With stopping behind the login, a long block is not a
+        # security feature — it is the operator held away from the stop button
+        # while the rig holds pressure, which is a safety failure mode wearing a
+        # security costume. Guessing a password at one attempt per minute is
+        # hopeless anyway; that is where the protection comes from, not from
+        # locking anyone out for hours.
         if self._fails >= 3:
             self._blocked_until = time.time() + min(60.0, 2.0 ** (self._fails - 2))
 
@@ -589,9 +609,10 @@ LOGIN_PAGE = r"""<!doctype html>
   <input id="pw" type="password" autocomplete="current-password" autofocus/>
   <button id="go" type="submit">Sign in</button>
   <div class="err" id="err" role="alert"></div>
-  <div class="note">Stopping a run never needs a sign-in — if the rig is running
-    and something looks wrong, <b>the stop control works without one</b>. Forgotten the
-    password? On the Pi, run <b>tools/set_password.py</b> to set a new one.</div>
+  <div class="note"><b>Stopping the rig needs an account too.</b> If the rig is running,
+    something looks wrong, and you cannot sign in — go to the lab and close the panel
+    valve by hand. That is the only way to stop pressurisation without this page.
+    Forgotten the password? On the Pi, run <b>tools/set_password.py</b> to set a new one.</div>
 </form>
 <script>
 const $=id=>document.getElementById(id);
@@ -771,6 +792,16 @@ PAGE = r"""<!doctype html>
   body.stale .stalebar{display:block}
 
   /* --- held-at-ceiling alarm ------------------------------------------------ */
+  .authwrap{position:fixed;inset:0;z-index:200;display:flex;align-items:center;
+            justify-content:center;padding:18px;background:rgba(8,10,14,.82)}
+  .authwrap[hidden]{display:none}
+  .authbox{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--acc);
+           border-radius:10px;padding:20px}
+  .authbox h3{margin:0 0 4px;font-size:16px}
+  .authsub{font-size:13px;color:var(--muted);margin-bottom:6px}
+  .authnote{font-size:12px;color:var(--muted);margin-top:14px;padding-top:12px;
+            border-top:1px solid var(--line)}
+  .authnote b{color:var(--warn)}
   .nextstep{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin:14px 18px 0;
             padding:11px 14px;border-radius:9px;background:#12191f;
             border:1px solid var(--line);border-left:3px solid var(--acc);font-size:14px}
@@ -807,6 +838,25 @@ PAGE = r"""<!doctype html>
     It does not vent the cell — and the panel valve still has to be closed by hand.</div>
   <div class="stalebar" id="staleBar" role="alert">⚠ No answer from the rig — the readings below are the
     last ones received and may be out of date.</div>
+</div>
+
+<!-- Signing back in happens HERE, over the page, never by navigating away.
+     Stopping needs a session, so the distance between a lapsed session and the
+     stop button is a safety number, not a convenience one: password, Enter, and
+     the safety bar is already on screen behind this. Navigating to a login page
+     and back would put two page loads in that path. -->
+<div class="authwrap" id="authWrap" hidden>
+  <form class="authbox" id="authForm">
+    <h3 id="authTitle">Signed out</h3>
+    <div class="authsub" id="authSub">Sign in again to control the rig.</div>
+    <label for="authPw">Password</label>
+    <input id="authPw" type="password" autocomplete="current-password"/>
+    <button id="authGo" type="submit">Sign in</button>
+    <div class="err" id="authErr" role="alert"></div>
+    <div class="authnote">Stopping needs an account too. <b>If you cannot sign in and
+      the rig needs to be stopped, go to the lab and close the panel valve by hand</b>
+      — that is the only way to stop pressurisation without this page.</div>
+  </form>
 </div>
 
 <!-- One line telling whoever opens this page what to do next. The rig is a cycle
@@ -1141,8 +1191,54 @@ $("startBtn").onclick=async()=>{
 // the held state deliberately rather than relying on the teardown to do it.
 // (Plain /stop also clears it — _end_run calls _exit_held — so this is about
 // saying what we mean, not about routing around a bug.)
-let HELD=false;
+let HELD=false, SIGNED_OUT=false;
+
+// --- signing back in, in place -----------------------------------------------
+// Stopping requires a session, so "how long from a lapsed session to a stopped
+// rig" is a safety number, not a convenience one. Everything here exists to keep
+// it short: no navigation away, the password focused the moment it opens, and on
+// success the page is exactly where it was with the stop button under the thumb.
+function showAuth(intent){
+  const w=$("authWrap");
+  if(!w.hidden) return;
+  w.hidden=false;
+  $("authTitle").textContent=intent==="stop"?"Sign in to stop the rig":"Signed out";
+  $("authSub").textContent=intent==="stop"
+    ? "Stopping needs an account. Sign in and the stop button is right behind this."
+    : "Sign in again to control the rig.";
+  $("authErr").textContent="";
+  $("authPw").value="";
+  $("authPw").focus();
+}
+$("authForm").onsubmit=async(e)=>{
+  e.preventDefault();
+  const btn=$("authGo"), pw=$("authPw").value;
+  if(!pw){ $("authErr").textContent="Enter the password."; return; }
+  btn.disabled=true; btn.textContent="Signing in…"; $("authErr").textContent="";
+  try{
+    const r=await fetch("/login",{method:"POST",headers:{"Content-Type":"application/json"},
+                                 body:JSON.stringify({password:pw})});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok && j.ok){
+      $("authWrap").hidden=true;
+      SIGNED_OUT=false; missed=0; setStale(false);
+      $("stopBtn").textContent="■ Stop & shut feed";
+      await poll();
+      $("stopBtn").focus();     // land on the control that was wanted
+      btn.disabled=false; btn.textContent="Sign in";
+      return;
+    }
+    $("authErr").textContent=j.error||"Could not sign in.";
+  }catch(err){
+    $("authErr").textContent="Could not reach the rig.";
+  }
+  btn.disabled=false; btn.textContent="Sign in";
+};
+
 $("stopBtn").onclick=async()=>{
+  // Signed out, this button is honest about what it does: it opens sign-in. A
+  // control labelled Stop that cannot stop is worse than one that says so.
+  if(SIGNED_OUT){ showAuth("stop"); return; }
   if(!confirm("Stop the run?\n\nThis shuts the feed valve and routes permeate to waste. "+
               "It does NOT vent the cell, and the air valve on the lab panel still has to be "+
               "closed by hand."))
@@ -1634,9 +1730,17 @@ async function poll(){
     // working connection, and stopping needs no session by design — so the one
     // control that must survive everything does.
     if(e && e.authRequired){
-      setStale(true,"Your session has ended. Sign in again to control the rig — "+
-                    "stopping still works without signing in.",false);
+      // Signed out. Under the policy Adrián set on 2026-07-31 this DOES take the
+      // stop button away, so the banner has to name the only thing that still
+      // works without a session: a person at the panel valve.
+      setStale(true,"Your session has ended — you cannot stop the rig from this page "+
+                    "until you sign in. If it needs stopping now, close the panel "+
+                    "valve by hand in the lab.",true);
       $("barPhase").textContent="signed out";
+      $("stopBtn").textContent="🔒 Sign in to stop";
+      $("stopBtn").disabled=false;      // it opens sign-in; it does not pretend to stop
+      SIGNED_OUT=true;
+      showAuth();
       return;
     }
     if(++missed>=2) setStale(true,"No answer from the rig — the readings below are the "+

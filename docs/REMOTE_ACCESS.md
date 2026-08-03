@@ -54,28 +54,44 @@ fresh Pi should tell you what to do, not lock you out of hardware.
   on a plain-HTTP LAN the browser would refuse to send it back and sign-in would
   simply appear broken.
 
-### Stopping never needs an account
+### Stopping needs an account too — and the history behind that
 
-`POST /stop` and `POST /recover/stop` are the only control paths that work
-without signing in, and that is deliberate — agreed by the control, hardware and
-interface sessions. Stopping only ever moves the rig towards safe: it shuts the
-feed and routes permeate to waste, and there is no phase from which stopping
-leaves it worse. It matters because of what this rig physically is right now:
-the relief valve is not fitted, the servo holds position rather than sealing when
-it loses power, and the ball valve's handle was removed so the servo can turn the
-stem. **`/stop` is one of only two things that can stop pressurisation, and the
-other one is a person standing at the panel.** A login prompt between someone and
-that button is the trade not to make.
+**Every path needs a session, stopping included.** There is no exemption.
 
-Everything else needs a session — including `POST /recover/retry`, which
-re-pressurises the cell, and `POST /recover/raise`, which **raises a safety
-ceiling**. This UI only ever tightens; raising is the one action that loosens, so
-it is never reachable without an account.
+That is a decision, not an oversight, and it went against advice — which is
+exactly why it is written down here. The control, hardware and interface sessions
+jointly recommended exempting `POST /stop`: stopping only ever moves the rig
+towards safe, Control verified by attack that no phase exists from which stopping
+leaves it worse, and Hardware pointed out that with no relief valve fitted, a
+servo that holds position instead of sealing when it loses power, and the ball
+valve's handle removed so the servo can turn the stem, **`/stop` is one of only
+two things that can stop pressurisation — the other being a person at the panel**.
 
-If your session ends while the page is open, the readings dim and the page says
-so — but **Stop stays live**. "I cannot trust the screen", "I cannot reach the
-rig" and "I am not signed in" are three different states here, and only the
-middle one takes the stop button away.
+Adrián was given that recommendation, then given Hardware's physical argument on
+top of it, and chose the strict policy on **2026-07-31**. So: **do not "restore"
+the exemption.** Reopening it is a conversation with him, not a commit.
+
+**What it costs, stated plainly so nobody meets it as a surprise:** an operator
+whose session has lapsed cannot stop the rig from this page until they sign in.
+The mitigations below are load-bearing, not polish:
+
+- **Signing back in happens on the page, over whatever you were looking at** —
+  never by navigating to a login screen and back. Password, Enter, and the stop
+  button is already on screen behind the overlay, focused.
+- **Sessions last a week and renew on every use**, so lapsing mid-run is rare by
+  design. Short expiry would buy nothing here: the asset is a valve, not a bank
+  account.
+- **A wrong password delays, it never locks you out.** The delay escalates and is
+  capped at one minute. With stopping behind the login, a durable lockout would
+  be a safety failure wearing a security costume.
+- **If you cannot sign in and the rig needs stopping: go to the lab and close the
+  panel valve by hand.** That is the only way to stop pressurisation without this
+  page, and the page says so when it locks you out.
+
+Under this policy, "I cannot trust the screen", "I cannot reach the rig" and "I am
+not signed in" remain three different states, but only the *stalled loop* one
+leaves the stop button live. Signed out, the button becomes **Sign in to stop** —
+it opens the sign-in overlay rather than pretending to be a control it is not.
 
 ## Setup (on the Pi, once it's running)
 
