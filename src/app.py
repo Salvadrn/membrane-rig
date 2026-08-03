@@ -104,6 +104,12 @@ class RigController:
         # water temperature (a test variable): polled slowly off the fast loop.
         # mu is derived from it; the run-mean temp feeds the permeability calc.
         self._water_temp_c = cfg.temperature.manual_c
+        # How that number was obtained. The HAL exposes it (TemperatureSensor.source)
+        # precisely because the value cannot carry the distinction itself, and µ —
+        # hence k — is derived from it: a configured constant must never reach the
+        # evidence trail looking like a measurement. Refined at runtime to flag a
+        # probe that has stopped answering.
+        self._temp_source = getattr(self.temp, "source", "unknown")
         self._temp_sum = 0.0
         self._temp_n = 0
         # in sim, tell the plant the viscosity so its flow scales as 1/mu
@@ -130,6 +136,7 @@ class RigController:
             "results": [],
             "analysis": None,
             "water_temp_c": round(cfg.temperature.manual_c, 2),
+            "water_temp_source": getattr(self.temp, "source", "unknown"),
             "viscosity_pa_s": cfg.membrane.viscosity_pa_s,
             "units": cfg.units,
             "playlist_analysis": None,
@@ -469,6 +476,7 @@ class RigController:
             results = list(self.sequencer.results)
             title = self.cfg.analysis.title
             run_temp_c = (self._temp_sum / self._temp_n) if self._temp_n else self._water_temp_c
+            temp_source = self._temp_source
         # mu from the run-mean water temperature (distilled/pure water)
         mu = water_viscosity_pa_s(run_temp_c)
         membrane = dataclasses.replace(self.cfg.membrane, viscosity_pa_s=mu, water_temp_c=run_temp_c)
@@ -539,6 +547,11 @@ class RigController:
             "label": result.label,
             "note": result.note,
             "water_temp_c": round(run_temp_c, 2),
+            # k = b*mu*L/A and mu comes from this temperature, so the k inherits
+            # however the temperature was obtained. Carry that with it: a k whose
+            # mu came from a configured constant is not the same evidence as one
+            # from a probe reading, and the number alone cannot say which.
+            "water_temp_source": temp_source,
             "viscosity_pa_s": mu,
             "json_file": Path(json_path).name if json_path else None,
             "plot_file": Path(plot_path).name if plot_path else None,
@@ -563,6 +576,7 @@ class RigController:
                     if i.status == DONE and i.ceiling_raised for p in i.points()]
         with self._lock:
             run_temp_c = (self._temp_sum / self._temp_n) if self._temp_n else self._water_temp_c
+            temp_source = self._temp_source
         mu = water_viscosity_pa_s(run_temp_c)
         membrane = dataclasses.replace(self.cfg.membrane, viscosity_pa_s=mu,
                                        water_temp_c=run_temp_c)
@@ -632,6 +646,11 @@ class RigController:
             "label": result.label,
             "note": result.note,
             "water_temp_c": round(run_temp_c, 2),
+            # k = b*mu*L/A and mu comes from this temperature, so the k inherits
+            # however the temperature was obtained. Carry that with it: a k whose
+            # mu came from a configured constant is not the same evidence as one
+            # from a probe reading, and the number alone cannot say which.
+            "water_temp_source": temp_source,
             "viscosity_pa_s": mu,
             **files,
         }
@@ -992,11 +1011,14 @@ class RigController:
     def _temp_loop(self) -> None:
         """Poll the water-temperature probe slowly (blocking reads are fine here,
         off the fast control loop). Cache the latest good reading + its viscosity."""
+        base = getattr(self.temp, "source", "unknown")
         while not self._stop_evt.is_set():
+            ok = False
             try:
                 t = self.temp.read_c()
                 if t == t:  # not NaN
                     mu = water_viscosity_pa_s(t)
+                    ok = True
                     with self._lock:
                         self._water_temp_c = t
                         self.status["water_temp_c"] = round(t, 2)
@@ -1005,6 +1027,14 @@ class RigController:
                         self.plant.set_viscosity(mu)
             except Exception:
                 pass
+            # A probe that stops answering is swallowed here by design (one bad
+            # read must not disturb a run), but then water_temp_c silently keeps
+            # its last value — and µ, hence k, would still be presented as
+            # measured. Say so instead: the number stays, its provenance changes.
+            with self._lock:
+                self._temp_source = base if (ok or base != "probe") \
+                    else "probe (no recent reading)"
+                self.status["water_temp_source"] = self._temp_source
             self._stop_evt.wait(self.cfg.temperature.read_period_s)
 
     def _safe_all(self) -> None:
