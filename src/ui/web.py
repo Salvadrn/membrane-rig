@@ -1,20 +1,23 @@
 """Local web UI (FastAPI). Single self-contained page, no external assets.
 
 Why a web UI (vs a CLI menu): the Pi runs headless in the lab, you reach it
-from a laptop/phone on the LAN, and a live pressure chart lets you *watch* the
-loop settle into the tolerance band before collection triggers. A thin CLI
-(src/ui/cli.py) covers SSH/tuning.
+through the Cloudflare tunnel from wherever you are, and a live pressure chart
+lets you *watch* the loop settle into the tolerance band before collection
+triggers. A thin CLI (src/ui/cli.py) covers SSH/tuning.
 
-Run:  python run.py web --config config.yaml   (default http://0.0.0.0:8000)
+Run:  python run.py web --config config.yaml   (default http://127.0.0.1:8000)
 
-THERE IS NO LOGIN HERE, BY DESIGN — AND SOMETHING ELSE MUST PROVIDE ONE.
-Every endpoint is unauthenticated: anyone who can reach this port can open the
-feed valve on a pressurised cell. That is acceptable only while the port is
-reachable from the lab LAN alone. The moment it is published — the Cloudflare
-Tunnel in docs/REMOTE_ACCESS.md — **Cloudflare Access has to sit in front of
-it**, and the server must stay bound to 127.0.0.1 so the tunnel is the only way
-in. Never expose the bare tunnel. If you add authentication here one day, say so
-in REMOTE_ACCESS.md too, because that doc currently promises this file has none.
+THIS APP HAS A LOGIN, AND IT IS NOT THE WHOLE STORY.
+One account, a cookie session, and every path behind it — stopping included, by
+Adrián's decision of 2026-07-31. Provision it with tools/set_password.py; the
+hash lives in ~/.membrane-rig/auth, never in this repo.
+
+What it does not cover, so nobody assumes otherwise: over the lab LAN this is
+plain HTTP, so the password and the session cookie cross the wire in the clear.
+That is why the default bind is 127.0.0.1 and the tunnel is the intended path —
+Cloudflare terminates TLS there — with Cloudflare Access in front of it as a
+second gate that this app never sees. `--host 0.0.0.0` still exists, now as a
+deliberate opt-in that warns at startup. See docs/REMOTE_ACCESS.md.
 """
 from __future__ import annotations
 
