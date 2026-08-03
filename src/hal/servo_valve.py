@@ -92,7 +92,8 @@ class ServoValve(ProportionalValve):
             # 0 pulse width releases the servo (stops sending pulses). It keeps
             # its position by friction: a servo does NOT spring shut on power
             # loss, which is why the mechanical relief valve is the real
-            # failsafe and why the supply valve gets closed by hand at the end
+            # failsafe and why the PANEL valve gets closed by hand at the end
+            # (the ball valve's handle is off — the panel is the only human shutoff)
             # of a session.
             self._pi.set_servo_pulsewidth(self.cfg.servo_pin, 0)
             self._pi.stop()

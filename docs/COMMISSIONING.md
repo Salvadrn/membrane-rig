@@ -635,7 +635,9 @@ correction recovers a measurement that did not happen.
 - [ ] **11.4** Full sequence end to end. **Expected: `R² ≥ 0.98`
       (`follows_darcy = True`)**, a CSV + meta + analysis + PNG + XLSX in `runs/`, and
       a temperature column that **moves**.
-- [ ] **11.5** Close the supply valve by hand. Every time.
+- [ ] **11.5** Close the **panel valve** by hand. Every time. (Say *panel* valve,
+      not *supply* valve: the control ball valve has had its handle removed so the
+      servo can turn the stem, so the panel is the only thing a human can shut.)
 
 ---
 
