@@ -260,6 +260,13 @@ y todos bloqueando decisiones que llevan días abiertas:
 
 Y uno que no es de banco pero destraba más que ninguno:
 
+- [ ] **Diámetro interior y largo del tubo buzo**, y el tramo **tee → portamalla**.
+      Las caídas de presión que cita `ASSEMBLY.md` están calculadas contra un buzo
+      *supuesto*; el buzo decide si su caída es despreciable o se come la prueba, y
+      el tramo tee→portamalla es el único que cae DENTRO de la medición.
+- [ ] **Rating de presión de los DOS recipientes** — tanque y portamalla son piezas
+      distintas y ninguno está escrito en el repo. El alivio se tara por debajo del
+      menor de los dos, así que sin ese número no hay contra qué tararlo.
 - [ ] **Tarada del regulador de la línea de aire.** Se lee de su carátula. Sin
       alivio mecánico es la **única** cota física sobre lo que la celda puede
       ver, y hoy gatea: presurizar con seguridad, el tope de la recuperación de

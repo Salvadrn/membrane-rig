@@ -173,7 +173,28 @@ assembly moves as a unit.
 2. Valve **stem** flat: square vs double-D, across-flats size, height → coupling (№1)
 3. Valve body / mounting surface + free space around it → mount (№2)
 4. **Swagelok tube OD** on the rig (likely 1/4") → the green BOM fittings
-5. Existing manometer port thread → transducer adapter
+5. **Manometer port thread** → transducer adapter. This is the tee's spare leg in
+   the instrumented line, and the gauge on it *is* the Keller LEX1 — one part, not
+   two. If it is G1/4 the transducer threads straight in and the adapter is not
+   needed at all.
+
+The four below only became visible once the rig turned out to be a **chain**
+rather than one vessel. The list above was written assuming a single pressure
+vessel with the mesh bolted into it, so none of these were on it:
+
+6. **Dip tube inner diameter and length.** Every pressure drop this document
+   quotes for it — the 0.7 / 7.9 / 26.6 kPa table — is computed against an
+   assumed 3–6 mm bore over 0.3 m. **Nobody has measured either.** It is the
+   difference between "negligible" and "eats most of the test pressure".
+7. **Run length from the tee to the holder inlet.** The only stretch that sits
+   *inside* the measurement. 5 cm is 0.23 kPa at 15 mL/s; 30 cm is 1.36.
+8. **Three more threads**, none of which existed when this list was written: the
+   tank's outlet, the holder's inlet, and the holder's permeate outlet. Each one
+   decides a fitting.
+9. **Pressure ratings — for BOTH vessels.** The tank and the membrane holder are
+   separate pieces and neither rating is written anywhere in this repo. The
+   relief valve is supposed to be set below the lower of the two, so this is not
+   bookkeeping: without it there is no number to set the relief against.
 
 ## Wiring (all grounds common)
 
