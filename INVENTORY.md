@@ -116,8 +116,10 @@ bloquean ni el fusible ni el diodo. Con lo que ya hay en la mano:
    contra la rosca G1/4**, y ese adaptador no está confirmado. Sin él, hoy solo se
    puede hacer el punto de cero. No improvises un sello con manguera a presión.
 
-   La calibración formal de 2 puntos sigue siendo contra el **Keller LEX1**, no
-   contra la columna (ver `docs/ASSEMBLY.md`).
+   **La columna de agua ES ahora la referencia de calibración.** El Keller LEX1
+   quedó fuera del plan (Adrián, 2026-08-03: leerlo eléctricamente necesita un
+   cable que el lab no tiene), así que el transductor es el único canal de
+   presión. Ver `docs/ASSEMBLY.md` § paso 2.
 
 **Actualización 2026-07-29: el multímetro SÍ está en la mesa**, así que el paso 3 se
 puede hacer directo y la alternativa de abajo dejó de ser necesaria. Al revés de lo
@@ -243,8 +245,10 @@ y todos bloqueando decisiones que llevan días abiertas:
 
 - [ ] **Barril de la fuente de 12 V**: diámetro exterior e interior, y **polaridad
       (centro +)** con el multímetro. Bloquea el riel de 12 V — ver bloqueos.
-- [ ] **Rosca del Keller LEX1**: si es G1/4, el transductor entra donde está el
-      LEX1 y el adaptador deja de hacer falta. Ver `docs/ASSEMBLY.md`.
+- [ ] **Rosca del manómetro (que es el Keller LEX1)**: si es G1/4, el transductor
+      entra en ese mismo puerto y el adaptador deja de hacer falta. Ahora sin
+      trade: el LEX1 salió del plan de medición, así que tomar su puerto no
+      desplaza ningún canal. Ver `docs/ASSEMBLY.md`.
 - [ ] **Par de arranque del vástago, EN SECO** (ΔP = 0). Da el piso; decide si el
       DS3218 alcanza pelón. Medir después a la tarada del regulador y registrar
       **a qué ΔP** corresponde cada número.

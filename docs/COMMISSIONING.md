@@ -756,10 +756,14 @@ Stated plainly so nobody assumes coverage that was not given.
    known survivable overpressure.
 8. **No accuracy reference for the DS18B20** exists in the BOM, so Stage 4.6 verifies
    plausibility and response, not calibration.
-9. **`wiring_fluidos.html` is stale in two places** (it still treats the 40 PSI
-   requirement as open — `INVENTORY.md` resolved it to 35 kPa on 2026-07-27 — and it
-   names the dial gauge as the calibration reference, which `ASSEMBLY.md` superseded
-   with the LEX1). Those sheets were left untouched here on purpose.
+9. ~~`wiring_fluidos.html` is stale in two places.~~ **CLOSED.** The sheet has been
+   redrawn to the real chain (tank → dip tube → instrumented line with the tee →
+   membrane holder → diverter), the 40 PSI scare is marked as the unit mix-up it
+   was, and the calibration reference is current. Note the reference moved twice:
+   dial gauge → LEX1 → **water column**, because the gauge in the line IS the LEX1
+   and Adrián ruled it out of the measurement plan on 2026-08-03 (reading it
+   electrically needs a mating cable the lab does not have). `ρgh` = 9.81 kPa per
+   metre is now the traceable second point.
 
 ---
 
