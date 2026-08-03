@@ -35,6 +35,7 @@
 .hoja-fluidos .banda{ border-radius:8px; padding:16px 20px; margin:0 0 22px; }
 .hoja-fluidos .banda-bad{ border:2px solid var(--bad,#b3261e); background: color-mix(in srgb, var(--bad,#b3261e) 10%, transparent); }
 .hoja-fluidos .banda-warn{ border:2px solid #b8860b; background: color-mix(in srgb, #b8860b 12%, transparent); }
+.hoja-fluidos .banda-good{ border:2px solid var(--good,#1e7d32); background: color-mix(in srgb, var(--good,#1e7d32) 10%, transparent); }
 .hoja-fluidos .banda h3{ font-size:15px; font-weight:500; margin:0 0 6px; }
 
 /* ---- filas de destino ---- */
@@ -77,45 +78,56 @@
 <h1>¿Cómo se plomea el circuito de fluidos?</h1>
 <p class="bajada">
   Todas las hojas de armado que existen hasta hoy son eléctricas. Esta es la del agua y el aire:
-  del panel del laboratorio hasta el permeado que cae en la probeta. Resuelve cuatro dudas concretas —
-  <strong>de qué lado de la válvula de bola</strong> se tee-an el alivio y el transductor y por qué no da igual,
+  del panel del laboratorio hasta el permeado que cae en la probeta. Resuelve cinco dudas concretas —
+  <strong>qué pieza va después de cuál</strong> (el rig es una cadena de piezas separadas, no un recipiente con la malla adentro),
+  <strong>dónde se tee-a el transductor</strong> y por qué esa posición decide si <code>k</code> sale sesgada,
   <strong>qué rosca es cada junta</strong> y en cuál va cinta de PTFE y en cuál nunca,
   <strong>cuál de los tres puertos del solenoide</strong> recibe el permeado (no es el que dice «inlet»),
   y <strong>qué queda abierto si se va la luz</strong> a media corrida.
 </p>
 
-<div class="banda banda-bad">
-  <h3>Hoy no se puede plomear nada. Lo que sí se puede hacer hoy es MEDIR.</h3>
-  <p style="margin:0 0 8px">
-    Del lado de fluidos faltan <strong>todas</strong> las piezas que se conectan:
-    válvula de alivio, solenoide de 3 vías, transductor, tubería de silicón, kit de barbs, abrazaderas,
-    cinta de PTFE y los adaptadores NPT&times;barb. De los fittings Swagelok de McMaster solo se sabe que Roxanne
-    colocó la orden — <strong>no se sabe si llegaron</strong>. Lo único físicamente presente son las piezas que ya se tenían:
-    válvula de bola, recipiente, probeta, manómetro y la sonda DS18B20.
+<div class="banda banda-good">
+  <h3 style="color:var(--good,#1e7d32)">La cadena está confirmada de primera mano — y esta hoja ya está redibujada a ella</h3>
+  <p style="margin:0 0 8px" class="tiny">
+    Los dibujos de esta hoja mostraban <strong>un solo recipiente con la membrana adentro</strong>. Eso era falso.
+    El banco es una <strong>cadena de piezas separadas</strong>, en palabras de Adrián:
+    <em>línea de aire → <strong>tanque de agua</strong> (con <strong>tubo buzo</strong> que llega al fondo y saca el agua
+    presurizada) → <strong>línea con el manómetro analógico</strong>, que tiene una <strong>tee cuya otra rama lleva el
+    transductor</strong> → <strong>portamalla cilíndrico</strong> (donde vive la malla; permeato sale por DEBAJO) →
+    <strong>solenoide de 3 vías</strong> → desecho mientras la presión se estabiliza / probeta mientras colecta.</em>
   </p>
   <p style="margin:0" class="tiny sub">
-    Esta hoja no es para armar hoy: es para <strong>comprar bien</strong> y para no equivocarse de rosca.
-    Y hay trabajo real disponible hoy mismo, con un calibrador en la mano, porque son exactamente los cuatro números
-    que faltan para poder ordenar: <strong>(1)</strong> el OD del tubo del rig (probablemente 1/4", <em>no confirmado</em>) —
-    es el que define el tamaño de todo fitting Swagelok; <strong>(2)</strong> la rosca del puerto del manómetro;
-    <strong>(3)</strong> la rosca del puerto de salida de permeado del recipiente; <strong>(4)</strong> el plano del vástago
-    de la bola (cuadrado o doble-D, entrecaras y altura) para el acople impreso.
-    Los cuatro están listados en <code>docs/ASSEMBLY.md</code> § «Measure before designing/buying» y ninguno está registrado en el repo.
+    <strong>El tanque y el portamalla son dos piezas distintas</strong>, y la tee del transductor va en la línea
+    <em>entre</em> ellas. Eso no es un detalle de dibujo: decide si <code>k</code> sale sesgada — ver la sección
+    «Dónde se mide» más abajo y <code>docs/ASSEMBLY.md</code> § «Where the transducer goes».
+    Lo que no dependía de la topología se conservó tal cual: roscas, mapa de puertos del solenoide, escalera de
+    presión y failsafe.
   </p>
 </div>
 
-<div class="banda banda-warn" style="border-left-color:#b3261e">
-  <h3 style="color:#b3261e">⚠ La TOPOLOGÍA de esta hoja está mal — en revisión</h3>
-  <p style="margin:0" class="tiny">
-    Los dibujos muestran <strong>un solo recipiente con la membrana adentro</strong>. El banco real es una
-    <strong>cadena de piezas separadas</strong>: línea de aire → <strong>tanque</strong> de agua →
-    <strong>tubo buzo</strong> que llega al fondo → línea con el <strong>manómetro</strong> →
-    <strong>portamalla</strong> (donde vive la malla) → probeta. Confirmado desde foto del banco.
-    <strong>No plomees siguiendo estos dibujos.</strong> Lo que SÍ sigue siendo válido y no depende de la
-    topología: las roscas (Swagelok vs NPT), el mapa de puertos del solenoide, la escalera de presión y el
-    failsafe. Redibujo pendiente de confirmar la cadena con Adrián — ver <code>docs/ASSEMBLY.md</code>
-    § "Where the transducer goes", que ya trae la consecuencia importante.
-    <span class="pend">topología en revisión</span>
+<div class="banda banda-bad">
+  <h3>Hoy sigue sin poderse plomear nada. Lo que sí se puede hacer hoy es MEDIR.</h3>
+  <p style="margin:0 0 8px">
+    Ya llegaron el <strong>transductor</strong>, el <strong>solenoide 3 vías</strong> y los <strong>fittings
+    Swagelok/McMaster</strong> (de estos últimos <em>no se ha verificado qué trae la caja</em>). Lo que falta es
+    justo lo que <em>hace</em> las juntas del lado húmedo: <strong>cinta de PTFE</strong>, <strong>tubería de silicón
+    1/4" ID</strong>, <strong>kit de barbs</strong>, <strong>abrazaderas</strong> y los <strong>adaptadores
+    1/4" NPT-M × barb (×3)</strong>. Sin la cinta no se sella ni un puerto NPT del solenoide, así que
+    <strong>no se plomea nada todavía</strong>. Y del lado eléctrico el <strong>1N5819</strong> tampoco llegó:
+    la bobina del diverter no se energiza sin él. Fuente: <code>INVENTORY.md</code>.
+  </p>
+  <p style="margin:0" class="tiny sub">
+    Esta hoja no es para armar hoy: es para <strong>comprar bien</strong> y para no equivocarse de rosca.
+    Y hay trabajo real disponible hoy mismo con un calibrador en la mano — con la cadena confirmada, los números
+    que faltan son <strong>seis</strong>, no cuatro: <strong>(1)</strong> el OD del tubo del rig (probablemente 1/4",
+    <em>no confirmado</em>), que define el tamaño de todo fitting Swagelok; <strong>(2)</strong> la rosca del puerto
+    del manómetro; <strong>(3)</strong> el plano del vástago de la bola (cuadrado o doble-D, entrecaras y altura)
+    para el acople impreso; <strong>(4)</strong> el puerto del <strong>tubo buzo</strong> en el tanque;
+    <strong>(5)</strong> la <strong>entrada</strong> del portamalla; <strong>(6)</strong> la <strong>salida de
+    permeato</strong> del portamalla. Solo los tres primeros están listados en <code>docs/ASSEMBLY.md</code>
+    § «Measure before designing/buying» (items 2, 4 y 5); los tres del tanque y del portamalla
+    <strong>no aparecen en ningún archivo del repo</strong> — son nuevos, y nacieron al confirmarse la cadena.
+    <span class="pend">seis roscas sin medir</span>
   </p>
 </div>
 
@@ -137,13 +149,14 @@
 <div class="banda banda-warn">
   <h3>⚠ Dos correcciones — léelas antes que nada de esta hoja</h3>
   <p style="margin:0 0 10px" class="tiny">
-    <strong>1. La válvula de alivio NO se va a instalar.</strong> Fue decisión de Adrián. Esta hoja la sigue
-    dibujando, la ubica en su tee y explica su familia de rosca — todo eso queda como <em>guía de contingencia
-    por si la decisión se revierte</em>, no como parte del armado. Lo que hay que leer de aquí en adelante es:
-    donde diga «el alivio hace X», hoy <strong>nadie hace X</strong>. La escalera perdió su única capa que actúa
-    sin software y sin energía, así que la <strong>tarada del regulador de la línea de aire es la única cota
-    física</strong> sobre lo que la celda puede ver — y ese número todavía no se ha registrado.
-    Ver <code>docs/ASSEMBLY.md</code> § First safety checks.
+    <strong>1. La válvula de alivio está PEDIDA, no montada.</strong> Adrián la sacó del pedido el 2026-07-29 y la
+    <strong>reinstauró el 2026-07-31</strong> al preparar la operación remota (<code>BOM.csv</code>: <em>«ON ORDER
+    again … ORDERED IS NOT INSTALLED»</em>). Esta hoja la sigue dibujando, la ubica en su tee y explica su familia de
+    rosca — pero como <em>contingencia</em>, no como parte del armado de hoy. Lo que hay que leer de aquí en adelante
+    es: donde diga «el alivio hace X», <strong>hoy nadie hace X</strong>. Hasta que la pieza llegue, esté montada y
+    tarada, la escalera <strong>no tiene ninguna capa que actúe sin software y sin energía</strong>, así que la
+    <strong>tarada del regulador de la línea de aire es la única cota física</strong> sobre lo que la celda puede ver
+    — y ese número todavía no se ha registrado. Ver <code>docs/ASSEMBLY.md</code> § First safety checks.
   </p>
   <p style="margin:0" class="tiny">
     <strong>2. El susto de los «ensayos a 40 PSI» era falsa alarma.</strong> Fue confusión de unidades: los ensayos
@@ -154,124 +167,321 @@
   </p>
 </div>
 
+<div class="banda banda-warn">
+  <h3>El último eslabón de la cadena puede invalidar la medición: el solenoide no es una pieza inocente</h3>
+  <p style="margin:0 0 8px" class="tiny">
+    Orificio de <strong>1.5 mm</strong>, <strong>Cv 0.09–0.21</strong>, y en esta cadena queda
+    <strong>después del portamalla</strong> — o sea aguas abajo de la malla, justo donde todo el cálculo de
+    permeabilidad supone atmósfera. Si el orificio restringe, hay contrapresión; y como esa caída va con
+    <strong>Q²</strong> mientras Q crece con ΔP, el error <strong>no desplaza la recta de Darcy: la dobla</strong>,
+    y <code>R² ≥ 0.98</code> no lo caza.
+  </p>
+  <p style="margin:0" class="tiny sub">
+    Es el mismo mecanismo que la caída del tubo buzo de la sección siguiente, en el otro extremo de la malla.
+    Análisis completo y <strong>prueba de aceptación bloqueante</strong> en <code>docs/COMMISSIONING.md</code>
+    § Stage&nbsp;10.5. Resumen operativo: <strong>mide primero el caudal libre con el diverter puenteado</strong>.
+    ≤ 5 mL/s y la válvula es transparente; más que eso y hay que correr la comparación con y sin diverter antes de
+    tomar un solo dato bueno. <span class="pend">caudal real nunca medido</span>
+  </p>
+</div>
+
 <hr class="rule">
 
-<h2>Lado del aire — del panel al recipiente</h2>
+<h2>La cadena real — del panel de aire a la probeta</h2>
 
 <div class="caja" style="margin-bottom:14px">
-  <svg viewBox="0 0 1120 492" role="img" aria-label="Circuito de aire: panel del laboratorio, válvula de bola con servo, tee de la válvula de alivio, tee del transductor y manómetro, y recipiente a presión con la membrana en la brida atornillada de la base">
+  <svg viewBox="0 0 1180 330" role="img" aria-label="Cadena del rig: panel de aire, válvula de bola con servo, tanque de agua con tubo buzo, línea instrumentada con manómetro y tee del transductor, portamalla con la malla, solenoide de tres vías, desecho y probeta">
 
-    <!-- ======== válvula de alivio (pendiente) ======== -->
-    <rect x="372" y="26" width="270" height="66" rx="6" fill="none" stroke="var(--bad,#b3261e)" stroke-width="2" stroke-dasharray="7 4"/>
-    <text x="507" y="50" text-anchor="middle" font-size="12.5" fill="currentColor">Válvula de alivio mecánica ~90 kPa</text>
-    <text x="507" y="67" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">13.05 psi · sin cable · sin software · sin corriente</text>
-    <text x="507" y="84" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">✗ no ha llegado</text>
+    <!-- ======== alivio (contingencia) ======== -->
+    <rect x="196" y="18" width="240" height="44" rx="6" fill="none" stroke="var(--bad,#b3261e)" stroke-width="2" stroke-dasharray="7 4"/>
+    <text x="316" y="38" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">Alivio ~90 kPa — PEDIDO, NO MONTADO</text>
+    <text x="316" y="53" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">contingencia · va en la línea de AIRE</text>
+    <line x1="316" y1="62" x2="316" y2="158" stroke="var(--bad,#b3261e)" stroke-width="2" stroke-dasharray="6 4"/>
 
-    <line x1="507" y1="92" x2="507" y2="190" stroke="var(--bad,#b3261e)" stroke-width="2.2" stroke-dasharray="6 4"/>
-    <text x="519" y="118" font-size="10.5" fill="var(--grey,#9e9e9e)">tee con rama 1/4" NPT-H</text>
-    <text x="519" y="132" font-size="10" fill="var(--good,#1e7d32)">PTFE aquí SÍ</text>
-    <text x="519" y="146" font-size="10" fill="var(--good,#1e7d32)">✓ aguas abajo de la bola</text>
+    <!-- ======== 1. panel ======== -->
+    <rect x="6" y="110" width="130" height="96" rx="6" fill="none" stroke="var(--pwr,#1f5e8b)" stroke-width="2"/>
+    <text x="71" y="138" text-anchor="middle" font-size="12" fill="currentColor">Panel de aire</text>
+    <text x="71" y="156" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">del laboratorio</text>
+    <text x="71" y="174" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">línea amarilla</text>
+    <text x="71" y="193" text-anchor="middle" font-size="10" fill="var(--bad,#b3261e)">presión NO medida</text>
+    <text x="71" y="228" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">su válvula es la ÚNICA</text>
+    <text x="71" y="243" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">que cierra un humano</text>
 
-    <!-- ======== panel de aire ======== -->
-    <rect x="16" y="160" width="152" height="60" rx="6" fill="none" stroke="var(--pwr,#1f5e8b)" stroke-width="2"/>
-    <text x="92" y="184" text-anchor="middle" font-size="12.5" fill="currentColor">Panel de aire del lab</text>
-    <text x="92" y="202" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">línea amarilla</text>
-    <text x="92" y="240" text-anchor="middle" font-size="10" fill="var(--bad,#b3261e)">presión de suministro:</text>
-    <text x="92" y="253" text-anchor="middle" font-size="10" fill="var(--bad,#b3261e)">no medida, no está en el repo</text>
+    <line x1="136" y1="158" x2="150" y2="158" stroke="var(--pwr,#1f5e8b)" stroke-width="2.4"/>
+    <polygon points="156,158 148,153 148,163" fill="var(--pwr,#1f5e8b)"/>
 
-    <line x1="168" y1="190" x2="252" y2="190" stroke="var(--pwr,#1f5e8b)" stroke-width="2.4"/>
-    <text x="210" y="180" text-anchor="middle" font-size="10.5" fill="var(--pwr,#1f5e8b)">aire</text>
+    <!-- ======== 2. válvula de bola ======== -->
+    <rect x="156" y="110" width="150" height="96" rx="6" fill="none" stroke="var(--ctrl,#7a2f2f)" stroke-width="2"/>
+    <text x="231" y="136" text-anchor="middle" font-size="12" fill="currentColor">Válvula de bola 90°</text>
+    <text x="231" y="154" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">servo en el vástago</text>
+    <text x="231" y="172" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">maneral quitado</text>
+    <text x="231" y="192" text-anchor="middle" font-size="10" fill="var(--ctrl,#7a2f2f)">0 % = cerrada = seguro</text>
+    <text x="231" y="228" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">NO es la que cierras</text>
+    <text x="231" y="243" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">a mano — no tiene maneral</text>
 
-    <!-- ======== válvula de bola ======== -->
-    <rect x="252" y="152" width="172" height="76" rx="6" fill="none" stroke="var(--ctrl,#7a2f2f)" stroke-width="2"/>
-    <text x="338" y="178" text-anchor="middle" font-size="12.5" fill="currentColor">Válvula de bola 90°</text>
-    <text x="338" y="195" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">el servo gira el vástago</text>
-    <text x="338" y="214" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">✓ en la mano</text>
-    <text x="338" y="290" text-anchor="middle" font-size="10.5" fill="var(--ctrl,#7a2f2f)">0 % = cerrada (estado seguro)</text>
-    <text x="338" y="304" text-anchor="middle" font-size="10.5" fill="var(--ctrl,#7a2f2f)">100 % = abierta</text>
-    <text x="338" y="322" text-anchor="middle" font-size="10" fill="var(--bad,#b3261e)">al perder corriente NO sella</text>
+    <line x1="306" y1="158" x2="320" y2="158" stroke="var(--pwr,#1f5e8b)" stroke-width="2.4"/>
+    <circle cx="316" cy="158" r="4.5" fill="currentColor"/>
+    <polygon points="326,158 318,153 318,163" fill="var(--pwr,#1f5e8b)"/>
 
-    <!-- ======== línea principal + tees ======== -->
-    <line x1="424" y1="190" x2="700" y2="190" stroke="var(--pwr,#1f5e8b)" stroke-width="2.4"/>
-    <circle cx="507" cy="190" r="5" fill="currentColor"/>
-    <circle cx="600" cy="190" r="5" fill="currentColor"/>
+    <!-- ======== 3. tanque ======== -->
+    <rect x="326" y="110" width="160" height="96" rx="6" fill="none" stroke="var(--pwr,#1f5e8b)" stroke-width="2"/>
+    <text x="406" y="136" text-anchor="middle" font-size="12" fill="currentColor">Tanque de agua</text>
+    <text x="406" y="154" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">aire sobre agua</text>
+    <text x="406" y="172" text-anchor="middle" font-size="10.5" fill="var(--sig,#8a6d00)">tubo buzo al FONDO</text>
+    <text x="406" y="192" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">saca agua, no aire</text>
+    <text x="406" y="228" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">aquí NO vive la malla</text>
+    <text x="406" y="243" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">3 mm de buzo = 26.6 kPa</text>
+    <text x="406" y="257" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">a 30 mL/s — pero va antes</text>
+    <text x="406" y="271" text-anchor="middle" font-size="10" fill="var(--good,#1e7d32)">de la tee ✓</text>
 
-    <!-- ======== rama del sensado ======== -->
-    <line x1="600" y1="190" x2="600" y2="292" stroke="var(--sig,#8a6d00)" stroke-width="2.2"/>
-    <text x="612" y="222" font-size="10.5" fill="var(--sig,#8a6d00)">tee de sensado</text>
-    <text x="612" y="236" font-size="10" fill="var(--grey,#9e9e9e)">o directo al puerto del manómetro</text>
-    <text x="612" y="250" font-size="10" fill="var(--bad,#b3261e)">pero entonces pierdes la referencia</text>
-    <text x="612" y="264" font-size="10" fill="var(--good,#1e7d32)">✓ aguas abajo de la bola</text>
+    <line x1="486" y1="158" x2="500" y2="158" stroke="var(--sig,#8a6d00)" stroke-width="2.4"/>
+    <polygon points="506,158 498,153 498,163" fill="var(--sig,#8a6d00)"/>
 
-    <rect x="436" y="292" width="304" height="118" rx="6" fill="none" stroke="var(--sig,#8a6d00)" stroke-width="2"/>
-    <text x="588" y="316" text-anchor="middle" font-size="12" fill="currentColor">Manómetro de carátula</text>
-    <text x="588" y="332" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">✓ en la mano · es la referencia de calibración</text>
-    <line x1="452" y1="346" x2="724" y2="346" stroke="var(--grey,#9e9e9e)" stroke-width="0.8" stroke-dasharray="3 3"/>
-    <text x="588" y="368" text-anchor="middle" font-size="12" fill="var(--sig,#8a6d00)">Transductor 0–15 PSI · G1/4 · 0.5–4.5 V</text>
-    <text x="588" y="384" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">✗ no ha llegado · satura a 103.4 kPa (15.00 psi)</text>
-    <text x="588" y="401" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">los dos tienen que ver la MISMA presión</text>
+    <!-- ======== 4. línea instrumentada ======== -->
+    <rect x="506" y="110" width="170" height="96" rx="6" fill="none" stroke="var(--sig,#8a6d00)" stroke-width="2"/>
+    <text x="591" y="134" text-anchor="middle" font-size="12" fill="currentColor">Línea instrumentada</text>
+    <text x="591" y="152" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">manómetro + TEE</text>
+    <text x="591" y="170" text-anchor="middle" font-size="10.5" fill="var(--sig,#8a6d00)">aquí mide el transductor</text>
+    <text x="591" y="190" text-anchor="middle" font-size="10" fill="var(--good,#1e7d32)">= lo que ve la malla ✓</text>
+    <line x1="591" y1="206" x2="591" y2="222" stroke="var(--sig,#8a6d00)" stroke-width="1.4" stroke-dasharray="4 3"/>
+    <text x="591" y="240" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">el rig YA lo tiene bien</text>
+    <text x="591" y="255" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">lo del buzo queda aguas</text>
+    <text x="591" y="269" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">arriba de la lectura</text>
 
-    <!-- ======== recipiente ======== -->
-    <line x1="700" y1="190" x2="784" y2="190" stroke="var(--pwr,#1f5e8b)" stroke-width="2.4"/>
-    <polygon points="790,190 780,185 780,195" fill="var(--pwr,#1f5e8b)"/>
+    <line x1="676" y1="158" x2="690" y2="158" stroke="var(--sig,#8a6d00)" stroke-width="2.4"/>
+    <polygon points="696,158 688,153 688,163" fill="var(--sig,#8a6d00)"/>
 
-    <rect x="790" y="140" width="300" height="296" rx="8" fill="none" stroke="var(--pwr,#1f5e8b)" stroke-width="2"/>
-    <text x="940" y="166" text-anchor="middle" font-size="11" fill="var(--grey,#9e9e9e)">aire a presión (headspace)</text>
+    <!-- ======== 5. portamalla ======== -->
+    <rect x="696" y="110" width="150" height="96" rx="6" fill="none" stroke="var(--good,#1e7d32)" stroke-width="2"/>
+    <text x="771" y="134" text-anchor="middle" font-size="12" fill="currentColor">Portamalla</text>
+    <text x="771" y="152" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">pieza SEPARADA</text>
+    <text x="771" y="170" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">malla en la brida base</text>
+    <text x="771" y="190" text-anchor="middle" font-size="10" fill="var(--sig,#8a6d00)">permeato ↓ por debajo</text>
+    <text x="771" y="228" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">aquí SÍ vive la malla</text>
+    <text x="771" y="243" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">cilíndrico, atornillado</text>
 
-    <rect x="804" y="200" width="272" height="118" rx="4" fill="none" stroke="var(--pwr,#1f5e8b)" stroke-width="1.2" stroke-dasharray="4 4"/>
-    <text x="940" y="252" text-anchor="middle" font-size="12" fill="var(--pwr,#1f5e8b)">agua destilada</text>
-    <text x="940" y="272" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">pruebas ≤ 60 kPa (8.70 psi)</text>
-    <text x="940" y="290" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">el aire empuja la columna,</text>
-    <text x="940" y="303" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">nunca toca la malla por arriba</text>
+    <line x1="846" y1="158" x2="860" y2="158" stroke="var(--sig,#8a6d00)" stroke-width="2.4"/>
+    <polygon points="866,158 858,153 858,163" fill="var(--sig,#8a6d00)"/>
 
-    <!-- brida + membrana -->
-    <rect x="770" y="330" width="340" height="30" rx="3" fill="none" stroke="var(--grey,#9e9e9e)" stroke-width="1.6"/>
-    <circle cx="780" cy="345" r="3.2" fill="var(--grey,#9e9e9e)"/>
-    <circle cx="1100" cy="345" r="3.2" fill="var(--grey,#9e9e9e)"/>
-    <line x1="790" y1="345" x2="1090" y2="345" stroke="var(--good,#1e7d32)" stroke-width="3.5"/>
+    <!-- ======== 6. solenoide ======== -->
+    <rect x="866" y="110" width="140" height="96" rx="6" fill="none" stroke="var(--ctrl,#7a2f2f)" stroke-width="2"/>
+    <text x="936" y="134" text-anchor="middle" font-size="11.5" fill="currentColor">Solenoide 3 vías</text>
+    <text x="936" y="152" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">DESPUÉS de la malla</text>
+    <text x="936" y="172" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">sin energía = desecho</text>
+    <text x="936" y="190" text-anchor="middle" font-size="10.5" fill="var(--ctrl,#7a2f2f)">energizado = probeta</text>
+    <text x="936" y="228" text-anchor="middle" font-size="10" fill="var(--bad,#b3261e)">orificio 1.5 mm</text>
+    <text x="936" y="242" text-anchor="middle" font-size="10" fill="var(--bad,#b3261e)">Cv 0.09–0.21</text>
 
-    <text x="940" y="378" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">brida atornillada de la BASE</text>
-    <text x="940" y="396" text-anchor="middle" font-size="11" fill="var(--good,#1e7d32)">MEMBRANA 60 mesh · A = 0.64 cm² · L = 0.117 mm</text>
-    <text x="940" y="412" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">límite del espécimen 65 kPa (9.43 psi) — lo aplica el SOFTWARE</text>
-    <text x="940" y="428" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">abajo de la malla: ~atmosférico</text>
+    <line x1="1006" y1="146" x2="1016" y2="132" stroke="var(--good,#1e7d32)" stroke-width="2.4"/>
+    <polygon points="1022,126 1012,129 1018,136" fill="var(--good,#1e7d32)"/>
+    <line x1="1006" y1="172" x2="1016" y2="186" stroke="var(--ctrl,#7a2f2f)" stroke-width="2.4"/>
+    <polygon points="1022,192 1012,189 1018,182" fill="var(--ctrl,#7a2f2f)"/>
 
-    <!-- salida de permeado -->
-    <line x1="940" y1="436" x2="940" y2="468" stroke="var(--sig,#8a6d00)" stroke-width="2.4"/>
-    <polygon points="940,476 934,464 946,464" fill="var(--sig,#8a6d00)"/>
-    <text x="928" y="462" text-anchor="end" font-size="10.5" fill="var(--sig,#8a6d00)">salida de permeado ↓</text>
+    <!-- ======== 7. destinos ======== -->
+    <rect x="1026" y="98" width="148" height="46" rx="6" fill="none" stroke="var(--good,#1e7d32)" stroke-width="2"/>
+    <text x="1100" y="118" text-anchor="middle" font-size="11.5" fill="currentColor">Desecho</text>
+    <text x="1100" y="134" text-anchor="middle" font-size="9.5" fill="var(--good,#1e7d32)">mientras estabiliza</text>
+
+    <rect x="1026" y="172" width="148" height="46" rx="6" fill="none" stroke="var(--grey,#9e9e9e)" stroke-width="2"/>
+    <text x="1100" y="192" text-anchor="middle" font-size="11.5" fill="currentColor">Probeta graduada</text>
+    <text x="1100" y="208" text-anchor="middle" font-size="9.5" fill="var(--grey,#9e9e9e)">durante la colecta</text>
+
+    <text x="1100" y="243" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">1000 mL · en la mano</text>
+
+    <!-- ======== leyenda de colores de línea ======== -->
+    <line x1="6" y1="300" x2="30" y2="300" stroke="var(--pwr,#1f5e8b)" stroke-width="2.4"/>
+    <text x="36" y="304" font-size="10.5" fill="var(--pwr,#1f5e8b)">aire comprimido</text>
+    <line x1="170" y1="300" x2="194" y2="300" stroke="var(--sig,#8a6d00)" stroke-width="2.4"/>
+    <text x="200" y="304" font-size="10.5" fill="var(--sig,#8a6d00)">agua a presión y permeato</text>
+    <line x1="386" y1="300" x2="410" y2="300" stroke="var(--bad,#b3261e)" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="416" y="304" font-size="10.5" fill="var(--bad,#b3261e)">pieza pedida, no montada</text>
+    <text x="640" y="304" font-size="10.5" fill="var(--grey,#9e9e9e)">El punto lleno es una tee real, no un cruce de líneas.</text>
+  </svg>
+</div>
+
+<p class="tiny sub" style="margin:0 0 26px">
+  <strong>Siete piezas en serie, no una.</strong> El error que tenía esta hoja era juntar el tanque y el portamalla
+  en un solo dibujo, y con eso desaparecía justamente el tramo donde se decide la calidad del dato: la línea que va
+  del tanque a la malla. El alivio —cuando llegue— se tee-a en la <strong>línea de aire</strong>, entre la bola y el
+  tanque, porque la energía está en el gas del headspace; entre esa tee y el tanque no puede haber ninguna válvula.
+</p>
+
+<h2>Dónde se mide, y por qué esa tee está bien</h2>
+
+<div class="caja" style="margin-bottom:14px">
+  <svg viewBox="0 0 1180 500" role="img" aria-label="Detalle de la medición: tanque de agua con tubo buzo al fondo, línea presurizada con manómetro y transductor en tee, y portamalla con la malla clampeada en la brida de la base y el permeato saliendo por debajo">
+
+    <!-- ======== TANQUE ======== -->
+    <rect x="60" y="60" width="260" height="340" rx="8" fill="none" stroke="var(--pwr,#1f5e8b)" stroke-width="2"/>
+    <text x="190" y="88" text-anchor="middle" font-size="13" fill="currentColor">Tanque de agua</text>
+    <text x="190" y="110" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">aire a presión (headspace)</text>
+
+    <line x1="8" y1="140" x2="52" y2="140" stroke="var(--pwr,#1f5e8b)" stroke-width="2.4"/>
+    <polygon points="60,140 50,135 50,145" fill="var(--pwr,#1f5e8b)"/>
+    <text x="8" y="114" font-size="10.5" fill="var(--pwr,#1f5e8b)">aire</text>
+    <text x="8" y="128" font-size="10.5" fill="var(--pwr,#1f5e8b)">de la bola</text>
+
+    <rect x="74" y="160" width="232" height="226" rx="4" fill="none" stroke="var(--pwr,#1f5e8b)" stroke-width="1.2" stroke-dasharray="4 4"/>
+    <text x="190" y="190" text-anchor="middle" font-size="12" fill="var(--pwr,#1f5e8b)">agua destilada</text>
+    <text x="190" y="213" text-anchor="middle" font-size="11.5" fill="var(--bad,#b3261e)">AQUÍ NO HAY MEMBRANA</text>
+    <text x="190" y="229" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">(ese era el error de la hoja vieja)</text>
+
+    <!-- tubo buzo: entra por la tapa y baja hasta el piso -->
+    <line x1="250" y1="30" x2="250" y2="374" stroke="var(--sig,#8a6d00)" stroke-width="2.6"/>
+    <line x1="238" y1="374" x2="262" y2="374" stroke="var(--sig,#8a6d00)" stroke-width="2.6"/>
+    <text x="238" y="300" text-anchor="end" font-size="11.5" fill="var(--sig,#8a6d00)">tubo buzo</text>
+    <text x="238" y="318" text-anchor="end" font-size="10.5" fill="var(--sig,#8a6d00)">llega al FONDO del tanque</text>
+    <text x="238" y="336" text-anchor="end" font-size="10.5" fill="var(--sig,#8a6d00)">por eso sale AGUA</text>
+    <text x="238" y="354" text-anchor="end" font-size="10" fill="var(--grey,#9e9e9e)">y no aire del headspace</text>
+
+    <text x="190" y="426" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">aire sobre agua: el aire empuja la</text>
+    <text x="190" y="442" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">superficie y NUNCA toca la malla</text>
+    <text x="190" y="464" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">rating de presión del tanque:</text>
+    <text x="190" y="479" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">no está escrito en el repo</text>
+
+    <!-- ======== línea presurizada ======== -->
+    <line x1="250" y1="30" x2="975" y2="30" stroke="var(--sig,#8a6d00)" stroke-width="2.6"/>
+    <circle cx="560" cy="30" r="5" fill="currentColor"/>
+    <circle cx="640" cy="30" r="5" fill="currentColor"/>
+    <line x1="560" y1="30" x2="560" y2="80" stroke="var(--sig,#8a6d00)" stroke-width="2.2"/>
+    <line x1="640" y1="30" x2="640" y2="80" stroke="var(--sig,#8a6d00)" stroke-width="2.2"/>
+    <text x="380" y="22" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">este tramo lleva TODA la presión de prueba — no es la línea de permeato</text>
+
+    <!-- instrumentos -->
+    <rect x="430" y="80" width="340" height="150" rx="6" fill="none" stroke="var(--sig,#8a6d00)" stroke-width="2"/>
+    <text x="600" y="106" text-anchor="middle" font-size="12.5" fill="currentColor">Manómetro de carátula</text>
+    <text x="600" y="124" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">✓ en la mano · referencia de respaldo</text>
+    <line x1="446" y1="140" x2="754" y2="140" stroke="var(--grey,#9e9e9e)" stroke-width="0.8" stroke-dasharray="3 3"/>
+    <text x="600" y="164" text-anchor="middle" font-size="12" fill="var(--sig,#8a6d00)">Transductor 0–15 PSI · G1/4 · 0.5–4.5 V</text>
+    <text x="600" y="182" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">✓ llegó 2026-07-27 · satura a 103.4 kPa (15.00 psi)</text>
+    <text x="600" y="202" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">los dos cuelgan de la MISMA línea, a los mismos</text>
+    <text x="600" y="216" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">centímetros de tubo de la malla</text>
+
+    <text x="430" y="272" font-size="11" fill="currentColor">Lo que cae ANTES de la tee (buzo de 3 mm):</text>
+    <text x="452" y="294" font-size="10.5" fill="var(--grey,#9e9e9e)">5 mL/s → 0.7 kPa</text>
+    <text x="452" y="312" font-size="10.5" fill="var(--grey,#9e9e9e)">15 mL/s → 7.9 kPa</text>
+    <text x="452" y="330" font-size="10.5" fill="var(--bad,#b3261e)">30 mL/s → 26.6 kPa</text>
+    <text x="430" y="356" font-size="10" fill="var(--grey,#9e9e9e)">contra 35 kPa de trabajo, y crece con Q^1.75:</text>
+    <text x="430" y="372" font-size="10" fill="var(--bad,#b3261e)">DOBLA la recta de Darcy, no la desplaza.</text>
+    <text x="430" y="396" font-size="10" fill="var(--grey,#9e9e9e)">Pero queda AGUAS ARRIBA de la tee, así que solo</text>
+    <text x="430" y="412" font-size="10.5" fill="var(--good,#1e7d32)">significa que el tanque trabaja más alto ✓</text>
+    <text x="430" y="436" font-size="10" fill="var(--grey,#9e9e9e)">Montar el sensor en el TANQUE metería todo eso</text>
+    <text x="430" y="452" font-size="10" fill="var(--bad,#b3261e)">entre sensor y malla, y sesgaría k sin que se vea.</text>
+
+    <!-- tramo tee -> portamalla -->
+    <text x="790" y="52" font-size="10.5" fill="var(--sig,#8a6d00)">tee → portamalla: lo MÁS CORTO</text>
+    <text x="790" y="68" font-size="10" fill="var(--grey,#9e9e9e)">5 cm de 1/4": 0.23 kPa @ 15 mL/s</text>
+    <text x="790" y="84" font-size="10" fill="var(--bad,#b3261e)">30 cm: 1.36 kPa · ese tramo SÍ cuenta</text>
+    <line x1="975" y1="30" x2="975" y2="144" stroke="var(--sig,#8a6d00)" stroke-width="2.6"/>
+    <polygon points="975,150 969,138 981,138" fill="var(--sig,#8a6d00)"/>
+
+    <!-- ======== PORTAMALLA ======== -->
+    <rect x="830" y="150" width="290" height="250" rx="10" fill="none" stroke="var(--good,#1e7d32)" stroke-width="2"/>
+    <text x="975" y="180" text-anchor="middle" font-size="13" fill="currentColor">Portamalla cilíndrico</text>
+    <text x="975" y="200" text-anchor="middle" font-size="11" fill="var(--bad,#b3261e)">pieza SEPARADA del tanque</text>
+    <text x="975" y="220" text-anchor="middle" font-size="10.5" fill="var(--grey,#9e9e9e)">aquí vive la malla</text>
+    <text x="975" y="250" text-anchor="middle" font-size="10.5" fill="var(--sig,#8a6d00)">el agua entra por ARRIBA</text>
+    <text x="975" y="268" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">y baja a través de la malla</text>
+    <text x="975" y="300" text-anchor="middle" font-size="10" fill="currentColor">A = 0.64 cm² · L = 0.117 mm · «60 mesh»</text>
+    <text x="975" y="316" text-anchor="middle" font-size="9.5" fill="var(--grey,#9e9e9e)">config.yaml — Adrián lo describe como ~1 cm²</text>
+    <text x="975" y="344" text-anchor="middle" font-size="10" fill="var(--bad,#b3261e)">límite del espécimen 65 kPa — lo aplica el SOFTWARE</text>
+
+    <!-- brida + malla -->
+    <rect x="800" y="370" width="350" height="30" rx="3" fill="none" stroke="var(--grey,#9e9e9e)" stroke-width="1.6"/>
+    <circle cx="812" cy="385" r="3.2" fill="var(--grey,#9e9e9e)"/>
+    <circle cx="1138" cy="385" r="3.2" fill="var(--grey,#9e9e9e)"/>
+    <line x1="830" y1="385" x2="1120" y2="385" stroke="var(--good,#1e7d32)" stroke-width="3.5"/>
+
+    <text x="960" y="424" text-anchor="end" font-size="10.5" fill="var(--good,#1e7d32)">brida atornillada de la BASE</text>
+    <text x="960" y="440" text-anchor="end" font-size="10.5" fill="var(--good,#1e7d32)">la malla se clampea aquí</text>
+    <text x="960" y="456" text-anchor="end" font-size="10" fill="var(--grey,#9e9e9e)">debajo: ~atmosférico</text>
+
+    <line x1="975" y1="400" x2="975" y2="472" stroke="var(--sig,#8a6d00)" stroke-width="2.4"/>
+    <polygon points="975,480 969,468 981,468" fill="var(--sig,#8a6d00)"/>
+    <text x="992" y="432" font-size="10.5" fill="var(--sig,#8a6d00)">permeato ↓</text>
+    <text x="992" y="448" font-size="10.5" fill="var(--sig,#8a6d00)">sale por DEBAJO</text>
+    <text x="992" y="464" font-size="10" fill="var(--grey,#9e9e9e)">→ al solenoide</text>
   </svg>
 </div>
 
 <p class="tiny sub" style="margin:0 0 8px">
-  Los dos puntos negros son <strong>tees reales</strong>, no cruces de línea. Los dos están <strong>aguas abajo</strong> de la
-  válvula de bola, y eso es una decisión, no un accidente: si el alivio se tee-a antes de la bola, cerrar la bola
-  <em>aísla al recipiente de su propio alivio</em>; y si el transductor se tee-a antes, el PID mediría la presión del
-  <em>suministro</em> en vez de la del recipiente y el lazo no cerraría nunca.
+  Los dos puntos llenos son <strong>tees reales</strong>, no cruces de línea, y están donde deben:
+  <strong>en la línea que va del tanque al portamalla</strong>. Todo lo que hay entre el tanque y la tee —tubo buzo,
+  fittings, tramo de línea— lleva el caudal completo y cae presión, y esa caída <strong>crece con Q</strong>, así que
+  no es un offset: <strong>dobla</strong> la recta de Darcy. Medir en la tee deja toda esa pérdida
+  <strong>aguas arriba</strong> de la lectura: significa nada más que el tanque trabaja un poco más alto, mientras el
+  sensor sigue reportando lo que la malla realmente ve. <strong>El rig ya lo tiene bien.</strong>
+  Lo único que sí queda <em>dentro</em> de la medición es el tramo <strong>tee → entrada del portamalla</strong>, y por
+  eso la regla es corta: <strong>la tee, lo más cerca del portamalla que permitan los fittings.</strong>
+  El análisis completo, con las dos tablas, vive en <code>docs/ASSEMBLY.md</code> § «Where the transducer goes».
 </p>
+
+<div class="cols" style="margin-top:18px">
+  <div class="co co-blue">
+    <div class="co-t">«¿Cómo sé si una caída de presión me arruina el dato o no?»</div>
+    <div class="co-b">
+      <p>Hay un solo criterio y sirve para todas: <strong>pregúntate si la caída depende del caudal.</strong></p>
+      <p><strong>Constante → desplaza.</strong> La columna estática del permeato (ρgh = 9.81 kPa por metro de
+        subida) vale lo mismo a 5 mL/s que a 30. Se mete entera en la <em>ordenada</em> del ajuste Q-vs-ΔP y
+        <strong>no sesga <code>k</code></strong>, porque <code>k</code> sale de la <em>pendiente</em>. Su riesgo es de
+        operabilidad, no de exactitud: con suficiente subida no queda flujo que medir en los setpoints bajos.</p>
+      <p><strong>Va con Q² → dobla.</strong> El tubo buzo (Q^1.75 en turbulento) y el orificio del diverter (Q²)
+        crecen con el caudal, y el caudal crece con ΔP. Eso <em>curva</em> la recta, y una recta curvada sigue
+        dando <code>R² ≥ 0.98</code>: el criterio de Darcy del rig <strong>no los ve</strong>.</p>
+      <p class="tiny sub" style="margin:0">
+        Los dos aparecen en esta cadena, uno de cada lado de la malla: el buzo antes, el diverter después. Al buzo lo
+        neutraliza la posición de la tee. Al diverter <strong>no lo neutraliza nada</strong> — hay que medirlo
+        (<code>docs/COMMISSIONING.md</code> § Stage 10.5).
+      </p>
+    </div>
+  </div>
+
+  <div class="co co-red">
+    <div class="co-t">«La línea del tanque al portamalla, ¿la hago con la manguera de silicón?»</div>
+    <div class="co-b">
+      <p><strong>No.</strong> Y esta es la trampa que la topología nueva destapa, porque en el dibujo viejo ese
+        tramo no existía: estaba <em>adentro</em> del recipiente.</p>
+      <p>La manguera del BOM está comprada explícitamente como
+        <em>«low-pressure permeate line only»</em> — es para lo que va <strong>después</strong> de la malla, que
+        vive a ~atmosférico. El tramo <strong>tanque → tee → portamalla</strong> está del lado de <em>arriba</em> de
+        la malla: lleva la presión de prueba completa, hasta 60–65 kPa (8.7–9.4 psi). Ahí va la plomería rígida del
+        rig, <strong>Swagelok/compresión</strong>, igual que la línea de aire.</p>
+      <p><strong>Qué pasa si te equivocas:</strong> lo que cede es un barb o una abrazadera, con agua a presión y sin
+        que el rig se entere — la presión se sigue controlando bien y lo único raro es una probeta vacía. No hay
+        caudalímetro que lo delate.</p>
+      <p class="tiny sub" style="margin:0">
+        Regla corta para no confundirse: <strong>arriba de la malla = rígido; abajo de la malla = silicón + barb +
+        abrazadera.</strong> La malla es la frontera, no el tanque.
+      </p>
+    </div>
+  </div>
+</div>
 
 <hr class="rule">
 
-<h2>Lado del permeado — de la membrana a la probeta</h2>
+<h2>Lado del permeado — del portamalla a la probeta</h2>
 
 <div class="caja" style="margin-bottom:14px">
-  <svg viewBox="0 0 1120 250" role="img" aria-label="Circuito de permeado: salida del recipiente, tubería de silicón, solenoide de tres vías, desecho con la sonda DS18B20 y probeta graduada">
+  <svg viewBox="0 0 1120 250" role="img" aria-label="Circuito de permeado: salida del portamalla por debajo de la brida, tubería de silicón, solenoide de tres vías, desecho con la sonda DS18B20 y probeta graduada">
 
-    <rect x="16" y="30" width="170" height="60" rx="6" fill="none" stroke="var(--grey,#9e9e9e)" stroke-width="1.8" stroke-dasharray="5 4"/>
-    <text x="101" y="54" text-anchor="middle" font-size="12" fill="currentColor">Salida del recipiente</text>
-    <text x="101" y="72" text-anchor="middle" font-size="9.5" fill="var(--bad,#b3261e)">rosca: no registrada — MÍDELA</text>
+    <rect x="16" y="24" width="176" height="72" rx="6" fill="none" stroke="var(--grey,#9e9e9e)" stroke-width="1.8" stroke-dasharray="5 4"/>
+    <text x="104" y="46" text-anchor="middle" font-size="12" fill="currentColor">Salida del PORTAMALLA</text>
+    <text x="104" y="63" text-anchor="middle" font-size="9.5" fill="var(--grey,#9e9e9e)">debajo de la brida de la base</text>
+    <text x="104" y="82" text-anchor="middle" font-size="9.5" fill="var(--bad,#b3261e)">rosca: no registrada — MÍDELA</text>
 
-    <line x1="186" y1="60" x2="390" y2="60" stroke="var(--sig,#8a6d00)" stroke-width="2.4"/>
-    <text x="288" y="33" text-anchor="middle" font-size="10" fill="var(--sig,#8a6d00)">silicón 1/4" ID + barb + abrazadera</text>
-    <text x="288" y="47" text-anchor="middle" font-size="9.5" fill="var(--bad,#b3261e)">✗ tubería, barbs y abrazaderas: faltan</text>
-    <text x="288" y="80" text-anchor="middle" font-size="10.5" fill="var(--ctrl,#7a2f2f)">→ puerto 2 (COM)</text>
-    <text x="288" y="94" text-anchor="middle" font-size="9.5" fill="var(--grey,#9e9e9e)">el proveedor lo llama «outlet»</text>
+    <line x1="192" y1="60" x2="390" y2="60" stroke="var(--sig,#8a6d00)" stroke-width="2.4"/>
+    <text x="291" y="33" text-anchor="middle" font-size="10" fill="var(--sig,#8a6d00)">silicón 1/4" ID + barb + abrazadera</text>
+    <text x="291" y="47" text-anchor="middle" font-size="9.5" fill="var(--bad,#b3261e)">✗ tubería, barbs y abrazaderas: faltan</text>
+    <text x="291" y="80" text-anchor="middle" font-size="10.5" fill="var(--ctrl,#7a2f2f)">→ puerto 2 (COM)</text>
+    <text x="291" y="94" text-anchor="middle" font-size="9.5" fill="var(--grey,#9e9e9e)">el proveedor lo llama «outlet»</text>
+    <text x="291" y="112" text-anchor="middle" font-size="9.5" fill="var(--good,#1e7d32)">baja: aquí SÍ va silicón · ruta cuesta abajo</text>
     <circle cx="390" cy="60" r="4.5" fill="var(--ctrl,#7a2f2f)"/>
 
     <!-- solenoide -->
-    <rect x="390" y="16" width="272" height="200" rx="6" fill="none" stroke="var(--ctrl,#7a2f2f)" stroke-width="2" stroke-dasharray="7 4"/>
+    <rect x="390" y="16" width="272" height="200" rx="6" fill="none" stroke="var(--ctrl,#7a2f2f)" stroke-width="2"/>
     <text x="526" y="42" text-anchor="middle" font-size="12.5" fill="currentColor">Solenoide 3 vías · 231Y-6-12VDC</text>
     <text x="526" y="59" text-anchor="middle" font-size="10" fill="var(--grey,#9e9e9e)">1/4" NPT-H ×3 · latón/NBR · 12 V 13 W (≈1.08 A)</text>
-    <text x="526" y="77" text-anchor="middle" font-size="10.5" fill="var(--bad,#b3261e)">✗ no ha llegado</text>
+    <text x="526" y="77" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">✓ llegó · va DESPUÉS del portamalla</text>
 
     <text x="526" y="116" text-anchor="middle" font-size="12.5" fill="var(--good,#1e7d32)">desenergizado → 2 ↔ 3</text>
     <text x="526" y="134" text-anchor="middle" font-size="10.5" fill="var(--good,#1e7d32)">= DESECHO · el failsafe correcto</text>
@@ -297,7 +507,7 @@
 
     <rect x="790" y="158" width="200" height="58" rx="6" fill="none" stroke="var(--grey,#9e9e9e)" stroke-width="2"/>
     <text x="890" y="182" text-anchor="middle" font-size="12" fill="currentColor">Probeta graduada</text>
-    <text x="890" y="200" text-anchor="middle" font-size="10" fill="var(--good,#1e7d32)">✓ en la mano · 60 s por punto</text>
+    <text x="890" y="200" text-anchor="middle" font-size="10" fill="var(--good,#1e7d32)">✓ en la mano · 1000 mL</text>
 
     <!-- sonda -->
     <line x1="990" y1="121" x2="1018" y2="121" stroke="var(--data,#6b3fa0)" stroke-width="2"/>
@@ -318,10 +528,10 @@
       por el <strong>puerto 2 («outlet»)</strong>, el desecho sale por el <strong>3</strong> y la probeta cuelga del
       <strong>1</strong>. Si lo plomeas «como suena» — permeado al puerto&nbsp;1 — entonces desenergizado el puerto&nbsp;1
       <strong>cierra</strong> y la línea de permeado queda <strong>tapada</strong>.</li>
-    <li><strong>Una línea de permeado tapada sube a la presión del recipiente.</strong> El silicón del BOM es explícitamente
-      «low-pressure permeate line only»: con la línea ciega, ese tramo pasa de ~atmosférico a los 60 kPa del recipiente y
-      lo que cede es un barb o una abrazadera. Además el rig no lo detecta: no hay caudalímetro, la presión del recipiente
-      se sigue controlando bien y lo único que lo delata es una probeta vacía al final del punto.</li>
+    <li><strong>Una línea de permeado tapada sube a la presión del tanque.</strong> El silicón del BOM es explícitamente
+      «low-pressure permeate line only»: con la línea ciega, ese tramo pasa de ~atmosférico a los 60 kPa que hay del otro
+      lado de la malla y lo que cede es un barb o una abrazadera. Además el rig no lo detecta: no hay caudalímetro, la
+      presión se sigue controlando bien y lo único que lo delata es una probeta vacía al final del punto.</li>
     <li><strong>Durante los 60&nbsp;s de colecta, el ramal de desecho no fluye.</strong> La sonda queda en agua quieta dentro
       del vaso justo en la ventana que importa para µ. Con <code>temperature.read_period_s: 3.0</code> y una µ que cambia
       lentamente eso normalmente no mueve el resultado, pero <strong>sí</strong> lo mueve si el vaso de desecho está a
@@ -350,10 +560,12 @@
     <div class="chip" style="background:var(--ctrl,#7a2f2f)"></div>
     <div class="nom" style="color:var(--ctrl,#7a2f2f)">Válvula de bola 90°</div>
     <div>
-      <div class="dst">→ salida a la tee del alivio, y de ahí al recipiente</div>
+      <div class="dst">→ salida a la tee del alivio, y de ahí al <strong>headspace del tanque</strong></div>
       <div class="why">Es el elemento de control. <code>valve.type: servo</code>, topología <em>inline</em>:
         0 % = cerrada = estado seguro, 100 % = abierta. Ya está en la mano; el servo va acoplado a su vástago
-        (ver <code>wiring_ubec.html</code>, y no lo acoples todavía).</div>
+        (ver <code>wiring_ubec.html</code>, y no lo acoples todavía). <strong>No es la válvula que un humano cierra:</strong>
+        tiene el maneral quitado justamente para que el servo pueda girar el vástago, así que la única que se cierra a
+        mano es la <strong>válvula del panel</strong>.</div>
     </div>
   </div>
 
@@ -361,11 +573,36 @@
     <div class="chip" style="background:var(--bad,#b3261e)"></div>
     <div class="nom" style="color:var(--bad,#b3261e)">Válvula de alivio</div>
     <div>
-      <div class="dst">→ tee <strong>aguas abajo</strong> de la bola, rama 1/4" NPT hembra</div>
-      <div class="why">Entre el alivio y el headspace del recipiente <strong>no puede haber ninguna válvula</strong>.
-        Es el único elemento de la escalera de presión que no depende del software, del Pi ni de la corriente.
-        Se ajusta a ~90 kPa (13.05 psi): arriba del corte global de 80 kPa y abajo del rating del recipiente
-        <span class="pend">rating no registrado</span>.</div>
+      <div class="dst">→ tee en la <strong>línea de aire</strong>, entre la bola y el tanque · rama 1/4" NPT hembra</div>
+      <div class="why">Entre el alivio y el headspace del tanque <strong>no puede haber ninguna válvula</strong>.
+        Va del lado del aire porque ahí está la energía almacenada (el gas es compresible; el agua no).
+        Se ajusta a ~90 kPa (13.05 psi): arriba del corte global de 80 kPa y abajo del rating del tanque
+        <span class="pend">rating no registrado</span>. <strong>Pedida, no montada</strong> — hoy este renglón
+        es un plan, no una protección.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--pwr,#1f5e8b)"></div>
+    <div class="nom" style="color:var(--pwr,#1f5e8b)">Tanque de agua</div>
+    <div>
+      <div class="dst">→ el aire entra por el headspace, arriba de la superficie del agua</div>
+      <div class="why">Aire sobre agua: el aire empuja la superficie y <strong>nunca toca la membrana</strong> — la
+        membrana ni siquiera está aquí dentro. Es lo que hace del tanque un <strong>acumulador de energía</strong>, y por
+        eso el alivio tiene que ventear en su línea de aire y no en el permeado.</div>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div class="chip" style="background:var(--sig,#8a6d00)"></div>
+    <div class="nom" style="color:var(--sig,#8a6d00)">Tubo buzo</div>
+    <div>
+      <div class="dst">→ del <strong>fondo</strong> del tanque a la línea de agua presurizada</div>
+      <div class="why">Su boca tiene que llegar al piso del tanque: si se queda corta, en cuanto baje el nivel empieza a
+        mandar <strong>aire</strong> al portamalla y la medición se acaba. Lleva el caudal completo y cae presión con el
+        caudal (3 mm de ID = <strong>26.6 kPa a 30 mL/s</strong>, contra 35 kPa de trabajo), pero toda esa caída queda
+        <em>aguas arriba</em> de la tee del transductor y por eso no sesga <code>k</code>.
+        <span class="pend">ID y rosca del buzo sin medir</span></div>
     </div>
   </div>
 
@@ -373,11 +610,13 @@
     <div class="chip" style="background:var(--sig,#8a6d00)"></div>
     <div class="nom" style="color:var(--sig,#8a6d00)">Transductor 0–15 PSI</div>
     <div>
-      <div class="dst">→ tee en el mismo tramo que el manómetro, aguas abajo de la bola</div>
-      <div class="why">Es lo que mide el PID: la presión del <strong>recipiente</strong>. Aguas arriba de la bola leería el
-        suministro y el lazo no podría cerrar. Rosca <strong>G1/4 (BSPP, sello de arandela plana)</strong> — no enrosca en
-        un puerto NPT sin adaptador. De aquí sale la señal de 0.5–4.5 V que va al divisor 10k/22k
-        (esa parte vive en <code>wiring_protoboard.html</code>).</div>
+      <div class="dst">→ la <strong>tee de la línea tanque → portamalla</strong>, junto al manómetro</div>
+      <div class="why">Es lo que mide el PID, y ahí mide <strong>lo que la malla ve</strong>. Del lado del tanque leería de
+        más (toda la caída del buzo se sumaría a su lectura); aguas arriba de la bola leería el suministro y el lazo no
+        cerraría nunca. Rosca <strong>G1/4 (BSPP, sello de arandela plana)</strong> — no enrosca en un puerto NPT sin
+        adaptador. De aquí sale la señal de 0.5–4.5 V que va al divisor 10k/22k
+        (esa parte vive en <code>wiring_protoboard.html</code>). <strong>Mantén la tee lo más cerca del portamalla que
+        permitan los fittings:</strong> ese tramo sí queda dentro de la medición.</div>
     </div>
   </div>
 
@@ -385,21 +624,23 @@
     <div class="chip" style="background:var(--grey,#9e9e9e)"></div>
     <div class="nom" style="color:var(--grey,#9e9e9e)">Manómetro de carátula</div>
     <div>
-      <div class="dst">→ se queda exactamente donde está</div>
-      <div class="why">Es la <strong>referencia</strong> de la calibración de dos puntos del transductor
-        (<code>docs/ASSEMBLY.md</code>, orden de armado paso 2). Montar el transductor «en el puerto del manómetro» para
-        ahorrarse un adaptador solo funciona si el manómetro se queda: hace falta una tee ahí, o calibrar antes de moverlo.</div>
+      <div class="dst">→ se queda exactamente donde está, en esa misma línea</div>
+      <div class="why">Sirve de lectura local y de <strong>respaldo</strong> de calibración. Ojo: la calibración de dos
+        puntos del transductor ya <strong>no</strong> se hace contra él — <code>docs/ASSEMBLY.md</code> (orden de armado
+        paso 2) la manda hacer contra el <strong>Keller LEX1</strong> del banco, y deja la carátula como alternativa solo
+        si el LEX1 no está disponible. Montar el transductor «en el puerto del manómetro» para ahorrarse un adaptador solo
+        funciona si el manómetro se queda: hace falta una tee ahí, o calibrar antes de moverlo.</div>
     </div>
   </div>
 
   <div class="fila">
-    <div class="chip" style="background:var(--pwr,#1f5e8b)"></div>
-    <div class="nom" style="color:var(--pwr,#1f5e8b)">Recipiente a presión</div>
+    <div class="chip" style="background:var(--good,#1e7d32)"></div>
+    <div class="nom" style="color:var(--good,#1e7d32)">Portamalla cilíndrico</div>
     <div>
-      <div class="dst">→ el aire entra por el headspace, arriba de la columna de agua</div>
-      <div class="why">Aire sobre agua: el aire nunca toca la membrana por arriba, empuja la columna. Es lo que hace que el
-        recipiente sea un <strong>acumulador de energía</strong> (el gas es compresible) y por eso el alivio tiene que
-        ventear ahí y no en el permeado.</div>
+      <div class="dst">→ el agua entra por arriba; la malla va en la brida atornillada de su base</div>
+      <div class="why"><strong>Es una pieza aparte del tanque</strong> — ese fue el error de las versiones anteriores de esta
+        hoja. La línea que lo alimenta viene del tanque y lleva la presión de prueba completa, así que se plomea rígida
+        (Swagelok), no con la manguera de permeato. Ni su rosca de entrada ni la de salida están registradas en el repo.</div>
     </div>
   </div>
 
@@ -407,8 +648,9 @@
     <div class="chip" style="background:var(--good,#1e7d32)"></div>
     <div class="nom" style="color:var(--good,#1e7d32)">Membrana</div>
     <div>
-      <div class="dst">→ prensada en la brida atornillada de la base; el permeato sale por DEBAJO</div>
-      <div class="why">A = 0.64 cm², L = 0.117 mm, etiqueta «60 mesh» (<code>config.yaml</code> bloque <code>membrane:</code>).
+      <div class="dst">→ prensada en la brida atornillada de la <strong>base del portamalla</strong>; el permeato sale por DEBAJO</div>
+      <div class="why">A = 0.64 cm², L = 0.117 mm, etiqueta «60 mesh» (<code>config.yaml</code> bloque <code>membrane:</code>);
+        Adrián la describe como un espécimen de ~1 cm², así que el área <strong>se mide antes de publicar un <code>k</code></strong>.
         Su límite es <strong>65 kPa</strong> y lo aplica el software en la admisión de la playlist. El alivio mecánico
         <strong>no</strong> la protege: cracka 25 kPa por encima de su límite.</div>
     </div>
@@ -416,11 +658,14 @@
 
   <div class="fila">
     <div class="chip" style="background:var(--sig,#8a6d00)"></div>
-    <div class="nom" style="color:var(--sig,#8a6d00)">Salida de permeado</div>
+    <div class="nom" style="color:var(--sig,#8a6d00)">Salida de permeato</div>
     <div>
-      <div class="dst">→ silicón 1/4" ID hasta el puerto 2 del solenoide</div>
+      <div class="dst">→ silicón 1/4" ID desde debajo de la brida hasta el puerto 2 del solenoide</div>
       <div class="why">Baja presión y agua: <strong>barb + abrazadera</strong>, no compresión y no NPT desnudo.
-        La rosca del puerto de salida del recipiente no está registrada en ningún archivo — mídela antes de pedir el adaptador.</div>
+        <strong>Rutéala cuesta abajo:</strong> cada metro de subida son 9.81 kPa de contrapresión — que es offset constante
+        y por eso <em>no</em> sesga <code>k</code>, pero a 35 kPa de consigna media subida se come el 14 % de la presión
+        motriz y puede dejarte sin flujo que medir. La rosca del puerto de salida del portamalla no está registrada en
+        ningún archivo — mídela antes de pedir el adaptador.</div>
     </div>
   </div>
 
@@ -428,9 +673,10 @@
     <div class="chip" style="background:var(--ctrl,#7a2f2f)"></div>
     <div class="nom" style="color:var(--ctrl,#7a2f2f)">Solenoide · puerto 2</div>
     <div>
-      <div class="dst">→ aquí entra el permeado (COM)</div>
+      <div class="dst">→ aquí entra el permeado (COM), viniendo de debajo de la brida del portamalla</div>
       <div class="why">Es el puerto que el proveedor llama «outlet», y es el común: el único que está conectado a algo en
-        <em>los dos</em> estados de la bobina. Por eso recibe el flujo, aunque el nombre diga lo contrario.</div>
+        <em>los dos</em> estados de la bobina. Por eso recibe el flujo, aunque el nombre diga lo contrario.
+        El solenoide entero va <strong>después</strong> del portamalla: es lo último de la cadena.</div>
     </div>
   </div>
 
@@ -492,7 +738,7 @@
         <td style="color:var(--pwr,#1f5e8b)">Swagelok / compresión</td>
         <td>La férula muerde el <strong>OD del tubo</strong>. Sello metal-metal sobre la superficie del tubo; la rosca de la tuerca solo aplica fuerza.</td>
         <td style="color:var(--bad,#b3261e)"><strong>NUNCA</strong></td>
-        <td>Todo el lado del aire: es la plomería que ya tiene el rig. La cinta ahí no sella nada y estorba el asentamiento de la férula.</td>
+        <td>Todo lo que está <strong>arriba de la malla</strong>: la línea de aire y la línea de agua presurizada tanque → tee → portamalla. Es la plomería que ya tiene el rig. La cinta ahí no sella nada y estorba el asentamiento de la férula.</td>
       </tr>
       <tr>
         <td style="color:var(--ctrl,#7a2f2f)">NPT (cónica)</td>
@@ -510,7 +756,7 @@
         <td style="color:var(--good,#1e7d32)">Barb + abrazadera</td>
         <td>La manguera comprimida contra las corrugaciones del barb. El sello lo hace la <strong>abrazadera</strong>, no la rosca.</td>
         <td style="color:var(--bad,#b3261e)"><strong>NUNCA</strong></td>
-        <td>Todo el lado del permeado: salida del recipiente, los tres puertos del solenoide vía adaptador NPT×barb, desecho y probeta.</td>
+        <td>Todo lo que está <strong>debajo de la malla</strong>: salida del portamalla, los tres puertos del solenoide vía adaptador NPT×barb, desecho y probeta.</td>
       </tr>
     </tbody>
   </table>
@@ -530,13 +776,18 @@
   <div class="caja" style="border-left:3px solid #b8860b">
     <h3 style="color:#b8860b">Lo que el BOM todavía no alcanza a especificar</h3>
     <ul class="why" style="margin:0">
-      <li><strong>Una sola tee — y ahora alcanza.</strong> <code>BOM.csv</code> lista <em>«Swagelok tee for sensor/relief tap»</em>
-        con <strong>Qty 1</strong>. Se pedía para <em>dos</em> tomas (alivio y transductor), lo que la dejaba corta; pero
-        <strong>el alivio no se va a comprar</strong>, así que queda una sola toma y la cantidad es correcta. Y puede que ni
-        esa haga falta: si el transductor entra en el puerto del manómetro —misma rosca G1/4 que el LEX1, por confirmar—
-        no se necesita tee. <em>Que no se compre una segunda por una pieza que no existe.</em></li>
-      <li><strong>El tipo de rama no está definido.</strong> El alivio pide rama <strong>1/4" NPT hembra</strong>;
-        el transductor pide <strong>G1/4</strong> o un adaptador. Una tee «tubo × tubo × tubo» no sirve para ninguno de los dos.</li>
+      <li><strong>La tee del BOM cambió de destinatario con la cadena.</strong> <code>BOM.csv</code> lista
+        <em>«Swagelok tee for sensor/relief tap»</em> con <strong>Qty 1</strong>, pensada para las dos tomas en la misma
+        línea. Con la cadena real son <strong>dos tees en dos líneas distintas</strong>: la del <strong>transductor</strong>
+        va en la línea de <em>agua</em> (tanque → portamalla) y la del <strong>alivio</strong> en la línea de
+        <em>aire</em> (bola → tanque). Pero la de agua <strong>ya existe en el rig</strong> — Adrián la describe montada, y
+        <code>docs/ASSEMBLY.md</code> § «Where the transducer goes» concluye que el rig ya tee-a bien. Entonces la única
+        tee que hay que comprar es la <strong>del alivio</strong>, y Qty 1 alcanza.
+        <span class="pend">confirmar con calibrador que la tee del agua está y qué rama tiene</span>
+        <em>Lo que no hay que hacer es comprar una segunda «por si acaso»: la cuenta cambió de sitio, no de tamaño.</em></li>
+      <li><strong>El tipo de rama no está definido.</strong> El alivio pide rama <strong>1/4" NPT hembra</strong>
+        (la CR25-100 es 1/4" NPT macho); el transductor pide <strong>G1/4</strong> o un adaptador. Una tee
+        «tubo × tubo × tubo» no sirve para ninguno de los dos.</li>
       <li><strong>La cinta de PTFE existe en el BOM</strong> con la nota correcta («NPT (diverter) joints only») pero
         <strong>no ha llegado</strong>, y sin ella no se puede sellar ningún puerto del solenoide.</li>
     </ul>
@@ -545,7 +796,7 @@
 
 <hr class="rule">
 
-<h2>Las tres dudas</h2>
+<h2>Las dudas de seguridad</h2>
 
 <div class="cols" style="margin-bottom:20px">
 
@@ -553,8 +804,8 @@
     <div class="co-t">«¿Por qué la válvula de alivio va del lado del aire y no del permeado?»</div>
     <div class="co-b">
       <p>Porque del lado del permeado no hay nada que aliviar, y aunque lo hubiera, no podría.</p>
-      <p><strong>La energía está en el aire.</strong> El gas del headspace es compresible: es el que almacena la presión y el
-        que puede seguir empujando aunque se cierre todo. El agua no. Ventear aire baja la presión del recipiente de
+      <p><strong>La energía está en el aire.</strong> El gas del headspace del tanque es compresible: es el que almacena la
+        presión y el que puede seguir empujando aunque se cierre todo. El agua no. Ventear aire baja la presión del tanque de
         inmediato; ventear una línea de líquido no baja nada, porque el líquido es incompresible y su gasto ya está limitado
         por otra cosa.</p>
       <p><strong>Y esa otra cosa es justamente la membrana.</strong> Un alivio en el permeado quedaría <em>aguas abajo de la
@@ -564,8 +815,11 @@
       <p><strong>Y el permeado ya está abierto a la atmósfera.</strong> En estado de reposo el solenoide desenergizado conecta
         el permeado con el desecho: es un drenaje abierto a un vaso, a presión ambiente. Un alivio ahí nunca crackearía.</p>
       <p class="tiny sub" style="margin:0">
-        Nota que vale la pena tener clara: el alivio protege al <strong>recipiente y a quien está parado junto a él</strong>,
-        no a la membrana. Cracka a ~90 kPa y el límite del espécimen es 65 kPa. La malla la protege el software, y solo el software.
+        Nota que vale la pena tener clara: el alivio protege al <strong>tanque y a quien está parado junto a él</strong>,
+        no a la membrana. Cracka a ~90 kPa y el límite del espécimen es 65 kPa. La malla la protege el software, y solo el
+        software. Y ojo con la cadena: el alivio va en la línea de aire, así que <strong>el portamalla —que es su propio
+        recipiente a presión— no tiene ninguna protección mecánica propia</strong>; depende de que su línea de alimentación
+        siga abierta hacia el tanque.
       </p>
     </div>
   </div>
@@ -609,17 +863,21 @@
           <code>GpioDiverter(initial_value=False)</code> apuntan al mismo lado.</p>
         <p><strong>La bola NO cierra.</strong> Un servo no tiene resorte de retorno: sostiene la posición por fricción y
           engranaje. Si iba en 55 % de apertura cuando se fue la luz, se queda en 55 % de apertura — y ahora nadie la puede
-          mover, porque el Pi también se apagó. El recipiente sigue llenándose hacia la presión del suministro.</p>
+          mover, porque el Pi también se apagó y <strong>la bola ya no tiene maneral</strong>. El tanque sigue llenándose
+          hacia la presión del suministro, y detrás de él la línea y el portamalla.</p>
       </div>
       <div>
-        <p><strong>Se apagó toda la escalera menos un peldaño.</strong> Los cuatro peldaños de abajo — pruebas ≤60,
+        <p><strong>Se apagó toda la escalera y no queda ningún peldaño.</strong> Los cuatro de abajo — pruebas ≤60,
           espécimen 65, techo por corrida max(setpoint)+10, corte global 80 — son <em>todos</em> de software. Sin Pi,
-          los cuatro desaparecen. El único que queda de pie es el <strong>alivio mecánico a ~90 kPa</strong>, que está
-          <strong>25 kPa por encima</strong> del límite del espécimen. Traducción honesta: al perder corriente,
-          la membrana ya no está protegida; solo lo está el recipiente.</p>
+          los cuatro desaparecen. El quinto sería el <strong>alivio mecánico a ~90 kPa</strong>, que además está
+          <strong>25 kPa por encima</strong> del límite del espécimen — pero <strong>está pedido, no montado</strong>.
+          Traducción honesta: hoy, al perder corriente, no protege nada más que la tarada del regulador del panel, que
+          nadie ha registrado.</p>
         <p style="margin:0"><strong>Por eso apagar el rig no es cerrar el aire.</strong> Al final de cada sesión hay que
-          <strong>cerrar el suministro a mano</strong>, aguas arriba de la bola. No es una recomendación de prudencia:
-          es el único acto que efectivamente corta la fuente de presión, y no hay ninguna pieza en el rig que lo haga por ti.</p>
+          <strong>cerrar la válvula del PANEL a mano</strong>. Dilo así y no «válvula de suministro»: la de bola tiene el
+          maneral quitado para que el servo pueda girar el vástago, así que <strong>la del panel es lo único que un humano
+          puede cerrar</strong>. No es una recomendación de prudencia — es el único acto que corta la fuente de presión, y
+          no hay ninguna pieza en el rig que lo haga por ti.</p>
       </div>
     </div>
   </div>
@@ -656,7 +914,9 @@
       <tr style="background:color-mix(in srgb, var(--bad,#b3261e) 8%, transparent)">
         <td style="color:var(--bad,#b3261e)">Alivio mecánico</td><td class="num">~90</td><td class="num">13.05</td>
         <td style="color:var(--bad,#b3261e)"><strong>hardware — nadie más</strong></td>
-        <td>La tee aguas abajo de la bola. <strong>El único peldaño que sigue existiendo sin corriente y sin Pi.</strong> <span class="pend">pieza no ha llegado</span></td>
+        <td>Una tee en la <strong>línea de aire</strong>, entre la bola y el tanque. Sería <strong>el único peldaño que
+          existe sin corriente y sin Pi</strong> — pero <span class="pend">pedida, no montada</span> así que hoy ese
+          renglón está vacío.</td>
       </tr>
       <tr>
         <td>Saturación del sensor</td><td class="num">103.4</td><td class="num">15.00</td>
@@ -669,8 +929,10 @@
     La columna de psi está aquí por una razón práctica: <strong>las válvulas de alivio se compran y se ajustan en psi</strong>,
     y el repo habla puro kPa. Convertida a 1 psi = 6.894757 kPa. El alivio tiene que quedar
     <strong>arriba de 11.60 psi</strong> (si no, ventea antes que el corte global y se vuelve el peldaño que gobierna)
-    y <strong>abajo del rating del recipiente</strong> — que <span class="pend">no está escrito en ningún archivo del repo</span>.
-    Pregúntaselo a Kwangsoo antes de fijar el tornillo.
+    y <strong>abajo del rating del tanque</strong> — que <span class="pend">no está escrito en ningún archivo del repo</span>.
+    Con la cadena confirmada son <strong>dos</strong> recipientes a presión sin rating registrado, el tanque y el
+    portamalla, y el que manda para tarar el alivio es el menor de los dos. Pregúntaselos a Kwangsoo antes de fijar el
+    tornillo.
   </p>
   <p class="tiny sub" style="margin:10px 0 0">
     Esta tabla es la escalera <strong>commiteada hoy</strong> en <code>config.yaml</code>, que es la que el software
@@ -697,7 +959,8 @@
         <td>Termina una corrida normal</td>
         <td><code>close()</code>: asienta, sostiene 1.5 s, suelta el servo.</td>
         <td>Desecho.</td>
-        <td>El recipiente se despresuriza <strong>solo por permeación a través de la malla</strong>: no hay venteo. Tarda.</td>
+        <td>Tanque, línea y portamalla se despresurizan <strong>solo por permeación a través de la malla</strong>: no hay
+          venteo, y ahora el volumen atrapado incluye el headspace del tanque. Tarda.</td>
       </tr>
       <tr>
         <td>La bola no sella de verdad</td>
@@ -709,7 +972,18 @@
         <td style="color:var(--bad,#b3261e)">Se va la luz a media corrida</td>
         <td style="color:var(--bad,#b3261e)"><strong>Queda donde iba. NO cierra.</strong></td>
         <td style="color:var(--good,#1e7d32)"><strong>Cae a desecho ✓</strong></td>
-        <td>El recipiente sube hacia el suministro. Único freno: el alivio a ~90 kPa, que está arriba del límite de la malla. <strong>Hay que cerrar el suministro a mano.</strong></td>
+        <td>Tanque y portamalla suben hacia el suministro. El freno que debería haber —el alivio a ~90 kPa, que además está
+          arriba del límite de la malla— <strong>no está montado</strong>. <strong>Hay que cerrar la válvula del PANEL a mano.</strong></td>
+      </tr>
+      <tr style="background:color-mix(in srgb, var(--bad,#b3261e) 8%, transparent)">
+        <td style="color:var(--bad,#b3261e)">Se zafa la línea <strong>tanque → portamalla</strong></td>
+        <td>Sigue alimentando; la presión se desploma y el PID abre la bola al 100 %.</td>
+        <td>Sin flujo.</td>
+        <td><strong>Es el chorro peligroso de esta cadena</strong>, porque ese tramo lleva la presión de prueba completa y
+          no ~atmosférico como el permeato. El rig lo confunde con «no alcanzo el setpoint»: lo que lo detiene es el
+          watchdog de planta (<code>watchdog_valve_pct: 70</code> durante <code>watchdog_hold_s: 8</code> sin subir
+          <code>watchdog_min_rise: 2</code> kPa), no un sensor de fuga. Por eso ese tramo se plomea rígido y con férula,
+          nunca con barb y abrazadera.</td>
       </tr>
       <tr>
         <td>Se desconecta el cable del transductor</td>
@@ -722,6 +996,15 @@
         <td>Sigue controlando normal.</td>
         <td>Se derrama al piso.</td>
         <td><strong>El rig no se entera.</strong> No hay caudalímetro: la presión se sigue sosteniendo bien y Q sale bajo o cero. Solo lo delata la probeta al final del punto. No hay failsafe de fluidos aquí.</td>
+      </tr>
+      <tr>
+        <td>El tanque se queda sin agua a media corrida</td>
+        <td>Sigue controlando normal.</td>
+        <td>Empieza a salir <strong>aire</strong>.</td>
+        <td>Modo de falla exclusivo de esta cadena, y silencioso: en cuanto el nivel baja de la boca del tubo buzo, lo que
+          llega al portamalla es aire del headspace. La presión se sigue sosteniendo perfecto, el R² se puede ver bien y
+          el volumen colectado ya no es permeato de agua. <strong>No hay sensor de nivel</strong> — el único control es
+          llenar el tanque y llevar la cuenta del volumen colectado por corrida.</td>
       </tr>
       <tr>
         <td>El solenoide quedó plomeado al revés</td>
@@ -739,24 +1022,28 @@
 <div class="cols3">
   <div class="caja" style="border-left:3px solid var(--good,#1e7d32)">
     <h3 style="color:var(--good,#1e7d32)">✓ En la mano</h3>
-    <p class="why" style="margin:0">Válvula de bola de aire (SS) · Recipiente a presión · Probeta graduada ·
-      Manómetro de carátula · Sonda DS18B20</p>
-    <p class="tiny sub" style="margin:10px 0 0">Todas eran «ya se tenía», salvo la sonda (llegó 2026-07-27). Ninguna se
-      conecta a otra sin una pieza que falta.</p>
+    <p class="why" style="margin:0">Válvula de bola de aire (SS) · <strong>Tanque de agua con su tubo buzo</strong> ·
+      <strong>Portamalla</strong> · Probeta graduada 1000 mL · Manómetro de carátula · Keller LEX1 · Sonda DS18B20 ·
+      Transductor 0–15 PSI (llegó 2026-07-27) · Solenoide 3 vías 231Y-6-12VDC</p>
+    <p class="tiny sub" style="margin:10px 0 0">El tanque y el portamalla están montados en el banco y son
+      <strong>piezas del laboratorio, no del BOM</strong> — por eso ninguno de los dos tiene rating de presión ni rosca
+      registrados en el repo. <span class="pend">medir sus roscas</span></p>
   </div>
   <div class="caja" style="border-left:3px solid var(--bad,#b3261e)">
     <h3 style="color:var(--bad,#b3261e)">✗ No ha llegado</h3>
-    <p class="why" style="margin:0">Válvula de alivio · Solenoide 3 vías 231Y-6-12VDC · Transductor 0–15 PSI ·
-      Tubería de silicón 1/4" ID · Kit de barbs · Abrazaderas · Cinta de PTFE · Adaptadores 1/4" NPT-M × barb (×3)</p>
-    <p class="tiny sub" style="margin:10px 0 0">Es <strong>todo</strong> lo que se conecta. Por eso hoy no hay ni una junta
-      que se pueda hacer.</p>
+    <p class="why" style="margin:0">Cinta de PTFE · Tubería de silicón 1/4" ID · Kit de barbs · Abrazaderas ·
+      Adaptadores 1/4" NPT-M × barb (×3) · Diodo 1N5819 (flyback) · Válvula de alivio (pedida de nuevo el 2026-07-31)</p>
+    <p class="tiny sub" style="margin:10px 0 0">Es todo lo que <strong>hace</strong> las juntas del lado húmedo. Sin la
+      cinta no se sella un solo puerto NPT del solenoide, así que aunque el solenoide ya esté aquí,
+      <strong>no hay ni una junta que se pueda hacer hoy</strong>.</p>
   </div>
   <div class="caja" style="border-left:3px solid var(--grey,#9e9e9e)">
     <h3 style="color:var(--grey,#9e9e9e)">? Estado desconocido</h3>
-    <p class="why" style="margin:0">Fittings Swagelok / McMaster: Roxanne ya colocó la orden, <strong>no se sabe si llegó</strong>.
-      Y aunque haya llegado, el tamaño se pidió sin medir el OD del tubo.</p>
-    <p class="tiny sub" style="margin:10px 0 0">Confirmar recepción con Kwangsoo, y verificar contra el calibrador antes de
-      dar por buena la talla.</p>
+    <p class="why" style="margin:0">Fittings Swagelok / McMaster: <strong>llegaron</strong>, pero
+      <strong>nadie ha verificado qué trae la caja</strong> — en particular si incluye el adaptador G1/4 → Swagelok del
+      transductor. Y el tamaño se pidió sin medir el OD del tubo.</p>
+    <p class="tiny sub" style="margin:10px 0 0">Pedir foto o lista de empaque, y verificar contra el calibrador antes de
+      dar por buena la talla. Aprovecha para confirmar si en la línea del agua ya hay una tee montada.</p>
   </div>
 </div>
 
@@ -773,13 +1060,30 @@
     <li><strong>Dónde va la sonda DS18B20.</strong> <code>docs/paper/fig1_system.png</code> la cuelga de la probeta;
       <code>docs/ASSEMBLY.md</code> §4 y <code>tools/gen_wiring.py</code> paso 5 la ponen en el chorro del desecho.
       Esta hoja sigue a ASSEMBLY, por el argumento de desplazamiento de volumen. Hay que alinear la figura del paper.</li>
-    <li><strong>Rating de presión del recipiente.</strong> <code>ASSEMBLY.md</code> pide fijar el alivio «below the vessel's
-      limit», pero ese límite <strong>no está escrito en ningún archivo del repo</strong>. Sin ese número, «~90 kPa» es una
-      elección razonada contra el corte de software, no contra el recipiente.</li>
+    <li><strong>Rating de presión — de los DOS recipientes.</strong> <code>ASSEMBLY.md</code> pide fijar el alivio «below the
+      vessel's limit», pero con la cadena confirmada hay <em>dos</em> piezas presurizadas —el <strong>tanque</strong> y el
+      <strong>portamalla</strong>— y <strong>ninguno de los dos límites está escrito en ningún archivo del repo</strong>.
+      Sin esos números, «~90 kPa» es una elección razonada contra el corte de software, no contra el hardware.</li>
+    <li><strong>Las tres roscas nuevas que trajo la cadena.</strong> El puerto del <strong>tubo buzo</strong> en el tanque,
+      la <strong>entrada</strong> del portamalla y su <strong>salida de permeato</strong>. Ninguna aparece en
+      <code>ASSEMBLY.md</code> § «Measure before designing/buying» (esa lista se escribió cuando el rig se creía un solo
+      recipiente) ni en ningún otro archivo. Son medición de calibrador, y bloquean el pedido de adaptadores.</li>
+    <li><strong>El ID del tubo buzo.</strong> Toda la tabla de caída de presión de <code>ASSEMBLY.md</code> se calcula
+      sobre 3 / 4 / 6 mm, y <strong>cuál es el real no está registrado</strong>. No sesga <code>k</code> (queda aguas
+      arriba de la tee), pero decide cuánto más alto tiene que trabajar el tanque para un mismo ΔP en la malla, y con
+      3 mm a 30 mL/s son <strong>26.6 kPa</strong> — comparable a la presión de trabajo.</li>
+    <li><strong>Dónde está el Keller LEX1 en la cadena.</strong> <code>ASSEMBLY.md</code> dice que el LEX1 ya está
+      <em>montado en este rig</em> y que la calibración de 2 puntos va contra él, no contra la carátula. Pero la cadena
+      que Adrián describió de primera mano solo menciona el <strong>manómetro analógico</strong>. En qué punto de la
+      línea está tomado el LEX1 <strong>no está en ningún archivo</strong>, y eso importa: si cuelga de otro nodo, la
+      calibración compara dos presiones que no son la misma. <span class="pend">localizar el LEX1 en el banco</span></li>
+    <li><strong>Si la tee del agua ya existe o hay que comprarla.</strong> Adrián la describe montada y
+      <code>ASSEMBLY.md</code> concluye que «el rig ya lo tiene bien», pero nadie la ha visto con un calibrador ni ha
+      registrado el tipo de rama. De eso depende si la única tee del BOM se destina al alivio o al transductor.</li>
     <li><strong>Consumo de la bobina del diverter.</strong> <code>ASSEMBLY.md</code> y <code>wiring_ubec.html</code> dicen que
       no está registrado. El listado del proveedor da <strong>13 W a 12 V ≈ 1.08 A</strong>, que con los ~0.95 A del UBEC
-      suma ~2.03 A contra el fusible de 3 A. <span class="conf">del listado, no medido</span> — vale la pena confirmarlo
-      contra la placa de la válvula cuando llegue y reflejarlo en <code>ASSEMBLY.md</code>.</li>
+      suma ~2.03 A contra el fusible de 3 A. <span class="conf">del listado, no medido</span> — la válvula ya está aquí,
+      así que se puede leer de su placa y reflejarlo en <code>ASSEMBLY.md</code>.</li>
     <li><strong>Presión mínima de operación del solenoide.</strong> El listado da rango 0–115 psi, lo que sugiere acción
       directa (y por eso funcionaría en un permeado a ~0 barg). <span class="pend">confirmar en el datasheet</span>:
       una válvula asistida por piloto necesitaría un diferencial mínimo y en esta línea nunca abriría.</li>
@@ -792,12 +1096,17 @@
 <p class="tiny sub" style="margin-top:22px">
   Fuentes: <code>.claude/roles/hardware.md</code> · <code>config.yaml</code> (bloques <code>sensor:</code>, <code>valve:</code>,
   <code>diverter:</code>, <code>safety:</code>, <code>membrane:</code>, <code>test:</code>, <code>temperature:</code>) ·
-  <code>docs/ASSEMBLY.md</code> · <code>BOM.csv</code> · <code>INVENTORY.md</code> · <code>README.md</code> (§ Build review) ·
+  <code>docs/ASSEMBLY.md</code> (en particular § «Where the transducer goes» y § «The specimen sits in its own holder»,
+  de donde salen las dos tablas de caída de presión) · <code>docs/COMMISSIONING.md</code> § Stage 10.5 ·
+  <code>BOM.csv</code> · <code>INVENTORY.md</code> · <code>README.md</code> (§ Build review) ·
   <code>tools/gen_wiring.py</code> · <code>src/hal/servo_valve.py</code> · <code>src/hal/gpio_diverter.py</code> ·
   <code>src/hal/ds18b20.py</code> · <code>docs/paper/gen_paper.js</code> ·
   listado del fabricante del solenoide 231Y-6-12VDC (ESValves) y de la válvula de alivio CR25-100.
+  La <strong>topología</strong> viene de Adrián de primera mano, no de un archivo — hasta el 2026-08-03 el repo describía
+  un solo recipiente con la membrana adentro.
   <strong>Nada de esta hoja está medido en el rig</strong>: no hay una sola junta hecha, ninguna presión verificada y
-  ningún fitting probado. Los tamaños de rosca del recipiente, del manómetro y del panel están sin medir a propósito —
-  marcados, no adivinados.
+  ningún fitting probado. Los tamaños de rosca del tanque, del portamalla, del manómetro y del panel están sin medir
+  a propósito — marcados, no adivinados. Y las caídas de presión del tubo buzo y del tramo tee → portamalla son
+  <strong>cálculo, no medición</strong>: dependen de un ID y de una longitud que nadie ha tomado todavía.
 </p>
 </div>
