@@ -703,6 +703,15 @@ PAGE = r"""<!doctype html>
   .legend .ln{display:inline-block;width:22px;height:0;border-top-width:3px}
   .legend .meas{border-top-style:solid;border-top-color:var(--acc)}
   .legend .targ{border-top-style:dashed;border-top-color:#8b949e}
+  .legend .ceil{border-top-style:dotted;border-top-color:var(--bad)}
+  .legend .sw{display:inline-block;width:22px;height:11px;border-radius:3px}
+  .legend .band{background:rgba(63,185,80,.22);border:1px solid rgba(63,185,80,.45)}
+  .chartwrap{position:relative}
+  .charttip{position:absolute;top:4px;pointer-events:none;background:#0d1117;
+            border:1px solid var(--line);border-radius:7px;padding:5px 9px;font-size:12px;
+            color:var(--ink);white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+  .charttip[hidden]{display:none}
+  .charttip .tt{color:var(--muted);margin-left:8px}
   table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
   th,td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}
   th:first-child,td:first-child{text-align:left}
@@ -978,12 +987,17 @@ holding steady.">?</span></label>
       <span id="collectWrap" style="display:none">collect left <b id="cleft">–</b>s</span>
       <span>abort above <b id="ceil">–</b> <span class="u"></span></span>
     </div>
-    <canvas id="chart" width="900" height="280" role="img"
-            aria-label="Live chart of measured pressure against the target over time.
+    <div class="chartwrap">
+      <canvas id="chart" width="900" height="280" role="img"
+              aria-label="Live chart of measured pressure against the target over time.
 The readings above give the same values as text."></canvas>
+      <div class="charttip" id="chartTip" hidden></div>
+    </div>
     <div class="legend">
       <span><i class="ln meas"></i>measured pressure</span>
       <span><i class="ln targ"></i>target (setpoint)</span>
+      <span><i class="sw band"></i>tolerance band</span>
+      <span><i class="ln ceil"></i>ceiling (abort)</span>
     </div>
     <div class="tscroll"><table id="results"><thead><tr>
       <th>Setpoint</th><th>Mean</th><th>Std</th><th>Min</th><th>Max</th><th>In-band</th><th>n</th><th></th>
@@ -1055,6 +1069,24 @@ async function post(url,body){
   return {ok:r.ok && j.ok!==false, data:j};
 }
 
+// Every button that talks to the rig goes through this. Over the tunnel a round
+// trip is long enough that a button which does nothing visible reads as broken,
+// and the operator presses it again — which for /playlist/play or a recovery
+// verb means asking twice for something that should happen once. Busy state
+// disables it, then a tick or a cross says which way it went.
+async function act(btn,url,body,okLabel){
+  if(btn.dataset.busy) return {ok:false,data:{}};
+  const label=btn.textContent;
+  btn.dataset.busy="1"; btn.disabled=true; btn.textContent="working…";
+  let res;
+  try{ res=await post(url,body); }
+  catch(e){ res={ok:false,data:{error:"could not reach the rig"}}; }
+  btn.textContent=res.ok?("✓ "+(okLabel||label)):("✕ "+label);
+  setTimeout(()=>{ btn.textContent=label; btn.disabled=false;
+                   delete btn.dataset.busy; }, res.ok?900:1600);
+  return res;
+}
+
 async function loadConfig(){
   const c=await (await fetch("/config")).json();
   U=c.units; CUTOFF=c.max_pressure; LIMIT=c.pressure_limit; MODE=c.mode;
@@ -1109,7 +1141,7 @@ $("expSp").oninput=checkSp;
 
 $("saveLimit").onclick=async()=>{
   const v=parseFloat($("meshLimit").value);
-  const r=await post("/limit",{limit:isNaN(v)?null:v});
+  const r=await act($("saveLimit"),"/limit",{limit:isNaN(v)?null:v},"Saved");
   if(r.ok){ LIMIT=r.data.limit; $("limitTxt").textContent=LIMIT; checkSp(); loadPlaylist(true); }
   else alert(r.data.error||"could not set the limit");
 };
@@ -1168,7 +1200,7 @@ $("addBtn").onclick=async()=>{
 };
 
 $("playBtn").onclick=async()=>{
-  const r=await post("/playlist/play");
+  const r=await act($("playBtn"),"/playlist/play",null,"Started");
   $("playErr").textContent=r.ok?"":(r.data.error||"could not start");
   if(r.ok) loadPlaylist(true);
 };
@@ -1327,7 +1359,7 @@ function renderHeld(s){
   $("heldWhy").textContent=why.join(" ");
 }
 $("hRetry").onclick=async()=>{
-  const r=await post("/recover/retry");
+  const r=await act($("hRetry"),"/recover/retry",null,"Retrying");
   $("heldErr").textContent=r.ok?"":(r.data.error||"could not retry");
 };
 $("hStop").onclick=async()=>{
@@ -1549,31 +1581,104 @@ function renderGate(d){
 
 function phaseClass(p){return "pill st-"+(p||"idle");}
 
-function draw(hist, tol){
+// Kept so the tooltip can answer "what was the value here" without re-deriving
+// the scales from a second copy of the data.
+let CHART={hist:null,sx:null,sy:null,t0:0,pad:0};
+
+function draw(hist, tol, ceiling){
   const cv=$("chart"), ctx=cv.getContext("2d");
   const W=cv.width=cv.clientWidth*devicePixelRatio, H=cv.height=280*devicePixelRatio;
   ctx.clearRect(0,0,W,H); ctx.scale(1,1);
   const pad=38*devicePixelRatio;
+  CHART.hist=null;
   if(!hist||hist.length<2){ctx.fillStyle="#8b949e";ctx.font=(13*devicePixelRatio)+"px sans-serif";
     ctx.fillText("waiting for data…",pad,H/2);return;}
   const t0=hist[0][0], t1=hist[hist.length-1][0];
   let pmin=Infinity,pmax=-Infinity;
   for(const h of hist){pmin=Math.min(pmin,h[1],h[2]);pmax=Math.max(pmax,h[1],h[2]);}
   pmin=Math.min(pmin, 0); pmax=Math.max(pmax*1.1, pmax+ (tol||1));
+  // The ceiling joins the scale only when it is close enough that showing it
+  // costs nothing. A run at 20 with a ceiling clamped to 65 would otherwise
+  // squash the trace into the bottom third to display a line nothing is near.
+  // When it is off-scale it still gets drawn — pinned to the top edge and
+  // labelled with an arrow, so "the limit is above this view" is visible rather
+  // than merely absent.
+  const ceilOnScale = ceiling!=null && ceiling<=pmax*1.6;
+  if(ceilOnScale) pmax=Math.max(pmax,ceiling*1.04);
   const sx=t=>pad+(t-t0)/Math.max(1e-6,(t1-t0))*(W-1.4*pad);
   const sy=p=>H-pad-(p-pmin)/Math.max(1e-6,(pmax-pmin))*(H-1.6*pad);
+  CHART={hist:hist,sx:sx,sy:sy,t0:t0,pad:pad};
+
+  // Tolerance band first, under everything: the operator is waiting for the
+  // blue line to sit inside this, and that is easier to see as a region than by
+  // comparing two numbers in the meta row.
+  if(tol>0){
+    ctx.fillStyle="rgba(63,185,80,.10)";
+    ctx.beginPath();
+    hist.forEach((h,i)=>{const x=sx(h[0]),y=sy(h[2]+tol);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    for(let i=hist.length-1;i>=0;i--){const h=hist[i];ctx.lineTo(sx(h[0]),sy(h[2]-tol));}
+    ctx.closePath();ctx.fill();
+  }
+
   ctx.strokeStyle="#30363d";ctx.lineWidth=devicePixelRatio;ctx.beginPath();
   ctx.moveTo(pad,H-pad);ctx.lineTo(W-0.4*pad,H-pad);ctx.moveTo(pad,H-pad);ctx.lineTo(pad,0.6*pad);ctx.stroke();
   ctx.fillStyle="#8b949e";ctx.font=(11*devicePixelRatio)+"px sans-serif";
   for(let i=0;i<=4;i++){const p=pmin+(pmax-pmin)*i/4;const y=sy(p);
     ctx.fillText(p.toFixed(1),4,y+3);ctx.strokeStyle="#1c2128";ctx.beginPath();
     ctx.moveTo(pad,y);ctx.lineTo(W-0.4*pad,y);ctx.stroke();}
+
+  // The ceiling: the pressure this run is not allowed to pass. Drawn so the
+  // safety ladder is something the operator SEES rather than reads in a box.
+  if(ceiling!=null){
+    const y=ceilOnScale?sy(ceiling):0.6*pad;
+    ctx.save();
+    ctx.setLineDash([3*devicePixelRatio,3*devicePixelRatio]);
+    ctx.strokeStyle="#f85149";ctx.lineWidth=1.5*devicePixelRatio;
+    ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-0.4*pad,y);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle="#f85149";ctx.font=(11*devicePixelRatio)+"px sans-serif";
+    const label=(ceilOnScale?"ceiling ":"ceiling ↑ ")+fmt(ceiling,1)+" "+U;
+    ctx.fillText(label, W-0.4*pad-ctx.measureText(label).width, y-4*devicePixelRatio);
+    ctx.restore();
+  }
+
   ctx.setLineDash([6*devicePixelRatio,4*devicePixelRatio]);ctx.strokeStyle="#8b949e";ctx.beginPath();
   hist.forEach((h,i)=>{const x=sx(h[0]),y=sy(h[2]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
   ctx.setLineDash([]);
   ctx.strokeStyle="#2f81f7";ctx.lineWidth=2*devicePixelRatio;ctx.beginPath();
   hist.forEach((h,i)=>{const x=sx(h[0]),y=sy(h[1]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
 }
+
+// Point at the trace to read it. Works with a finger as well as a mouse — over
+// the tunnel this chart is often the only thing telling the operator what the
+// cell is doing, and "roughly where the line is" is not a reading.
+function chartProbe(clientX){
+  const cv=$("chart"), tipEl=$("chartTip");
+  if(!CHART.hist){ tipEl.hidden=true; return; }
+  const r=cv.getBoundingClientRect();
+  const xCss=clientX-r.left;
+  const x=xCss*devicePixelRatio;
+  let best=null,bestD=Infinity;
+  for(const h of CHART.hist){
+    const d=Math.abs(CHART.sx(h[0])-x);
+    if(d<bestD){bestD=d;best=h;}
+  }
+  if(!best){ tipEl.hidden=true; return; }
+  tipEl.hidden=false;
+  tipEl.innerHTML=`<b>${fmt(best[1])} ${U}</b>`+
+    (best[2]!=null?` · target ${fmt(best[2])}`:"")+
+    `<span class="tt">t+${fmt(best[0]-CHART.t0,1)}s</span>`;
+  const px=CHART.sx(best[0])/devicePixelRatio;
+  tipEl.style.left=Math.max(4,Math.min(px-tipEl.offsetWidth/2,r.width-tipEl.offsetWidth-4))+"px";
+}
+(function(){
+  const cv=$("chart");
+  cv.addEventListener("mousemove",e=>chartProbe(e.clientX));
+  cv.addEventListener("mouseleave",()=>{$("chartTip").hidden=true;});
+  cv.addEventListener("touchstart",e=>{if(e.touches[0])chartProbe(e.touches[0].clientX);},{passive:true});
+  cv.addEventListener("touchmove",e=>{if(e.touches[0])chartProbe(e.touches[0].clientX);},{passive:true});
+  cv.addEventListener("touchend",()=>{$("chartTip").hidden=true;});
+})();
 
 function showAnalysis(a, combined){
   if(!a) return;
@@ -1804,7 +1909,7 @@ async function poll(){
     if(s.close_warning){cw.style.display="block";cw.textContent="⚠ "+s.close_warning;}
     else{cw.style.display="none";}
     const tol=s.setpoint_disp? s.setpoint_disp*(parseFloat($("expTol").value)||10)/100 : 1;
-    draw(s.history, tol);
+    draw(s.history, tol, s.run_ceiling_disp);
     const tb=$("results").querySelector("tbody"); tb.innerHTML="";
     (s.results||[]).forEach(r=>{
       const tr=document.createElement("tr");
