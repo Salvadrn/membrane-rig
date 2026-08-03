@@ -50,6 +50,23 @@ Everything except the last one is the software succeeding at its job: it saw a
 problem and put the rig in a safe state. The last one is the software telling you
 it *failed* and needs you.
 
+### This looks wrong but isn't
+
+**A queue item in red (FAILED) has not lost its data.** Stopping a run marks the
+item failed, but every point it already measured is still there — in the run's
+CSV and in the item itself. What it is *not* in, yet, is the combined fit, which
+only counts items marked done.
+
+> **Re-queueing does not recover them — it re-runs the whole experiment**, and
+> costs you the bench time and the setup again. **Marking the item done** is what
+> pulls its measured points into the combined fit.
+
+The item's own note says this where you will see it, in the queue.
+
+This will come up more than you expect, because stopping a run is a normal thing
+to do: a session times out, you log back in, you stop. That is not a failure, and
+neither is what it leaves behind.
+
 ### Never do these
 
 - **Never loosen a pressure limit** to make an abort stop happening. The limits
@@ -73,6 +90,15 @@ You can start, watch and stop a run from the web interface. You **cannot**:
 
 So: **do not start a pressurised run unless someone is in the lab.** Remote
 operation is for watching and stopping, not for unattended experiments.
+
+**Keep a session open for the whole run.** Every action in the app — including
+stop — requires being logged in. If your session expires while pressure is up,
+you have to authenticate before you can stop anything, and that is time you may
+not want to spend. Log in before you start, and stay logged in until the run
+ends.
+
+The panel valve is the only control that never asks for a password. That is
+another reason someone should be in the lab whenever the rig is pressurised.
 
 ---
 
