@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import json
 import os
+import pathlib
 import sys
 import time
 import urllib.error
@@ -47,6 +48,25 @@ import urllib.request
 APP_STATUS_URL = os.environ.get("RIG_APP_STATUS_URL", "http://127.0.0.1:8000/status")
 BEACON_URL = os.environ.get("RIG_BEACON_URL", "")
 SECRET = os.environ.get("RIG_INGEST_SECRET", "")
+
+# The app's auth file (src/ui/auth.py owns the format; tools/set_password.py
+# writes it). Parsed directly instead of importing src.ui.auth for two reasons:
+# this script's documented contract is the HTTP boundary, and under the systemd
+# unit in the docstring `python tools/status_beacon.py` has sys.path[0]=tools/,
+# so the import would not resolve anyway. The format is KEY=value, one per
+# line — if auth.py ever changes it, the 401 handler below says so out loud.
+AUTH_FILE = pathlib.Path(os.environ.get("RIG_AUTH_FILE", os.path.expanduser("~/.membrane-rig/auth")))
+
+
+def beacon_token() -> str | None:
+    """Fresh read every call, so --rotate-token takes effect without a restart."""
+    try:
+        for line in AUTH_FILE.read_text().splitlines():
+            if line.startswith("BEACON_TOKEN="):
+                return line.split("=", 1)[1].strip() or None
+    except OSError:
+        pass  # no auth configured yet: the app serves /status open and warns
+    return None
 
 POST_PERIOD_S = 5.0  # the Worker calls the rig stale after 20 s, i.e. three missed beats
 HTTP_TIMEOUT_S = 4.0  # under the period, so a hung request cannot stack up beats
@@ -95,9 +115,23 @@ def translate(payload: dict) -> dict:
 
 
 def fetch_status() -> dict | None:
+    req = urllib.request.Request(APP_STATUS_URL)
+    token = beacon_token()
+    if token:
+        req.add_header("X-Rig-Token", token)
     try:
-        with urllib.request.urlopen(APP_STATUS_URL, timeout=HTTP_TIMEOUT_S) as r:
+        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_S) as r:
             payload = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        if exc.code == 401:
+            hint = ("token rejected — rotated? run: python tools/set_password.py --show-token"
+                    if token else
+                    "auth is configured but no BEACON_TOKEN found in "
+                    f"{AUTH_FILE} — run: python tools/set_password.py --rotate-token")
+        else:
+            hint = str(exc)
+        print(f"[beacon] cannot read app status: {hint}", file=sys.stderr, flush=True)
+        return None
     except Exception as exc:  # app down, restarting, or not serving yet
         print(f"[beacon] cannot read app status: {exc}", file=sys.stderr, flush=True)
         return None
