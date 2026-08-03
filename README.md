@@ -310,12 +310,17 @@ not stop anyone sniffing the network. That is why the intended route is the
 Cloudflare tunnel, which brings TLS. Full setup and reasoning in
 [`docs/REMOTE_ACCESS.md`](docs/REMOTE_ACCESS.md).
 
-> **`POST /stop` and `POST /recover/stop` deliberately need no account.** With no
-> mechanical relief fitted, a servo that does not close on power loss, and a
-> control valve whose handle has been removed, `/stop` is one of only two things
-> that can halt pressurisation — and the other requires standing at the panel.
-> Everything else needs a session, including `/recover/raise`, which lifts a
-> safety ceiling.
+> **Every endpoint needs an account — stopping included.** There is no exempt
+> endpoint. Exempting `/stop` was recommended by the control, hardware and
+> interface work and verified harmless; Adrián was given that recommendation
+> plus the physical argument for it and chose the strict policy anyway, so it
+> is a decision rather than a default nobody picked.
+>
+> Know the cost before you meet it: **if your session has lapsed you cannot stop
+> the rig from this page until you sign in.** The mitigations are load-bearing,
+> not polish — an in-page sign-in overlay that keeps you where you were, long
+> sessions renewed on use, and a rate limit that delays but never locks you out.
+> **The fallback that always works is physical: close the panel valve by hand.**
 
 Three ways to link them — pick by your lab:
 
