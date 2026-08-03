@@ -111,6 +111,16 @@ Para pasar trabajo entre sesiones, usa la herramienta de mensajes entre sesiones
   *recomienda*, contra el código y contra las decisiones vigentes. Si cambiaste
   **qué hace** el sistema o **qué se va a comprar**, abre `CLAUDE.md`,
   `README.md`, `.claude/roles/*`, `docs/` y `docs/paper/` y léelos.
+- **Un barrido solo limpia lo que existía cuando corrió.** La regla de arriba
+  ataca lo viejo que quedó; su gemela es **texto nuevo escrito desde un modelo
+  mental viejo**, que reintroduce el error sin que ningún barrido lo cache — la
+  sección no estaba cuando se barrió, y releer lo cambiado no la encuentra. Caso
+  real (2026-07-31): el barrido `16d88ac` sacó del repo entero la afirmación de
+  que el alivio mecánico protege sin software; una sección de `REMOTE_ACCESS.md`
+  redactada DESPUÉS la reintrodujo textual — una afirmación de seguridad, la peor
+  categoría para reintroducir. Si escribes una sección nueva sobre un tema
+  corregido hace poco, verifícala contra el estado actual, no contra lo que
+  recordabas — sobre todo si empezaste a redactarla antes de la corrección.
 - **Simulación ≠ hardware.** Cualquier afirmación sobre el comportamiento físico
   va marcada como pendiente de validar en el rig.
 - **Un sensor caído nunca se interpreta como "presión baja"** — se trata como
