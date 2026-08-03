@@ -26,6 +26,15 @@ Eres el agente **Interfaz** del proyecto membrane-rig (banco de permeabilidad de
 - **Panel "gate" (`#gateBox`, `renderGate(d)`)**: es el corazon del flujo. Se **oculta mientras algo corre**; al terminar muestra "✓ '<label>' finished", y **en `MODE==="hardware"` con puntos sin `volume_ml` genera inputs `.gvol` + boton `#saveVols` → `POST /playlist/volumes`**. Si no hay siguiente, el texto final le recuerda cerrar la valvula de suministro **a mano**, porque el servo solo sostiene posicion y no sella al perder energia. Ese parrafo no se borra.
 - **Todo viaja en unidades de display, no en kPa.** El JS manda lo que el usuario escribio y el servidor convierte con `cfg.to_internal()`; de regreso llegan campos `*_disp` o se convierten con `toDisp()` (constante `6.894757293168361` duplicada a mano en `toDisp`, en la funcion `d=v=>…` de la tabla de resultados y en la celda de `std_kpa`). Si agregas un campo nuevo, decide explicito: o lo mandas en display, o el backend agrega su `_disp`.
 - **Los pills de estado son CSS por clase generada**: `class="pill st-${it.status}"`. Existen `.st-idle .st-pending .st-stabilizing .st-collecting .st-running .st-done .st-fault .st-failed .st-skipped`. Un estado nuevo en `playlist.py` sin su regla CSS sale sin estilo.
+- **Todo endpoint exige sesión, incluido `POST /stop`.** Política **explícita de
+  Adrián (2026-07-31)**, elegida **contra** la recomendación conjunta de Control,
+  Hardware e Interfaz de eximir el paro —recomendación unánime y verificada
+  inocua— y sostenida después de que se le presentara el argumento físico de
+  Hardware. **No la relajes.** Reabrirla es conversación con Adrián, no un
+  commit. Las mitigaciones son parte de la política, no adorno: login en la
+  propia página sin navegar, foco en el paro al entrar, sesiones de una semana
+  renovadas por uso, limitador que retrasa pero nunca bloquea de forma duradera,
+  y banner con el fallback físico (cerrar la válvula del panel a mano).
 - **Todo texto del operador se ESCAPA antes de `innerHTML`** (`esc()`), en la tabla de la cola, en el gate y en la tira de siguiente paso. La razon vieja —"lo teclea el operador local, asi que hoy pasa"— **ya no es cierta y no vuelve**: la playlist es un archivo que sobrevive la sesion, `POST /playlist/add` acepta etiquetas de cualquier cliente sin pasar por la pagina, el rig contesta por el tunel, y quien lee la cola ya no es quien la lleno. El escape va en el **render**, no en la entrada, para que cubra toda fuente por igual.
 - **Stop vive en la barra de seguridad fija** (`stopBtn`, ~46 px, alcanzable sin scroll; commits `18a65a3`/`a542211`). Se deshabilita SOLO cuando no hay enlace (el clic no llegaria) y sigue vivo con el lazo atorado (el servidor responde y `/stop` corre `_safe_all()`) — esa asimetria es deliberada, no la "simplifiques". El guard `$("stopBtn")&&(...)` que justificaba su ausencia ya no existe.
 - **`POST /playlist/edit` esta implementado y la pagina nunca lo llama.** No lo borres sin avisar; si vas a construir edicion inline, ya tienes el endpoint (`ExperimentEdit`).
