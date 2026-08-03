@@ -565,7 +565,7 @@ PAGE = r"""<!doctype html>
   <span class="spacer"></span>
   <button class="estop" id="stopBtn">■ Stop &amp; shut feed</button>
   <div class="barnote" id="barNote">Stop shuts the feed valve and routes permeate to waste.
-    It does not vent the cell — and the supply valve still has to be closed by hand.</div>
+    It does not vent the cell — and the panel valve still has to be closed by hand.</div>
   <div class="stalebar" id="staleBar" role="alert">⚠ No answer from the rig — the readings below are the
     last ones received and may be out of date.</div>
 </div>
@@ -905,7 +905,8 @@ $("startBtn").onclick=async()=>{
 let HELD=false;
 $("stopBtn").onclick=async()=>{
   if(!confirm("Stop the run?\n\nThis shuts the feed valve and routes permeate to waste. "+
-              "It does NOT vent the cell, and the supply valve still has to be closed by hand."))
+              "It does NOT vent the cell, and the air valve on the lab panel still has to be "+
+              "closed by hand."))
     return;
   const r=await post(HELD?"/recover/stop":"/stop");
   if(!r.ok && r.data && r.data.error) alert("Could not stop: "+r.data.error);
@@ -1193,7 +1194,7 @@ function renderGate(d){
           `${nxt.setpoints.join(", ")} ${U} for ${nxt.collection_s}s. Press play when you are ready.`;
   } else {
     body+=`${body?"<br>":""}<b style="color:var(--ink)">Playlist finished</b> — nothing pending. `+
-          `The rig has shut its feed valve; <b style="color:var(--ink)">close the supply valve by `+
+          `The rig has shut its feed valve; <b style="color:var(--ink)">close the panel valve by `+
           `hand</b> before you leave, since the servo only holds position and does not seal on power loss.`;
   }
   $("gateTitle").textContent=title||"Ready";

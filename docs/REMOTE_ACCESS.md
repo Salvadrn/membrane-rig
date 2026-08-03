@@ -85,8 +85,15 @@ and the parts below exist specifically for it.
   true — a stop control you have to scroll to find is not a stop control.
 - **Stop shuts the feed; it does not vent the cell.** It fully closes the feed
   valve and routes permeate to waste. The cell then bleeds down through the
-  membrane. There is also a mechanical relief at ~90 kPa that needs no software.
-- **The supply valve still has to be closed by hand**, and remotely *nobody can
+  membrane.
+- **Nothing on this rig protects it without the software.** The mechanical relief
+  valve is on order and **not fitted**, and the servo holds its position rather
+  than sealing when it loses power. So every layer that can stop a pressure
+  excursion — the run ceiling, the global cutoff, the sensor checks — needs the
+  controller powered and running. Operating remotely, that is the assumption you
+  are making: if the software cannot act and you are not at the bench, nothing
+  else will.
+- **The panel valve still has to be closed by hand**, and remotely *nobody can
   do that*. The servo only holds position; it does not seal when it loses power.
   So a remote session is never fully "put away" until someone walks to the bench.
   Plan the end of a remote run around that.
