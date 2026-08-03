@@ -110,8 +110,14 @@ class RigController:
         # evidence trail looking like a measurement. Refined at runtime to flag a
         # probe that has stopped answering.
         self._temp_source = getattr(self.temp, "source", "unknown")
+        self._temp_last_good = 0.0   # monotonic of the last successful read; 0 = never
         self._temp_sum = 0.0
         self._temp_n = 0
+        # Provenance of the temperature ACROSS the run: "mixed" if it changed
+        # mid-run, because a single run-level label would then misdescribe every
+        # sample on one side of that moment. The per-row CSV stays the record of
+        # truth; this is the honest scalar for the run summary.
+        self._run_temp_source: Optional[str] = None
         # in sim, tell the plant the viscosity so its flow scales as 1/mu
         if self.plant is not None and hasattr(self.plant, "set_viscosity"):
             self.plant.set_viscosity(water_viscosity_pa_s(cfg.temperature.manual_c))
@@ -278,6 +284,7 @@ class RigController:
             self.status["held_alarm"] = None
             self._temp_sum = 0.0
             self._temp_n = 0
+            self._run_temp_source = None
             self._close_check_until = 0.0
             self._close_warning = ""
             self.status["close_warning"] = ""
@@ -476,7 +483,7 @@ class RigController:
             results = list(self.sequencer.results)
             title = self.cfg.analysis.title
             run_temp_c = (self._temp_sum / self._temp_n) if self._temp_n else self._water_temp_c
-            temp_source = self._temp_source
+            temp_source = self._run_temp_source or self._temp_source
         # mu from the run-mean water temperature (distilled/pure water)
         mu = water_viscosity_pa_s(run_temp_c)
         membrane = dataclasses.replace(self.cfg.membrane, viscosity_pa_s=mu, water_temp_c=run_temp_c)
@@ -519,7 +526,7 @@ class RigController:
                     detail.append(row)
                 xlsx_path = export_permeability_xlsx(
                     result, self.logger.xlsx_path(), title=title, units="kPa",
-                    points_detail=detail)
+                    points_detail=detail, water_temp_source=temp_source)
             except Exception:
                 xlsx_path = None
         summary = {
@@ -576,7 +583,7 @@ class RigController:
                     if i.status == DONE and i.ceiling_raised for p in i.points()]
         with self._lock:
             run_temp_c = (self._temp_sum / self._temp_n) if self._temp_n else self._water_temp_c
-            temp_source = self._temp_source
+            temp_source = self._run_temp_source or self._temp_source
         mu = water_viscosity_pa_s(run_temp_c)
         membrane = dataclasses.replace(self.cfg.membrane, viscosity_pa_s=mu,
                                        water_temp_c=run_temp_c)
@@ -618,7 +625,7 @@ class RigController:
                 files["xlsx_file"] = Path(export_permeability_xlsx(
                     result, base.with_name("playlist_latest_results.xlsx"),
                     title=self.cfg.analysis.title, units="kPa",
-                    points_detail=detail)).name
+                    points_detail=detail, water_temp_source=temp_source)).name
             except Exception:
                 pass
         summary = {
@@ -781,6 +788,11 @@ class RigController:
     # the alarm text and the Retry button, never an abort.
     _RUNAWAY_RISE_KPA_S = 0.5
     _RUNAWAY_VALVE_PCT = 20.0
+
+    # Missed poll periods before a probe stops being reported as "measured".
+    # A label, not a safety threshold — it gates nothing, so it lives here rather
+    # than adding config surface. 3 periods = 9 s at the default read_period_s.
+    _TEMP_STALE_PERIODS = 3
 
     def _track_rate(self, pressure: float) -> None:
         """Filtered dP/dt, used only to tell a normal overshoot from a runaway when
@@ -1031,8 +1043,22 @@ class RigController:
             # read must not disturb a run), but then water_temp_c silently keeps
             # its last value — and µ, hence k, would still be presented as
             # measured. Say so instead: the number stays, its provenance changes.
+            #
+            # Only after a GRACE, though: `source` is a static class attribute, so
+            # staleness can only be judged here, and flipping on the first missed
+            # read would paint the screen red for an isolated 1-Wire CRC error —
+            # a noisy warning is one that gets ignored. Water temperature moves
+            # slowly (µ shifts ~2.4 %/°C), so a few seconds of holding the last
+            # good value is honest as long as we stop calling it "measured" once
+            # it really has gone quiet. NOT a fault: unlike pressure, a stale
+            # temperature must never abort a run — it is a provenance problem.
+            now_m = time.monotonic()
+            if ok:
+                self._temp_last_good = now_m
+            stale_after = self._TEMP_STALE_PERIODS * max(0.1, self.cfg.temperature.read_period_s)
+            age = (now_m - self._temp_last_good) if self._temp_last_good else float("inf")
             with self._lock:
-                self._temp_source = base if (ok or base != "probe") \
+                self._temp_source = base if (base != "probe" or age <= stale_after) \
                     else "probe (no recent reading)"
                 self.status["water_temp_source"] = self._temp_source
             self._stop_evt.wait(self.cfg.temperature.read_period_s)
@@ -1256,6 +1282,11 @@ class RigController:
                     elapsed = now - self._run_start
                     self._temp_sum += self._water_temp_c
                     self._temp_n += 1
+                    # run-level provenance: constant, or honestly "mixed"
+                    if self._run_temp_source is None:
+                        self._run_temp_source = self._temp_source
+                    elif self._run_temp_source != self._temp_source:
+                        self._run_temp_source = "mixed"
                     self.logger.log(
                         elapsed_s=elapsed, phase=seq.phase.value,
                         setpoint_kpa=seq.setpoint_kpa, pressure_kpa=pressure,
