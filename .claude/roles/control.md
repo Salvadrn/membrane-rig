@@ -72,6 +72,16 @@ src/config.py         config.yaml
   descarta la colecta parcial (lleva la excursión adentro, y ese registro de
   presión es el que produce `k`), así que un punto reintentado es tan limpio como
   uno normal.
+- **El corte OCIOSO se queda en 80, y es decisión, no descuido.** `disarm()` devuelve
+  el corte al global (80 kPa) al terminar cualquier corrida y **no** lo clampa al
+  límite del espécimen, así que con una malla declarada a 65 una sobrepresión
+  ociosa no alarma hasta 80. **Decisión explícita de Adrián (2026-07-31)**, con el
+  trade-off aceptado: la alarma puede sonar hasta 15 kPa por encima de lo que la
+  malla declara tolerar. **No lo "arregles".** Se ve idéntico al bug que la
+  auditoría SÍ marcó y SÍ se arregló (`arm_for_run` perdía el clamp del espécimen
+  con `overshoot_margin = 0`), así que cada lector nuevo lo vuelve a reportar. Se
+  planteó, se analizó y se decidió en contra a propósito; reabrirlo es con Adrián,
+  no con un parche.
 - **Ampliar el techo nace apagado.** `safety.operator_raise_max: 0` = **deshabilitado
   por completo** (no "tope al límite del espécimen": eso habría permitido subir de
   30 a 65 en una corrida de 20 kPa). Con 0 se reporta `raise_max == ceiling` para

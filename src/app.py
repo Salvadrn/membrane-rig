@@ -1078,6 +1078,16 @@ class RigController:
                 # keep the raise note even on a clean finish — it is provenance,
                 # not an error message, so "completed" must not erase it.
                 item_note = "" if reason == "completed" else reason
+                # A stopped/failed item keeps whatever points it already measured,
+                # but collected_points() only counts DONE items — so those good
+                # points sit outside the combined fit until someone says so. Tell
+                # the operator how to get them back, right where they'll see it:
+                # re-queueing RE-RUNS the experiment, marking it done recovers it.
+                kept = sum(1 for r in results if r.get("success"))
+                if reason != "completed" and kept:
+                    item_note = (f"{item_note}; {kept} measured point(s) kept — mark this "
+                                 f"item done to include them in the combined fit "
+                                 f"(re-queueing re-runs it instead)")
                 if self._raise_note:
                     item_note = f"{item_note}; {self._raise_note}" if item_note else self._raise_note
                 self.playlist.update(

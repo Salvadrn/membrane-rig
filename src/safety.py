@@ -88,7 +88,19 @@ class SafetyMonitor:
         return self.max_pressure
 
     def disarm(self) -> None:
-        """Back to the global cutoff (idle: no run ceiling applies)."""
+        """Back to the global cutoff (idle: no run ceiling applies).
+
+        DELIBERATE, NOT AN OVERSIGHT — Adrián's decision, 2026-07-31. The idle
+        cutoff returns to the GLOBAL 80 kPa and is *not* clamped to the mounted
+        specimen's limit, so with a 65 kPa mesh mounted an idle overpressure does
+        not alarm until 80. The trade-off he accepted: the alarm fires up to 15 kPa
+        above what the mesh was declared to tolerate.
+
+        Do not "fix" this. It looks like the arm_for_run bug that WAS fixed (an
+        audit found the specimen clamp being dropped when overshoot_margin = 0, and
+        that one was a real defect), so it gets re-reported by every fresh reader.
+        It was raised, analysed and decided against on purpose. Reopening it needs
+        Adrián, not a patch."""
         self._armed = False
         self.max_pressure = self.hard_max
         self.limit_name = "safety cutoff"
