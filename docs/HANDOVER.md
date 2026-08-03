@@ -111,10 +111,35 @@ another reason someone should be in the lab whenever the rig is pressurised.
    per [`REMOTE_ACCESS.md`](REMOTE_ACCESS.md), but the final hostname is waiting
    on Adrián's domain decision. On the lab network, `membrane-rig.local:8000`
    works.
-3. **Log in.** `<ACCOUNT FLOW — PENDING>` — the app is being changed to require
-   an account. Fill this in when that lands, including how to rotate the
-   password.
+3. **Log in.** Every action needs an account — including stop. See "Accounts"
+   below if one has not been set up yet.
 4. **Open the air supply** at the panel, and confirm the regulator setting.
+
+### Accounts
+
+Run this **on the Pi** to create the login, or to change it later:
+
+```
+./.venv/bin/python tools/set_password.py
+```
+
+The password is stored **hashed** (PBKDF2-SHA256) in `~/.membrane-rig/auth`,
+mode 600, outside the repo — so it never reaches git and re-deploying the code
+does not disturb it. The same run also issues the beacon token, so provisioning
+a fresh Pi is one command.
+
+| Need | Command |
+|---|---|
+| Set or change the password | `tools/set_password.py` |
+| New beacon token only | `tools/set_password.py --rotate-token` (restart the beacon after) |
+| See the current token | `tools/set_password.py --show-token` |
+
+**If no account is configured**, the rig still serves and warns loudly at
+startup. That is deliberate: a fresh Pi should tell you what to do, not lock you
+out of your own hardware.
+
+**Rotate the password when someone leaves the group**, and after anyone watches
+you type it. There is one account; it is shared by whoever operates the rig.
 
 ### Running an experiment
 
