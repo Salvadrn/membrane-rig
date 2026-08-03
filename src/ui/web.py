@@ -695,6 +695,11 @@ PAGE = r"""<!doctype html>
   .st-skipped{background:#21262d;color:var(--muted);text-decoration:line-through}
   .meta{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin:10px 0}
   .meta b{color:var(--ink);font-weight:600}
+  /* Provenance, never colour alone: each state carries its own words too. */
+  .prov{font-size:12px}
+  .prov.ok{color:var(--ok)}
+  .prov.warn{color:var(--warn)}
+  .prov.bad{color:var(--bad);font-weight:600}
   canvas{width:100%;height:280px;display:block;margin-top:8px}
   /* The chart's two lines were told apart only by colour and dash pattern, with
      nothing on the page saying which was which. */
@@ -986,6 +991,7 @@ holding steady.">?</span></label>
       <span>elapsed <b id="elapsed">–</b>s</span>
       <span id="collectWrap" style="display:none">collect left <b id="cleft">–</b>s</span>
       <span>abort above <b id="ceil">–</b> <span class="u"></span></span>
+      <span id="tempWrap">water <b id="wtemp">–</b>°C <span id="wtempSrc"></span></span>
     </div>
     <div class="chartwrap">
       <canvas id="chart" width="900" height="280" role="img"
@@ -1874,7 +1880,22 @@ async function poll(){
     $("ceil").textContent=fmt(s.run_ceiling_disp,1)+
       ((s.run_ceiling_source && s.run_ceiling_source!=="run ceiling")
         ? " ("+s.run_ceiling_source+")" : "");
-    // safety bar mirrors the live reading and the state
+    // Water temperature ALWAYS carries where it came from. It is not decoration:
+    // µ is derived from it and k is derived from µ, so a configured constant
+    // dressed as a reading would put invented precision straight into the
+    // published number. The page showed no temperature at all until the control
+    // layer could say its provenance — a value that cannot say where it came
+    // from is worse on screen than absent.
+    $("wtemp").textContent=fmt(s.water_temp_c,1);
+    const src=s.water_temp_source||"unknown";
+    const srcEl=$("wtempSrc");
+    const known={"probe":["measured","ok"],
+                 "manual":["set in config, not measured","warn"],
+                 "sim":["simulated","warn"],
+                 "probe (no recent reading)":["⚠ probe not answering — last value","bad"]};
+    const d=known[src]||[src+" — provenance unknown","bad"];
+    srcEl.textContent="("+d[0]+")";
+    srcEl.className="prov "+d[1];
     HELD=!!s.held;
     CURRENT_ITEM_ID=s.item_id||null;
     $("barPv").textContent=fmt(s.pressure_disp);
