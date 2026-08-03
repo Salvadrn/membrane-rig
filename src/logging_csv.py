@@ -40,12 +40,22 @@ class RunLogger:
             f"setpoint_{self.cfg.units}", "setpoint_kpa",
             f"pressure_{self.cfg.units}", "pressure_kpa",
             "valve_command", "diverter_measured", "in_band", "water_temp_c",
+            # How that temperature was obtained ("probe" / "manual" / "sim" /
+            # "probe (no recent reading)"). k = b·µ·L/A and µ comes from this
+            # temperature, so k inherits its provenance: a k whose µ came from a
+            # typed-in number is not the same evidence as one from a live probe,
+            # and the value alone cannot carry that. Logged per ROW, not per run,
+            # because it can change mid-run — a probe that stops answering keeps
+            # the last value but is no longer measuring, and a single label for
+            # the whole run would misdescribe every row on one side of that.
+            "water_temp_source",
         ])
         self._fh.flush()
         return self.name
 
     def log(self, *, elapsed_s, phase, setpoint_kpa, pressure_kpa,
-            valve_command, diverter_measured, in_band, water_temp_c=None) -> None:
+            valve_command, diverter_measured, in_band, water_temp_c=None,
+            water_temp_source=None) -> None:
         if self._writer is None:
             return
         sp_disp = "" if setpoint_kpa is None else round(self.cfg.disp(setpoint_kpa), 4)
@@ -56,6 +66,7 @@ class RunLogger:
             round(self.cfg.disp(pressure_kpa), 4), round(pressure_kpa, 4),
             round(valve_command, 3), int(bool(diverter_measured)), int(bool(in_band)),
             "" if water_temp_c is None else round(water_temp_c, 3),
+            "" if water_temp_source is None else str(water_temp_source),
         ])
         self._fh.flush()
 

@@ -67,7 +67,8 @@ def xlsx_available() -> bool:
 
 
 def export_permeability_xlsx(result, out_path, *, title: str = "Q vs ΔP",
-                             units: str = "kPa", points_detail=None) -> Optional[str]:
+                             units: str = "kPa", points_detail=None,
+                             water_temp_source=None) -> Optional[str]:
     if result.n < 1 or not out_path:
         # see plot_permeability: str(None) would write a workbook named "None"
         return None
@@ -88,14 +89,20 @@ def export_permeability_xlsx(result, out_path, *, title: str = "Q vs ΔP",
         ("area (cm²)", result.area_m2 * 1e4),
         ("thickness (mm)", result.thickness_m * 1e3),
         ("water temp (°C)", result.water_temp_c),
-        ("viscosity (Pa·s)", result.viscosity_pa_s),
     ]
+    # µ is derived from that temperature and k from µ, so k is only as trustworthy
+    # as how the temperature was obtained. Sits directly under the value it
+    # qualifies; omitted entirely when the caller doesn't say, leaving the
+    # previous workbook untouched.
+    if water_temp_source:
+        meta.append(("water temp source", str(water_temp_source)))
+    meta.append(("viscosity (Pa·s)", result.viscosity_pa_s))
     for i, (k, v) in enumerate(meta, start=1):
         ws.cell(row=i, column=1, value=k).font = bold
         ws.cell(row=i, column=2, value=v)
 
     # --- data table -----------------------------------------------------------
-    head_row = 6
+    head_row = len(meta) + 1        # follows the header block; it is not always 5 rows
     ws.cell(row=head_row, column=2, value=f"pressure ({units})").font = bold
     ws.cell(row=head_row, column=3, value="flow rate (m³/s)").font = bold
     first = head_row + 1
@@ -123,7 +130,7 @@ def export_permeability_xlsx(result, out_path, *, title: str = "Q vs ΔP",
     series.graphicalProperties.line.noFill = True  # markers only (scatter)
     series.trendline = Trendline(trendlineType="linear", dispEq=True, dispRSqr=True)
     chart.series.append(series)
-    ws.add_chart(chart, "E6")
+    ws.add_chart(chart, f"E{head_row}")
 
     # --- results block --------------------------------------------------------
     r = last + 2
