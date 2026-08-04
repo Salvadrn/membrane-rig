@@ -30,6 +30,9 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 | Fittings Swagelok / McMaster | **LLEGARON** (confirmado por Adrián). ⚠ **Falta verificar QUÉ llegó exactamente** — si incluye el adaptador G1/4→Swagelok del transductor y la tee, la cadena de sensado se puede montar en el rig y el cuello de botella mecánico desaparece. Pedir foto o lista de empaque |
 | **Pin headers macho 2.54 mm** (110 pzas, `B0FFSRKF7W`) | **ORDENADO, sin llegar.** No estaba en `BOM.csv`. Es la solución limpia al Paso 0: soldar un pin a cada punta trenzada, en vez de sacrificar jumpers del kit |
 | Kit de tornillos M4 | llegó; item #10. Sirve para baseplate, marco y bracket del servo. **NO sirve para montar el Pi** — ver abajo |
+| **Portafusibles + fusibles 3 A** | llegó; item #7. **Desbloquea el riel de 12 V** junto con el barrel jack |
+| **Barrel jack 5.5×2.1 → tornillo** | llegó; item #6. Era el segundo bloqueo del riel de 12 V, ahora cerrado |
+| **Válvula de alivio ajustable** | llegó; item #3. ⚠ **EN LA MANO NO ES MONTADA**: no protege nada hasta estar instalada Y tarada. Confirmar su rango al montarla y registrar el punto de tarado |
 | **Multímetro** | confirmado por Adrián 2026-07-29. Desbloquea medir `divider_ratio`, los rieles del header y el cero del transductor **sin la Pi** |
 | **Cautín + soldadura** | confirmado por Adrián 2026-07-29. Desbloquea el Paso 0: colas de conductor sólido en las puntas trenzadas (sonda, 22AWG y —confirmar— transductor) |
 
@@ -167,8 +170,10 @@ prioridad.
 
 ## Bloqueos activos
 
-- **⚠ TERCER bloqueo del riel de 12 V que nadie había escrito: el barril de la
-  fuente no se ha medido.** El item #6 que se va a comprar es específicamente un
+- **El riel de 12 V ya NO está bloqueado por piezas** — llegaron el fusible (#7)
+  y el barrel jack (#6). Queda un solo bloqueo real y es del **diverter**, no del
+  riel: **sin el 1N5819 montado no se energiza la bobina**.
+- **⚠ Pero antes de conectar: el barril de la fuente sigue sin medirse.** El item #6 que se va a comprar es específicamente un
   adaptador **5.5×2.1**. Este inventario registraba ese tamaño como *asumido*,
   con un ASIN (`B013OVYRZU`) que además **no es el que compró `BOM.csv`**
   (`B01C010YJI`). Si el plug real no es 5.5×2.1, **el #6 no entra aunque

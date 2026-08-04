@@ -75,8 +75,9 @@ valve:
   # --- servo on the air-inlet ball valve (type: servo) ---
   # Calibrate the endpoints to the ball valve's useful sub-range (NOT hard stops -
   # over-driving stalls/cooks the servo). Servo needs its OWN 5-6V supply (UBEC),
-  # not the Pi rail; it holds position on power loss, so the mechanical relief
-  # valve is the hardware failsafe.
+  # not the Pi rail; it holds position on power loss. The mechanical relief is
+  # meant to cover that case but is IN HAND, NOT FITTED — until it is mounted and
+  # set, the panel valve closed by hand is the only remedy.
   servo_pin: 18        # BCM hardware-PWM pin: 12, 13, 18 or 19
   servo_min_us: 700    # pulse (us) at 0%   -> LOWEST pressure (inline: closed / bleed: open)
   servo_max_us: 2300   # pulse (us) at 100% -> HIGHEST pressure (inline: open / bleed: closed)

@@ -34,8 +34,11 @@ small margin. Do NOT jam it into the mechanical stop — the controller holds th
 position for as long as the rig sits idle, and a stalled servo overheats.
 
 Note: a servo HOLDS position on power loss (it does not spring to safe), so it
-is not a fail-safe by itself — the mechanical relief valve is the hardware
-failsafe. `to_safe()` actively drives to the lowest-pressure stop while powered.
+is not a fail-safe by itself. The mechanical relief valve is meant to cover that
+case — it is now IN HAND but **not fitted**, and it protects nothing until it is
+mounted and its crack pressure is set. Until then the panel valve is the only
+human shutoff and the regulator setting is the only bound. `to_safe()` actively
+drives to the lowest-pressure stop while powered.
 
 pigpio is imported lazily so this file imports fine on a laptop.
 """
@@ -91,8 +94,9 @@ class ServoValve(ProportionalValve):
             time.sleep(max(0.0, float(self.cfg.close_hold_s)))
             # 0 pulse width releases the servo (stops sending pulses). It keeps
             # its position by friction: a servo does NOT spring shut on power
-            # loss, which is why the mechanical relief valve is the real
-            # failsafe and why the PANEL valve gets closed by hand at the end
+            # loss. The mechanical relief is meant to cover that, but it is in
+            # hand and NOT FITTED — so today the PANEL valve being closed by hand
+            # at the end is the whole failsafe, not a backup to one
             # (the ball valve's handle is off — the panel is the only human shutoff)
             # of a session.
             self._pi.set_servo_pulsewidth(self.cfg.servo_pin, 0)
