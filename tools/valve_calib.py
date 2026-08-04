@@ -28,7 +28,7 @@ SAFETY — read before running either mode:
     normally, `servo_max_us` when `valve.invert` is set, since _apply() flips
     frac. The banner prints whichever applies. If the coupling is already fitted
     and that pulse lies past the mechanical stop, it stalls the servo.
-  * The mechanical relief valve is **on order but not fitted**, so until it is
+  * The mechanical relief valve is **in hand but not fitted**, so until it is
     mounted and set the supply pressure is the only thing bounding a runaway.
     Know the regulator setting before admitting air, and keep a hand on the
     panel valve.
@@ -57,7 +57,7 @@ BANNER = """
     - the servo is DECOUPLED from the valve stem, or you have already
       verified {us} us is inside the stem's travel
     - the servo is powered from the UBEC (6 V), never the Pi rail
-    - you know the air regulator setting (the relief is on order, NOT fitted)
+    - you know the air regulator setting (the relief is in hand, NOT fitted)
 ========================================================================
 """
 

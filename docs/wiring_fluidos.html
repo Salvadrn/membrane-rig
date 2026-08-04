@@ -1,3 +1,20 @@
+<div style="border:2px solid #1e7d32; border-left-width:6px; border-radius:8px; padding:14px 18px; margin:0 0 20px; background:color-mix(in srgb,#1e7d32 8%,transparent)">
+  <div style="font-weight:500; color:#1e7d32; font-size:15px; margin-bottom:8px">ESTADO AL 2026-08-03 — esto manda sobre el cuerpo de la hoja</div>
+  <div style="font-size:13.5px; line-height:1.6">
+    <b>YA LLEGARON</b> el <b>portafusibles + fusibles de 3 A</b> (#7), el <b>barrel jack → tornillo</b> (#6) y la
+    <b>válvula de alivio</b> (#3). El cuerpo de esta hoja todavía los describe como faltantes en varios lugares
+    — <b>ignóralo</b>. El riel de 12 V <b>ya no está bloqueado por piezas</b>.
+    <br><br>
+    <b>Lo que SÍ sigue bloqueado:</b> el <b>diverter</b>, porque falta el <b>1N5819</b>. Sin ese diodo montado
+    en paralelo a la bobina no se energiza — el pico inverso puede matar el IRLZ44N en corto (diverter colectando
+    para siempre) o perforar hacia GPIO23.
+    <br><br>
+    <b>Y el alivio en la mano NO es alivio montado:</b> no protege nada hasta estar instalado <em>y tarado</em>,
+    y para tararlo hace falta el rating de presión de los recipientes, que aún no está registrado.
+    Antes de conectar la fuente: <b>medir el barril y confirmar polaridad centro-positivo</b>.
+  </div>
+</div>
+
 <div class="hoja-fluidos">
 <style>
 .hoja-fluidos{
