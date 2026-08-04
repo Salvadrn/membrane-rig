@@ -74,6 +74,44 @@ Tags on each check:
 
 Everything here is `[bench]` and can be done today.
 
+> ### ⚠ This stage already cost a Raspberry Pi
+>
+> **2026-08-01: the first Pi died — it heated up, and there is continuity between
+> 3.3 V and GND.** That is a shorted 3.3 V rail, not a network fault, and it
+> retroactively explains the days of "not responding" since 2026-07-29.
+>
+> It died **before `install.sh` ever ran**, serving nothing but SSH, so the rig
+> software is ruled out. The cause was electrical, on this bench or inside the
+> board.
+>
+> Read that against check **0.2** below, which was already written and says a
+> reading there is "a short across a Pi regulator before anything is even
+> connected". The check was right. **The stage is only protection if it is run
+> before the Pi is plugged in, every time — including for a replacement board.**
+>
+> **The most expensive mistake available right now is plugging the new Pi into a
+> bench that still has the fault.** It would die identically, and it would look
+> like it arrived defective.
+
+- [ ] **0.0 POST-MORTEM — do this BEFORE the replacement Pi touches anything.**
+      One free measurement decides whether the bench is guilty, and it stops
+      costing boards. **Pi unplugged and disconnected from the breadboard**, then
+      with the ohmmeter:
+
+      | Measure | Reading | What it means |
+      |---|---|---|
+      | Breadboard 3.3 V row ↔ GND row | **short** | **The bench is the cause.** Find it before any Pi is connected — a second board dies the same way |
+      | Breadboard 3.3 V row ↔ GND row | **OL** | Bench is clean here |
+      | Breadboard 3.3 V row ↔ 5 V row | **short** | The killer: 5 V back-fed into the 3.3 V rail. Header pins 1 and 2 are **adjacent**, so this is a one-row error |
+      | Dead Pi, pin 1 ↔ pin 6, off the board | **short** | Confirms the board itself is gone (expected — this is the reported symptom) |
+
+      If the breadboard is clean **and** only the Pi shorts, the board failed
+      internally and the bench is exonerated. If the breadboard shorts too, **the
+      bench killed it** and will kill the next one.
+
+      Record which of the two it was. It is the difference between replacing one
+      board and replacing two.
+
 - [ ] **Tools on the table.** Multimeter and soldering iron confirmed 2026-07-29.
       `BOM.csv` lists **no tools at all** and no solid-core wire, so the solid tails
       of check 0.5 come from sacrificing kit jumpers.
@@ -84,7 +122,23 @@ Everything here is `[bench]` and can be done today.
       A missing bridge means half your grounds are not grounds.
 - [ ] **0.2 Rail + against rail −. Expected: open circuit (OL).**
       Any reading here is a short across a Pi regulator before anything is even
-      connected.
+      connected. **This is the check that would have saved the first Pi.**
+- [ ] **0.2b The 3.3 V row against the 5 V row. Expected: OL.**
+      A separate check, because it fails differently and it is the more likely
+      killer. A 3.3↔GND short starves the rail; a **5 V→3.3 V** contact back-feeds
+      the regulator and destroys whatever is on that rail. Ranked by how much
+      energy they can deliver on *this* bench:
+
+      | Fault | Why it is plausible here | Damage |
+      |---|---|---|
+      | **Transducer V+ (5 V) in the 3.3 V row** | it is powered from **pin 2** and bench-tested unmounted — 5 V is deliberately on this board | **highest** — a 5 V source with amps behind it, straight onto the 3.3 V rail |
+      | **Jumper off by one row, pin 1 ↔ pin 2** | the two rails are **physically adjacent** on the header | **highest** — same fault, different origin |
+      | **Stray strand of 22 AWG bridging rows** | the wire is *stranded*, the pin headers have not arrived, and check 0.5 exists precisely because stranded ends splay | high if it lands 3.3↔5 V, moderate if 3.3↔GND |
+      | **Transducer output (0.5–4.5 V) into the ADS1115 with no divider** | the divider is the *only* thing between a 4.5 V source and a 3.3 V part; its input clamp then dumps into the 3.3 V rail | moderate — limited by the transducer's output impedance |
+      | **DS18B20 4.7 kΩ pull-up landed on pin 2 instead of pin 1** | pins 1 and 2 again | **lowest** — 4.7 kΩ limits it to ~0.2 mA into the clamp. A real wiring error worth fixing, but on its own it is unlikely to kill a board (it can *trigger* latch-up, which then does the damage) |
+
+      Check the top two first. They are the only ones on this bench with enough
+      current behind them to kill a board quickly.
 - [ ] **0.3 Ohmmeter on every resistor *before* planting it.** The kit is 1 %.
       | Resistor | Role | Expected |
       |---|---|---|
@@ -137,6 +191,15 @@ Everything here is `[bench]` and can be done today.
 
 `[bench]`. Pi powered by its USB-C, **nothing** connected to the header.
 
+**The first energisation of a new Pi happens with a bare header. No exceptions.**
+Stage 0 proved the *bench* is clean; this stage proves the *board* is, and mixing
+the two is how you end up unable to say which one failed.
+
+- [ ] **1.0 Before applying power: pin 1 ↔ pin 6, Pi unplugged, ohmmeter.
+      Expected: OL.** Ten seconds, and it is the exact measurement that
+      characterised the dead board. A short here means the Pi arrived faulty or
+      was killed before this stage — do not power it, and do not connect it to the
+      bench looking for the cause.
 - [ ] **1.1** pin 2 → pin 6: **5.0 V ± 5 %**
 - [ ] **1.2** pin 1 → pin 6: **3.3 V ± 5 %**
 - [ ] **1.3** pin 1 ↔ pin 17: **continuity** (same 3.3 V — also proves you are
@@ -156,7 +219,14 @@ Everything here is `[bench]` and can be done today.
 A Pi that boots but does not appear on the network still delivers both rails
 normally — the header knows nothing about Ethernet. A Pi that is genuinely dead
 loses 3.3 V (the board generates it); 5 V usually survives because it comes from
-the USB-C input, but that has not been verified on this board.
+the USB-C input.
+
+**That last part is no longer a guess: it was confirmed the expensive way.** The
+first Pi presented as a network fault for three days and was in fact a **short on
+the 3.3 V rail**, with the board heating up. The lesson worth carrying is that
+*"it doesn't respond"* and *"its 3.3 V rail is shorted"* look identical from the
+network side, and one ohmmeter reading separates them. Measure before diagnosing
+remotely.
 
 **Gate:** if either rail is missing, stop. Everything downstream is referenced to
 them.
@@ -168,6 +238,38 @@ them.
 `[bench]`. **No 12 V anywhere near this stage.** The whole low-voltage sensing
 chain is independent of the 12 V rail, which is why it can be finished long before
 the fuse arrives.
+
+> ### Connect this stage ONE BLOCK AT A TIME, powering down between blocks
+>
+> This is the stage where the bench first touches the header, so it is the stage
+> that killed the first Pi. Connecting all four blocks and then powering up tells
+> you *that* something is wrong; connecting them one at a time tells you **which
+> one**, and it costs four extra minutes.
+>
+> The order runs cheapest-to-most-expensive and 3.3 V-before-5 V, so the block
+> that introduces 5 V to the board comes last, when everything before it is known
+> good:
+>
+> | # | Block | Introduces |
+> |---|---|---|
+> | 1 | ADS1115 (VDD 3.3 V, SDA/SCL, ADDR→GND) | 3.3 V only |
+> | 2 | Divider 10k/22k into A0 | nothing new |
+> | 3 | DS18B20 + 4.7 kΩ pull-up **to pin 1** | 3.3 V only |
+> | 4 | Transducer V+ **to pin 2** | **5 V — the block with the killer in it** |
+>
+> Between every block, with power applied:
+>
+> - [ ] **Rails still right?** pin 1 → pin 6 = 3.3 V, pin 2 → pin 6 = 5.0 V. A
+>       rail that sagged when you added a block found your fault.
+> - [ ] **Touch the Pi's SoC and the ADS1115.** Warm is normal; **too hot to keep a
+>       finger on is not, and it is the symptom the first Pi showed.** Pull power
+>       immediately — do not "let it settle".
+> - [ ] **Power down before wiring the next block.** Planting parts in a live
+>       breadboard is how a jumper touches the neighbouring row on its way in.
+>
+> Block 4 is the one to slow down on. Confirm the transducer's V+ is in the
+> **5 V** row and its signal goes to the **divider**, never straight to A0 — the
+> divider is the only thing standing between a 4.5 V output and a 3.3 V part.
 
 - [ ] **2.1 ADS1115 planted, ADDR to GND, VDD to 3.3 V** (not 5 V — the divider is
       sized for a 3.3 V ADC). Compare the 10-pin strip against the module's silkscreen

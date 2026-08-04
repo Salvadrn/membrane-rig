@@ -9,7 +9,8 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 
 | Pieza | Notas |
 |---|---|
-| Raspberry Pi 4 + microSD | ya se tenía. **⚠ PROBLEMA REPORTADO — naturaleza por confirmar.** Deja de contar como pieza sana: es la causa raíz de los días de "no responde" desde 2026-07-29, que se habían atribuido a red. Posible reemplazo. **Si se reemplaza, tiene que ser Pi 4 — ver la restricción abajo** |
+| ~~Raspberry Pi 4~~ | **MUERTA (2026-08-01).** Se calienta y hay **continuidad 3.3 V ↔ GND**: corto en el riel de 3.3. No es red — explica los días de silencio desde 2026-07-29. Murió **antes de correr `install.sh`**, sirviendo solo SSH, así que el software del rig queda descartado. **La causa del corto sigue abierta** y es lo que importa: si fue el banco, la Pi 2 muere igual. Ver `docs/COMMISSIONING.md` Stage 0.0 |
+| **Raspberry Pi 4 de reemplazo** | **EN COMPRA** (Adrián, directo). **Pi 4, NO Pi 5** — ver restricción abajo. **No conectarla al banco hasta correr el Stage 0.0**: la microSD probablemente sobrevivió (el corto es del riel, no de la tarjeta), pero eso se confirma arrancando la Pi nueva **sola** |
 | Probeta graduada **1000 mL** | ya se tenía; capacidad confirmada por Adrián 2026-07-30. División menor **por confirmar** (típicamente 10 mL en esta capacidad). **⚠ Con el caudal del sim se llena en 17–35 s, no en los 60 s de `test.collection_s`** — ver abajo |
 | Manómetro de carátula | ya se tenía; sirve de referencia para calibrar el transductor |
 | Válvula de bola de aire (SS, verde) | ya se tenía; es la que va a mover el servo |
@@ -175,19 +176,33 @@ justificado y hay que rederivarlo — junto con lo que dependa de él en
 **No es que la Pi 5 sea imposible: es que cuesta reescribir el driver del servo
 y rederivar el gate, a cambio de cero beneficio para este rig.**
 
-### Antes de comprar Pi: descartar lo barato
+### Diagnóstico cerrado, causa abierta (actualizado 2026-08-04)
 
-Adrián va a pagar esto de su bolsa, así que vale decirlo: **una Pi que "no
-responde" casi nunca es una Pi muerta.** En orden de probabilidad y de costo:
+> Esta sección decía "descartar microSD y fuente antes de comprar". **El
+> diagnóstico llegó y las descartó:** un corto 3.3↔GND con la placa
+> calentándose no lo produce ni una tarjeta corrupta ni una fuente débil. La
+> placa está muerta y el reemplazo es correcto.
 
-1. **microSD corrupta** — la causa #1. Cuesta $0 descartarla: se reflashea otra
-   tarjeta y se arranca. Si arranca, la Pi está sana y el gasto se evitó.
-2. **Fuente USB-C insuficiente** — la Pi 4 quiere 5 V 3 A. Segunda causa más
-   común, y tiene una trampa: **si el problema es la fuente, una Pi nueva con la
-   fuente vieja reproduce la falla idéntica** y parecerá que llegó defectuosa.
-3. **La Pi de verdad.** Hasta descartar 1 y 2, esto es una hipótesis.
+**Pero cerrar el diagnóstico no cierra la causa, y la causa es lo caro.** Un
+corto en el riel de 3.3 V no aparece solo. Si lo produjo el cableado del banco,
+**la Pi de reemplazo muere idéntico al conectarla** — y va a parecer que llegó
+defectuosa.
 
-Comprar sin saber cuál de las tres es puede ser dinero tirado.
+La medición que lo decide es gratis y está en `docs/COMMISSIONING.md` **Stage
+0.0**: con la Pi desconectada, medir el protoboard en frío.
+
+- Protoboard con corto 3.3↔GND o 3.3↔5 V → **el banco es culpable.** Hay que
+  encontrarlo antes de que la Pi nueva toque nada.
+- Protoboard limpio y solo la Pi vieja en corto → falló la placa, el banco queda
+  exonerado.
+
+**Registrar cuál de las dos fue.** Es la diferencia entre reemplazar una placa y
+reemplazar dos.
+
+Sospechosos ordenados por energía disponible en este banco —los dos primeros son
+los únicos con corriente suficiente para matar rápido— en la tabla del Stage
+0.2b. El resumen: **los pines 1 (3.3 V) y 2 (5 V) del header son vecinos**, y el
+transductor se alimenta a propósito del pin 2.
 
 ## Pendiente de compra
 
@@ -276,14 +291,15 @@ vez.
 - **No energizar ni acoplar el servo.** `ServoValve` lo manda a 700 µs solo al
   arrancar en modo hardware y `servo_close_us` sigue en 0 (sin calibrar). La
   calibración de extremos va con la válvula DESACOPLADA del vástago.
-- **La Pi tiene un problema de hardware — ya no es "no responde por red".**
-  Reportado 2026-08-01; naturaleza por confirmar con Adrián. Esto **explica
-  retroactivamente** los días de silencio desde 2026-07-29, que este archivo
-  atribuía a red. El software del rig nunca se instaló ahí: `install.sh` es el
-  que habilita I²C/1-Wire e instala `i2c-tools`, así que `i2cdetect` **no existe
-  todavía** y toda verificación que dependa de la Pi sigue diferida — ahora con
-  causa raíz, no con un misterio. Si termina en reemplazo, **Pi 4, no Pi 5**
-  (ver la sección de arriba), y antes conviene descartar microSD y fuente.
+- **La Pi está MUERTA: corto en el riel de 3.3 V (2026-08-01).** Ya no es "no
+  responde por red" — se calienta y hay continuidad 3.3↔GND. Explica los días de
+  silencio desde 2026-07-29. Reemplazo en compra, **Pi 4 no Pi 5**. El software
+  del rig nunca se instaló ahí: `install.sh` es el que habilita I²C/1-Wire e
+  instala `i2c-tools`, así que `i2cdetect` **no existe todavía** y toda
+  verificación que dependa de la Pi sigue diferida.
+- **⚠ NO conectar la Pi de reemplazo al banco antes del Stage 0.0.** La causa del
+  corto sigue abierta. Si está en el protoboard, la placa nueva muere igual. Es
+  el bloqueo más caro que hay ahora mismo, y se levanta con un óhmetro en frío.
 
 ## Presión de ensayo: 35 kPa — confirmado (2026-07-27)
 
