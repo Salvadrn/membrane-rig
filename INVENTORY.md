@@ -10,7 +10,7 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 | Pieza | Notas |
 |---|---|
 | ~~Raspberry Pi 4~~ | **MUERTA (2026-08-01).** Se calienta y hay **continuidad 3.3 V ↔ GND**: corto en el riel de 3.3. No es red — explica los días de silencio desde 2026-07-29. Murió **antes de correr `install.sh`**, sirviendo solo SSH, así que el software del rig queda descartado. **La causa del corto sigue abierta** y es lo que importa: si fue el banco, la Pi 2 muere igual. Ver `docs/COMMISSIONING.md` Stage 0.0 |
-| **Raspberry Pi 4 de reemplazo** | **EN COMPRA** (Adrián, directo). **Pi 4, NO Pi 5** — ver restricción abajo. **No conectarla al banco hasta correr el Stage 0.0**: la microSD probablemente sobrevivió (el corto es del riel, no de la tarjeta), pero eso se confirma arrancando la Pi nueva **sola** |
+| **Raspberry Pi 4 de reemplazo** | **LLEGÓ 2026-08-02 y funciona.** ⚠ **Pines 6 y 14 del header dañados** — los dos son tierra, y el 6 era el que citaba toda la documentación. Sustitutos acordados: **pin 9** (sensado) y **pin 20** (lado diverter). Ver la nota abajo. **No conectarla al banco hasta correr el Stage 0.0** — la causa del corto de la Pi 1 sigue sin determinarse, y ahora hay una placa buena sobre la mesa |
 | Probeta graduada **1000 mL** | ya se tenía; capacidad confirmada por Adrián 2026-07-30. División menor **por confirmar** (típicamente 10 mL en esta capacidad). **⚠ Con el caudal del sim se llena en 17–35 s, no en los 60 s de `test.collection_s`** — ver abajo |
 | Manómetro de carátula | ya se tenía; sirve de referencia para calibrar el transductor |
 | Válvula de bola de aire (SS, verde) | ya se tenía; es la que va a mover el servo |
@@ -175,6 +175,36 @@ justificado y hay que rederivarlo — junto con lo que dependa de él en
 
 **No es que la Pi 5 sea imposible: es que cuesta reescribir el driver del servo
 y rederivar el gate, a cambio de cero beneficio para este rig.**
+
+### ⚠ Esta Pi: la tierra es el pin 9, no el pin 6
+
+La placa de reemplazo llegó funcional pero con los **pines 6 y 14 dañados**, los
+dos de tierra. Sustitución acordada con Adrián: **pin 9** para el sensado (queda
+pegado a la zona 1–7) y **pin 20** para el lado del diverter.
+
+Barrido hecho el 2026-08-04: **28 sustituciones** de "pin 6" → "pin 9" en
+`COMMISSIONING.md` y en las hojas `wiring_banco`, `wiring_potencia`,
+`wiring_protoboard` y `wiring_ubec`. `ASSEMBLY.md` **no requirió cambios**: su
+tabla usa nombres BCM (`GPIO2`, `GND`) y nunca manda a un pin físico. **"pin 14"
+no aparecía en ningún archivo del repo.**
+
+**Lo que más importa no es el cableado, es la medición.** Un pin dañado está
+abierto, así que medir contra el pin 6 devuelve 0 V en todos los rieles y OL en
+toda continuidad. En esta placa eso se lee como *"los dos rieles muertos, sin
+corto"* — una Pi sana que parece cadáver. Quien siga una copia impresa vieja va
+a condenar una placa buena.
+
+**No forzar un cable en el 6 ni en el 14.** El 6 está junto al **pin 4 (5 V)** y
+el 14 entre el **12 (servo)** y el **16 (compuerta del diverter)**. Un pin doblado
+tocando a su vecino es un corto de 5 V a tierra de un lado y una falla de
+actuador del otro. Conviene marcarlos físicamente: este rig ya perdió una placa
+por un corto en el riel de 3.3 V.
+
+Buena noticia de los sustitutos: **los dos caen en vecindarios más benignos.** El
+pin 9 tiene al 7 (GPIO4, la sonda) y al 11 (sin uso); el pin 20 tiene al 18 y al
+22, ambos sin uso. Recorrerse una posición ya no toca un riel de potencia.
+
+Cuando se repare o reemplace el header, **deshacer esta sustitución.**
 
 ### Diagnóstico cerrado, causa abierta (actualizado 2026-08-04)
 

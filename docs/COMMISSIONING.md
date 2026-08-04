@@ -33,6 +33,20 @@ Tags on each check:
 | `[Pi]` | needs `install.sh` to have run on the Raspberry Pi |
 | `[part]` | blocked: a part named in `INVENTORY.md` has not arrived |
 
+> ### ⚠ This board: ground is **pin 9**, not pin 6
+>
+> The replacement Pi (arrived 2026-08-02, working) has **header pins 6 and 14
+> damaged** — both grounds. Every check below has been rewritten to measure
+> against **pin 9**; the diverter-side reference is **pin 20**.
+>
+> **This matters more for measuring than for wiring.** A damaged pin is open, so
+> probing against pin 6 returns 0 V for every rail and OL for every continuity
+> check. On this board that reads as *"both rails dead, no short"* — a healthy Pi
+> that looks like a corpse. If you are working from a printed copy that says pin
+> 6, that is the copy, not the board.
+>
+> Undo this substitution when the header is replaced.
+
 ---
 
 ## The four interlocks that override everything else
@@ -103,7 +117,7 @@ Everything here is `[bench]` and can be done today.
       | Breadboard 3.3 V row ↔ GND row | **short** | **The bench is the cause.** Find it before any Pi is connected — a second board dies the same way |
       | Breadboard 3.3 V row ↔ GND row | **OL** | Bench is clean here |
       | Breadboard 3.3 V row ↔ 5 V row | **short** | The killer: 5 V back-fed into the 3.3 V rail. Header pins 1 and 2 are **adjacent**, so this is a one-row error |
-      | Dead Pi, pin 1 ↔ pin 6, off the board | **short** | Confirms the board itself is gone (expected — this is the reported symptom) |
+      | Dead Pi, pin 1 ↔ pin 9, off the board | **short** | Confirms the board itself is gone (expected — this is the reported symptom) |
 
       If the breadboard is clean **and** only the Pi shorts, the board failed
       internally and the bench is exonerated. If the breadboard shorts too, **the
@@ -195,13 +209,13 @@ Everything here is `[bench]` and can be done today.
 Stage 0 proved the *bench* is clean; this stage proves the *board* is, and mixing
 the two is how you end up unable to say which one failed.
 
-- [ ] **1.0 Before applying power: pin 1 ↔ pin 6, Pi unplugged, ohmmeter.
+- [ ] **1.0 Before applying power: pin 1 ↔ pin 9, Pi unplugged, ohmmeter.
       Expected: OL.** Ten seconds, and it is the exact measurement that
       characterised the dead board. A short here means the Pi arrived faulty or
       was killed before this stage — do not power it, and do not connect it to the
       bench looking for the cause.
-- [ ] **1.1** pin 2 → pin 6: **5.0 V ± 5 %**
-- [ ] **1.2** pin 1 → pin 6: **3.3 V ± 5 %**
+- [ ] **1.1** pin 2 → pin 9: **5.0 V ± 5 %**
+- [ ] **1.2** pin 1 → pin 9: **3.3 V ± 5 %**
 - [ ] **1.3** pin 1 ↔ pin 17: **continuity** (same 3.3 V — also proves you are
       counting pins correctly)
 - [ ] **1.4** pin 2 ↔ pin 4: **continuity** (same 5 V)
@@ -259,7 +273,7 @@ the fuse arrives.
 >
 > Between every block, with power applied:
 >
-> - [ ] **Rails still right?** pin 1 → pin 6 = 3.3 V, pin 2 → pin 6 = 5.0 V. A
+> - [ ] **Rails still right?** pin 1 → pin 9 = 3.3 V, pin 2 → pin 9 = 5.0 V. A
 >       rail that sagged when you added a block found your fault.
 > - [ ] **Touch the Pi's SoC and the ADS1115.** Warm is normal; **too hot to keep a
 >       finger on is not, and it is the symptom the first Pi showed.** Pull power
@@ -405,7 +419,7 @@ switched off, which is worse than not having it.
 terminal adapter (item #6). Order matters here more than anywhere else.
 
 - [ ] **5.1 Grounds first, before any supply is plugged in.** From one point on the
-      ground bar, check continuity to: **Pi GND (pin 6), UBEC IN−, UBEC OUT−, and the
+      ground bar, check continuity to: **Pi GND (pin 9), UBEC IN−, UBEC OUT−, and the
       12 V supply negative. All four must beep.** If one does not, stop. Two grounds
       that never meet is one of the two ways components die on this bench.
 - [ ] **5.2** Rail + against rail −: **open**, again, now that more is planted.

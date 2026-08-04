@@ -12,6 +12,34 @@ you need them.
 > [`COMMISSIONING.md`](COMMISSIONING.md) end to end. Until then, treat every
 > number the software reports as unverified.
 
+> ### ⚠ THIS PARTICULAR RASPBERRY PI: header pins 6 and 14 are damaged
+>
+> Both are ground pins, and **pin 6 is the one every wiring document used to
+> name.** They are physically unusable on this board.
+>
+> | Instead of | Use | For |
+> |---|---|---|
+> | pin 6 (GND) | **pin 9** | sensing ground, and every voltage measured "against GND" |
+> | pin 14 (GND) | **pin 20** | diverter-side reference, *if a local one is wired at all — see below* |
+>
+> The wiring sheets and `COMMISSIONING.md` have been updated to say pin 9. This
+> note exists because **you may be holding a printed or older copy that still
+> says pin 6**, and because a replacement Pi will have working pins — at which
+> point this note stops applying and the substitution should be undone.
+>
+> **Two consequences that are easy to miss:**
+>
+> - **Every "measure X against pin 6" reads a false result on this board.** A
+>   damaged pin is open, so pin 1 → pin 6 reads 0 V and pin 1 ↔ pin 6 reads OL —
+>   which looks exactly like *"both rails dead"* and *"no short"*. Someone
+>   following an old checklist would conclude this healthy Pi is broken. Measure
+>   against **pin 9**.
+> - **Do not force a wire into pin 6 or 14.** Pin 6 sits beside pin 4 (5 V), and
+>   pin 14 sits between pin 12 (servo signal) and pin 16 (diverter gate). A bent
+>   pin touching its neighbour is a 5 V-to-ground short on one side and an
+>   actuator fault on the other. Mark them physically — this rig has already lost
+>   one board to a 3.3 V short.
+
 ---
 
 ## 1 · Something is wrong

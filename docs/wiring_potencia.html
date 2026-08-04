@@ -957,7 +957,7 @@
     <table>
       <tr><th style="width:34%">Pata</th><th>Qué lleva</th></tr>
       <tr><td><b>riel −</b> del protoboard</td>
-          <td>la tierra de <b>medición</b>: Pi pin 6, GND del ADS1115, R2 del divisor, GND del transductor, GND de la sonda y el pull-down de 10 kΩ. Corriente: <b>microamperios</b></td></tr>
+          <td>la tierra de <b>medición</b>: Pi pin 9, GND del ADS1115, R2 del divisor, GND del transductor, GND de la sonda y el pull-down de 10 kΩ. Corriente: <b>microamperios</b></td></tr>
       <tr><td><b>source</b> del IRLZ44N</td>
           <td>el retorno de la bobina: <b>1.08 A</b> en pulsos, ~6 veces por corrida</td></tr>
       <tr><td><b>IN −</b> del UBEC</td>
@@ -991,7 +991,7 @@
       </div>
     </div>
     <p class="why" style="margin:12px 0 0">
-      Hoy, sin el #6, la referencia provisional del banco es el <b>pin 6 del Pi</b> y es legítima
+      Hoy, sin el #6, la referencia provisional del banco es el <b>pin 9 del Pi</b> y es legítima
       precisamente porque no hay potencia: por el riel − no circula más que los 141 µA del divisor y
       los microamperios de la compuerta. El día que llegue el #6 nacen los cuatro cables de arriba.
       <span class="sub">Los 20–50 mΩ de riel son una estimación de contacto de protoboard, no una
@@ -1113,7 +1113,7 @@
   <!-- riel logico -->
   <rect x="150" y="420" width="330" height="50" rx="6" fill="none" stroke="var(--gnd)" stroke-width="1.8"/>
   <text x="315" y="440" text-anchor="middle" font-size="11.5" font-weight="500" fill="currentColor">riel − del protoboard</text>
-  <text x="315" y="457" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".65">Pi pin 6 · ADS1115 · divisor · sonda · 10 kΩ — solo µA</text>
+  <text x="315" y="457" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".65">Pi pin 9 · ADS1115 · divisor · sonda · 10 kΩ — solo µA</text>
 
   <!-- negativo de la fuente -->
   <path d="M60 94 V 470" stroke="var(--gnd)" stroke-width="2.2"/>

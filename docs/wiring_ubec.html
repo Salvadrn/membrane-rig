@@ -311,7 +311,7 @@
       </div>
       <div class="fila">
         <div class="chip" style="background:#1a1a1a; outline:1px solid var(--grey,#9e9e9e)"></div>
-        <div class="nom">Pi · pin 6 (GND)</div>
+        <div class="nom">Pi · pin 9 (GND)</div>
         <div>
           <div class="dst">→ barra de tierra común</div>
           <div class="why">Es el único cobre que el Pi comparte con el mundo de 12 V / 6 V. Sin él el servo no tiene contra qué comparar el pulso.</div>
@@ -446,7 +446,7 @@
 
         <line x1="270" y1="458" x2="330" y2="458" stroke="currentColor" stroke-width="2.4"/>
         <line x1="330" y1="458" x2="330" y2="512" stroke="currentColor" stroke-width="2.4"/>
-        <text x="264" y="462" text-anchor="end" font-size="11" fill="currentColor">GND · pin 6</text>
+        <text x="264" y="462" text-anchor="end" font-size="11" fill="currentColor">GND · pin 9</text>
 
         <!-- prohibicion 5V <-> 6V -->
         <line x1="326" y1="336" x2="340" y2="308" stroke="var(--bad,#b3261e)" stroke-width="2" stroke-dasharray="5 3"/>
@@ -639,7 +639,7 @@
   <div class="caja">
     <h3 style="color:var(--good,#1e7d32)">Con el multímetro, en este orden</h3>
     <ul class="why">
-      <li><strong>Continuidad de tierras primero.</strong> Un solo punto de la barra contra: GND del Pi (pin 6), IN− del UBEC, OUT− del UBEC, negativo de la fuente. Los cuatro deben pitar. Si alguno no, no sigas.</li>
+      <li><strong>Continuidad de tierras primero.</strong> Un solo punto de la barra contra: GND del Pi (pin 9), IN− del UBEC, OUT− del UBEC, negativo de la fuente. Los cuatro deben pitar. Si alguno no, no sigas.</li>
       <li><strong>Mide el riel antes de conectar al receptor.</strong> Con el fusible puesto y el servo <em>desconectado</em>: 12 V en la entrada del UBEC (las fuentes baratas leen 12.3–13 V en vacío, es normal) y <strong>6.0 V ± 0.2</strong> en la salida. Anota cuál lead es + y cuál −.</li>
       <li><strong>Recién ahí conectas el servo</strong>, y en este orden: café → barra de tierra, rojo → 6 V, naranja → GPIO18.</li>
       <li><strong>Verifica el extremo de 700 µs con el servo DESACOPLADO</strong> antes de que el acople toque el vástago.</li>
