@@ -3,13 +3,13 @@
 Estado físico de las piezas del rig. `BOM.csv` es la lista de compra; esto es qué
 hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 
-Última actualización: 2026-07-27
+Última actualización: 2026-08-04
 
 ## En la mano
 
 | Pieza | Notas |
 |---|---|
-| Raspberry Pi 4 + microSD | ya se tenía |
+| Raspberry Pi 4 + microSD | ya se tenía. **⚠ PROBLEMA REPORTADO — naturaleza por confirmar.** Deja de contar como pieza sana: es la causa raíz de los días de "no responde" desde 2026-07-29, que se habían atribuido a red. Posible reemplazo. **Si se reemplaza, tiene que ser Pi 4 — ver la restricción abajo** |
 | Probeta graduada **1000 mL** | ya se tenía; capacidad confirmada por Adrián 2026-07-30. División menor **por confirmar** (típicamente 10 mL en esta capacidad). **⚠ Con el caudal del sim se llena en 17–35 s, no en los 60 s de `test.collection_s`** — ver abajo |
 | Manómetro de carátula | ya se tenía; sirve de referencia para calibrar el transductor |
 | Válvula de bola de aire (SS, verde) | ya se tenía; es la que va a mover el servo |
@@ -24,7 +24,7 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 | Kit de resistencias 1 % | confirmado por Adrián; verificado que trae 22 kΩ (por eso el divisor es 10k/22k y no 10k/20k) |
 | Sonda DS18B20 waterproof | llegó 2026-07-27; era el item #4 del pedido. Desbloquea la cadena de temperatura completa |
 | **Transductor 0–15 PSI, 0.5–4.5 V, G1/4** | llegó 2026-07-27; item #1, el prioritario. **Cierra la cadena de sensado completa**: transductor → divisor 10k/22k → ADS1115 → Pi. Para MONTARLO en el rig hace falta el adaptador G1/4 → Swagelok — **la orden de McMaster ya llegó**, falta confirmar si lo incluye |
-| Kit de capacitores electrolíticos (470 / 1000 µF) | llegó 2026-07-27; item #8. **No desbloquea nada todavía**: van al riel de 12 V, que sigue trabado por el fusible |
+| Kit de capacitores electrolíticos (470 / 1000 µF) | llegó 2026-07-27; item #8. Van al punto estrella del riel de 12 V. **Ya no los bloquea ninguna pieza** — llegaron el fusible (#7) y el barrel jack (#6), que era donde aterrizaba el punto estrella |
 | **Solenoide 3 vías 231Y-6-12VDC** | llegó; item #2. **⚠ Orificio de 1.5 mm, Cv 0.09–0.21 — puede estrangular la medición.** Ver "El diverter puede invalidar la medición" abajo. No energizar: falta el 1N5819 |
 | Termorretráctil 650 pzas 2:1 | llegó; item #9. **Cierra el hueco de "no hay con qué aislar"** — ver la nota de herramientas |
 | Fittings Swagelok / McMaster | **LLEGARON** (confirmado por Adrián). ⚠ **Falta verificar QUÉ llegó exactamente** — si incluye el adaptador G1/4→Swagelok del transductor y la tee, la cadena de sensado se puede montar en el rig y el cuello de botella mecánico desaparece. Pedir foto o lista de empaque |
@@ -140,19 +140,64 @@ cociente** — sale mejor que con un multímetro barato. Requiere un script cort
 `adafruit_ads1x15` (el rig solo lee A0) y, por lo tanto, la Pi viva. Propuesta sin
 verificar; ver `docs/wiring_protoboard.html`.
 
+## ⚠ Si se reemplaza la Pi: tiene que ser Pi 4, NO Pi 5
+
+Restricción de hardware/software, **verificada contra el código el 2026-08-04**.
+Es la clase de compra que se hace en cinco minutos y se descubre incompatible en
+tres semanas, así que queda escrita antes de comprar.
+
+**`pigpio` no funciona en la Pi 5.** La Pi 5 mueve el GPIO al southbridge
+**RP1**; `pigpio` accede directo a los registros del SoC (BCM2711 y anteriores) y
+no está portado. Lo que se cae, verificado con `grep`:
+
+| Archivo | Qué usa | En Pi 5 |
+|---|---|---|
+| `src/hal/servo_valve.py:57` | `pigpio.pi()` + `set_servo_pulsewidth()` | **muerto** — es el actuador principal, el lazo de presión completo |
+| `src/hal/pwm_valve.py:36` | `pigpio.pi()` + `hardware_PWM()` | **muerto** — topología alterna, hoy sin construir |
+| `install.sh:19` | `systemctl enable --now pigpiod` | **el aprovisionamiento falla aquí**, antes de todo lo demás |
+
+Ese último renglón es el que más importa y no es obvio: **`install.sh` nunca ha
+corrido**. Comprar una Pi 5 significa que el primer intento de instalar el rig
+se atora en la línea 19, y el síntoma —"pigpiod no arranca"— no se parece en
+nada a "compré el modelo equivocado".
+
+Lo que **sí** sobrevive a una Pi 5, para no exagerar el argumento:
+`gpio_diverter.py` usa **gpiozero**, que en 2.x usa `lgpio` por defecto y sí
+soporta la Pi 5 — el docstring dice "pigpio backend" pero no lo impone. I²C
+(ADS1115) y 1-Wire (DS18B20) también funcionan. **Es el servo lo que no.**
+
+Y un derivado que se iría en silencio: la resistencia de gate de **470 Ω** se
+derivó del límite de **8 mA del BCM2711**. Los pads del RP1 tienen otra
+característica de drive, así que en una Pi 5 ese número deja de estar
+justificado y hay que rederivarlo — junto con lo que dependa de él en
+`ASSEMBLY.md` y en las seis hojas de cableado.
+
+**No es que la Pi 5 sea imposible: es que cuesta reescribir el driver del servo
+y rederivar el gate, a cambio de cero beneficio para este rig.**
+
+### Antes de comprar Pi: descartar lo barato
+
+Adrián va a pagar esto de su bolsa, así que vale decirlo: **una Pi que "no
+responde" casi nunca es una Pi muerta.** En orden de probabilidad y de costo:
+
+1. **microSD corrupta** — la causa #1. Cuesta $0 descartarla: se reflashea otra
+   tarjeta y se arranca. Si arranca, la Pi está sana y el gasto se evitó.
+2. **Fuente USB-C insuficiente** — la Pi 4 quiere 5 V 3 A. Segunda causa más
+   común, y tiene una trampa: **si el problema es la fuente, una Pi nueva con la
+   fuente vieja reproduce la falla idéntica** y parecerá que llegó defectuosa.
+3. **La Pi de verdad.** Hasta descartar 1 y 2, esto es una hipótesis.
+
+Comprar sin saber cuál de las tres es puede ser dinero tirado.
+
 ## Pendiente de compra
 
-Los 10 items del correo a Roxanne (borrador sin enviar). Los tres primeros son
-prioridad.
+Del correo a Roxanne (borrador sin enviar) ya llegaron **#3, #6, #7** y #9 —
+salieron de esta tabla. **Adrián va a comprar lo que falta él mismo, fuera del
+ciclo de Roxanne** (decisión 2026-08-04).
 
 | # | Pieza | Link |
 |---|---|---|
-| 2 | Solenoide 3 vías 12 V para agua (231Y-6-12VDC) | ESValves |
-| 3 | Válvula de alivio ajustable 0–20 PSI | B01KO7NVYK |
 | 5 | Adaptador 1/4" NPT-M × barb (×3) | B07VJK7KML |
-| 6 | Barrel jack 5.5×2.1 → terminal de tornillo | B077QD4G3Q |
-| 7 | Portafusibles inline + fusible 3 A | B088FNTJDV |
-| 9 | Termorretráctil 650 pzas 2:1 | B07WWWPR2X |
 | 10 | Kit de tornillos M4 | B0FGV8F6G7 |
 
 ### Falta y no está en el correo
@@ -164,9 +209,50 @@ prioridad.
 | Kit de barbs barb-a-barb | uniones de la tubería |
 | PTFE thread-seal tape | juntas NPT del diverter |
 | Abrazaderas de manguera | cada junta barb-silicón |
-| Fittings Swagelok / McMaster | orden de McMaster ya colocada por Roxanne — ¿llegó? |
-| Enclosure + coupling servo | impresión 3D propia |
-| Cinta de aislar | el termorretráctil es el item #9 y no ha llegado; la cinta **no está en `BOM.csv`** y es la única forma de aislar los empalmes del Paso 0 mientras tanto |
+| Enclosure + coupling servo | impresión 3D propia, no es compra |
+
+**Salieron de esta tabla** (estaban desactualizados al 2026-08-04):
+
+- **Fittings Swagelok / McMaster** — ya **llegaron**. Lo que falta no es
+  comprarlos, es **verificar qué trajo el paquete**: si incluye el adaptador
+  G1/4 → Swagelok del transductor y la tee. Eso es una foto o una lista de
+  empaque, no dinero.
+- **Cinta de aislar** — su única justificación era que el termorretráctil no
+  había llegado. **Ya llegó** (item #9), así que hay con qué aislar.
+
+### ⚠ Para la lista de compra directa: NO incluir M3 para montar la Pi
+
+Está mal por dos motivos independientes, y es el que quiero corregirte antes de
+que se compre:
+
+1. **No hace falta tornillería para la Pi**: va en una **carcasa que Adrián ya
+   tiene**.
+2. **Aunque hiciera falta, el M3 no entra.** Los barrenos de la Pi son de
+   ~2.7 mm = **M2.5**. Es un error que este repo ya cometió una vez y corrigió.
+
+El **kit M4 (item #10) sí sirve**, pero para otra cosa: baseplate, marco que
+reacciona el par del servo y bracket.
+
+### El 1N5819 no debería bloquear tres semanas
+
+Es el único bloqueo por pieza que queda en todo el rig, y es un diodo de
+centavos. Si comprarlo en línea tarda, **cualquier tienda local de electrónica
+lo resuelve el mismo día** — y si no hay 1N5819, sirve un **1N4001–1N4007**:
+
+| | 1N5819 (BOM) | 1N4001–4007 (sustituto) |
+|---|---|---|
+| Tipo | Schottky | rectificador estándar |
+| Rating | 40 V / 1 A | 50–1000 V / 1 A |
+| Recuperación | rápida | ~2 µs |
+| ¿Sirve aquí? | sí | **sí** |
+
+La recuperación lenta del 1N400x solo importaría conmutando a frecuencia alta.
+El diverter conmuta **una o dos veces por punto de medición**, así que la
+diferencia es irrelevante. Lo que importa es lo que ambos cumplen: soportar los
+**1.08 A** de la bobina y bloquear los 12 V en directa.
+
+Comprar **varios**, no uno: es la pieza que si se quema deja el rig parado otra
+vez.
 
 ## Bloqueos activos
 
@@ -185,20 +271,19 @@ prioridad.
   el riel invertido, el diodo de cuerpo del IRLZ44N y el 1N5819 quedan **los dos
   en directa**: corto franco desde el primer instante.
 
-- **No energizar el riel de 12 V sin el fusible de 3 A** (item #7, no ha llegado).
-  La fuente ya está en la mano y el protoboard también, así que la tentación es
-  real: se puede cablear todo, pero no se conecta la fuente.
 - **No energizar el diverter sin el 1N5819 montado** en paralelo a la bobina.
+  Es el único bloqueo por pieza que queda.
 - **No energizar ni acoplar el servo.** `ServoValve` lo manda a 700 µs solo al
   arrancar en modo hardware y `servo_close_us` sigue en 0 (sin calibrar). La
   calibración de extremos va con la válvula DESACOPLADA del vástago.
-- **La Pi no responde (2026-07-29)** y el software del rig nunca se instaló ahí.
-  `install.sh` es el que habilita I²C/1-Wire e instala `i2c-tools`, así que
-  `i2cdetect` **no existe todavía**: toda verificación que dependa de la Pi está
-  diferida. General lo está resolviendo. Además falta el **adaptador barrel jack →
-  terminal de tornillo (item #6)**, que es un segundo bloqueo del riel de 12 V
-  independiente del fusible: hoy no hay dónde aterrizar los 12 V en un tornillo, así
-  que el **punto estrella no existe** y los capacitores no se pueden colocar.
+- **La Pi tiene un problema de hardware — ya no es "no responde por red".**
+  Reportado 2026-08-01; naturaleza por confirmar con Adrián. Esto **explica
+  retroactivamente** los días de silencio desde 2026-07-29, que este archivo
+  atribuía a red. El software del rig nunca se instaló ahí: `install.sh` es el
+  que habilita I²C/1-Wire e instala `i2c-tools`, así que `i2cdetect` **no existe
+  todavía** y toda verificación que dependa de la Pi sigue diferida — ahora con
+  causa raíz, no con un misterio. Si termina en reemplazo, **Pi 4, no Pi 5**
+  (ver la sección de arriba), y antes conviene descartar microSD y fuente.
 
 ## Presión de ensayo: 35 kPa — confirmado (2026-07-27)
 
