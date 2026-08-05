@@ -1127,6 +1127,8 @@
 <path d="M222.0 102.0 L222.0 112.0 L728.0 112.0 L728.0 318.0" fill="none" stroke="var(--pwr)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 3"/>
 <text x="736.0" y="108.0" font-size="10.5" fill="var(--pwr)" font-weight="500">5 V ← pin 2 · UN SOLO HOYO, nunca a un riel</text>
 <path d="M1005.0 232.0 L1019.0 232.0 L1019.0 540.0 L1005.0 540.0" fill="none" stroke="var(--gnd)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 3"/>
+<path d="M336.5 540.0 L336.5 582.0" fill="none" stroke="var(--gnd)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="344.5" y="574.0" font-size="10.5" fill="var(--gnd)" font-weight="500">riel − → TORNILLO ESTRELLA — UN solo cable, la única salida de tierra de las placas</text>
 <text x="560.0" y="686.0" font-size="11.5" fill="currentColor" text-anchor="middle" opacity=".65">Si por un cable pasan más de ~1 A, ese cable no toca el protoboard.</text>
 </svg>
 <svg viewBox="0 0 1120 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Protoboard B de control: IRLZ44N en las columnas 5 a 7 con su red de compuerta">
@@ -2131,7 +2133,7 @@
   </div>
 </div>
 
-<h2>Los cinco cables que NO tocan el protoboard</h2>
+<h2>Los ocho cables que van por FUERA, punto a punto</h2>
 
 <div class="comp" style="--c:var(--bad)">
 <table>
@@ -2146,6 +2148,12 @@
       <td class="why"><b>1.67 A pico</b> al calarse el servo</td></tr>
   <tr><td>5</td><td>OUT− del UBEC</td><td>Negro/café del servo</td>
       <td class="why"><b>1.67 A de retorno.</b> Nunca por el Pi — ver abajo</td></tr>
+  <tr><td>6</td><td>Riel − de la placa A</td><td>Tornillo estrella</td>
+      <td class="why"><b>la ÚNICA salida de tierra de las placas</b> — un cable, jamás dos. Faltaba en esta lista y en el dibujo hasta 2026-08-05</td></tr>
+  <tr><td>7</td><td>Nodo +12 V (salida del fusible)</td><td>IN+ del UBEC Hobbywing 3A</td>
+      <td class="why">~0.95 A con el servo calado</td></tr>
+  <tr><td>8</td><td>IN− del UBEC</td><td>Tornillo estrella</td>
+      <td class="why">el retorno de la conversión 12→6 V — tercer pico de la estrella</td></tr>
 </table>
 <p class="why" style="margin:12px 0 0">
   La señal del servo (naranja → pin 12) sí es de µA, pero conviene llevarla directa del header al

@@ -37,7 +37,9 @@ Tags on each check:
 >
 > The replacement Pi (arrived 2026-08-02, working) has **header pins 6 and 14
 > damaged** — both grounds. Every check below has been rewritten to measure
-> against **pin 9**; the diverter-side reference is **pin 20**.
+> against **pin 9**. The diverter side has NO Pi-side ground of its own — its
+> reference arrives through the star screw (single ground entry; pin 20 is only a
+> registered spare, NOT wired).
 >
 > **This matters more for measuring than for wiring.** A damaged pin is open, so
 > probing against pin 6 returns 0 V for every rail and OL for every continuity
@@ -153,6 +155,18 @@ Everything here is `[bench]` and can be done today.
 
       Check the top two first. They are the only ones on this bench with enough
       current behind them to kill a board quickly.
+
+- [ ] **0.2c GPIO23's gate line ↔ MOSFET drain. Expected: OL.**
+      This check did not exist before 2026-08-05 and it names a killer. If the
+      470 Ω leg lands **one row off**, GPIO23 ends up tied to the DRAIN through
+      470 Ω — and the drain sits at **+12 V through the coil** whenever the FET
+      is off. The day a 12 V supply exists, that is (12 − 3.6)/470 ≈ **18 mA
+      continuously** into GPIO23's ESD clamp and out through the 3.3 V rail:
+      heating plus 3.3↔GND continuity — the exact signature Pi 1 died with.
+      (Honest caveat: the 12 V rail did not exist while Pi 1 was alive, so as a
+      root cause for THAT death this requires an undocumented 12 V source; as a
+      way to kill THIS Pi on the day the supply is first plugged, it is fully
+      live.) Probe the gate column ↔ the drain column: **OL**, always.
 - [ ] **0.3 Ohmmeter on every resistor *before* planting it.** The kit is 1 %.
       | Resistor | Role | Expected |
       |---|---|---|
@@ -214,6 +228,14 @@ the two is how you end up unable to say which one failed.
       characterised the dead board. A short here means the Pi arrived faulty or
       was killed before this stage — do not power it, and do not connect it to the
       bench looking for the cause.
+- [ ] **1.0b Header PAIRS, Pi still unplugged — all expected OL:**
+      **pin 2 ↔ pin 9** and **pin 4 ↔ pin 9** (5 V against ground: the
+      highest-energy pair, and no check measured it before 2026-08-05), and
+      **pin 6 ↔ pin 4** — pin 6 is DAMAGED and lives next to pin 4 (5 V). If it
+      is bent toward its neighbour, the first USB-C plug-in becomes a 5 V short
+      inside the header, and this reading is the only place it shows up early.
+      Same for **pin 14 ↔ pin 12** and **pin 14 ↔ pin 16** (the other damaged
+      pin, between the servo signal and the diverter gate).
 - [ ] **1.1** pin 2 → pin 9: **5.0 V ± 5 %**
 - [ ] **1.2** pin 1 → pin 9: **3.3 V ± 5 %**
 - [ ] **1.3** pin 1 ↔ pin 17: **continuity** (same 3.3 V — also proves you are
@@ -447,7 +469,9 @@ terminal adapter (item #6). Order matters here more than anywhere else.
 
 `[part]` (needs Stage 5). **The coupler stays off the stem for all of this.**
 
-- [ ] **6.1 Connect in this order: brown → ground bar, red → 6 V, orange → GPIO18.**
+- [ ] **6.1 Connect in this order: brown → UBEC OUT−, red → UBEC OUT+ (6 V), orange → GPIO18 (pin 12).**
+      The servo's return lives at the UBEC, not on a ground bar — its pulse loop closes
+      through the 1000 µF output capacitor (corrected 2026-08-05).
       Ground first, and it is also the last thing you ever disconnect. If the brown
       lead comes off while V+ is live, the motor's return current — up to 1.67 A —
       looks for a path home and the only one left is the signal wire into GPIO18,

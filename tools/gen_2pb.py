@@ -302,6 +302,14 @@ def build() -> str:
     o += wire([(cx(63) + 16, ra_m), (cx(63) + 30, ra_m), (cx(63) + 30, rail_y(A, "bm")),
                (cx(63) + 16, rail_y(A, "bm"))], GN, 1.8, dash="4 3")
 
+    # THE missing conductor (caught 2026-08-05): the single cable that takes the
+    # boards' quiet ground down to the star screw. Without it drawn, the tree has
+    # no root and nobody wires it.
+    o += wire([(cx(18), rail_y(A, "bm")), (cx(18), rail_y(A, "bm") + 42)], GN, 2.6)
+    o.append(txt(cx(18) + 8, rail_y(A, "bm") + 34,
+                 "riel − → TORNILLO ESTRELLA — UN solo cable, la única salida de tierra de las placas",
+                 10.5, fill=GN, weight="500"))
+
     o.append(txt(W / 2, HA - 14,
                  "Si por un cable pasan más de ~1 A, ese cable no toca el protoboard.",
                  11.5, anchor="middle", op=".65"))

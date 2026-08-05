@@ -266,7 +266,7 @@
         <div class="chip" style="background:#1a1a1a; outline:1px solid var(--grey,#9e9e9e)"></div>
         <div class="nom">UBEC OUT −</div>
         <div>
-          <div class="dst">→ a la misma barra de tierra común</div>
+          <div class="dst">→ OUT− del UBEC — su retorno vive ahí, no en la barra (corregido 2026-08-05)</div>
           <div class="why">Es el retorno del motor del servo <em>y</em> la referencia contra la que el servo lee el pulso del Pi. Las dos cosas por el mismo cobre.</div>
         </div>
       </div>
@@ -282,7 +282,7 @@
         <div class="chip" style="background:#1a1a1a; outline:1px solid var(--grey,#9e9e9e)"></div>
         <div class="nom">Servo · café (pos 1)</div>
         <div>
-          <div class="dst">→ barra de tierra común</div>
+          <div class="dst">→ OUT− del UBEC</div>
           <div class="why">Se conecta PRIMERO y se desconecta AL FINAL. Ver la tabla de failsafe: quitarlo con V+ puesto manda el retorno por GPIO18.</div>
         </div>
       </div>

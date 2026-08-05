@@ -971,8 +971,8 @@
           <td>el retorno de la bobina: <b>1.08 A</b> en pulsos, ~6 veces por corrida</td></tr>
       <tr><td><b>IN −</b> del UBEC</td>
           <td>el retorno de la conversión 12→6 V</td></tr>
-      <tr><td><b>OUT −</b> del UBEC / café del servo</td>
-          <td>el retorno del motor: hasta <b>1.67 A</b> de pico al calarse</td></tr>
+      <tr><td><b>OUT −</b> del UBEC / café del servo — <b>se quedan JUNTOS en el UBEC</b>, no vienen al tornillo (corregido 2026-08-05)</td>
+          <td>el retorno del motor (hasta <b>1.67 A</b> de pico) circula servo↔capacitor de salida, dentro del mundo del UBEC</td></tr>
     </table>
     <p class="why" style="margin:12px 0 0">
       Cuatro cables, cuatro tornillazos en el <b>mismo</b> terminal. <b>Nunca uno a través de otro</b> y
@@ -1236,8 +1236,8 @@
       <li><b>Riel con el fusible puesto y todo lo demás desconectado:</b> ~12–13 V en el nodo. Solo
         entonces conectas el IN+ del UBEC.</li>
       <li><b>Salida del UBEC antes de tocar el servo:</b> <b>6.0 V ± 0.2</b>, y anota cuál lead es +.
-        Recién ahí conectas el servo, y en este orden: <b>café → tierra, rojo → 6 V, naranja →
-        GPIO18</b>.</li>
+        Recién ahí conectas el servo, y en este orden: <b>café → OUT− del UBEC, rojo → OUT+ (6 V), naranja →
+        GPIO18 (pin 12)</b>. El café no va a ninguna barra: su retorno vive en el UBEC.</li>
       <li><b>Diverter, la primera vez:</b> con la Pi mandando GPIO23 alto, mide la compuerta contra el
         source → <b>~3.15 V</b>, y el drain → cae de 12 V a casi 0. La bobina debe hacer clic.</li>
     </ol>
