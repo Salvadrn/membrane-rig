@@ -63,13 +63,18 @@ paper. Nadie más toca la matemática: si `k` sale mal, es tuyo. Lee primero
   porque `MockPlant` lo mete a propósito (`sim.flow_intercept_m3s: 1.3072e-5`,
   `flow_per_kpa_m3s: 7.86e-7`, escalado por `mu_ref/mu` con `mu_ref = mu(20 °C)`).
   En datos reales un intercepto grande a ΔP→0 grita fuga o bypass del diverter.
-- **Columnas exactas del CSV de traza** (`logging_csv.py:38-43`), 11 columnas:
+- **Columnas exactas del CSV de traza** (`logging_csv.py`), 12 columnas:
   `iso_time, elapsed_s, phase, setpoint_<units>, setpoint_kpa, pressure_<units>,
-  pressure_kpa, valve_command, diverter_measured, in_band, water_temp_c`.
+  pressure_kpa, valve_command, diverter_measured, in_band, water_temp_c,
+  water_temp_source`.
   Las columnas `_<units>` son duplicado en la unidad de display (`kPa` o `psi`),
   las `_kpa` son las canónicas. Booleans van como `int(bool(...))` 0/1; presiones
-  redondeadas a 4 decimales, `elapsed_s` a 3, temp a 3. **Si agregas columna, va
-  al final** — hay CSVs viejos y scripts que leen por nombre.
+  redondeadas a 4 decimales, `elapsed_s` a 3, temp a 3. `water_temp_source`
+  ("probe" / "manual" / "sim" / "probe (no recent reading)") va **por fila** y no
+  por corrida, porque puede cambiar a media prueba: una sonda que deja de
+  responder conserva su último valor pero ya no está midiendo, y una etiqueta
+  única describiría mal todas las filas de un lado de ese instante. **Si agregas
+  columna, va al final** — hay CSVs viejos y scripts que leen por nombre.
 - **Tres artefactos por corrida** en `runs/`: `run_YYYYMMDD_HHMMSS.csv` (traza),
   `_meta.json` (setpoints, PID, tolerancia, dwell, resultados por punto) y
   `_analysis.json` (`result.as_dict()`, que agrega `pore_size_um`). Más
