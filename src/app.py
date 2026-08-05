@@ -190,10 +190,17 @@ class RigController:
         `max` is live: it tracks the specimen limit, which the operator can tighten
         mid-session. check_setpoints() remains the authority — this is the
         preview, not a second gate."""
+        # Round the max DOWN, never to nearest: the published bound has to be a
+        # value check_setpoints() actually accepts. In psi a 65 kPa limit is
+        # 9.4274… and round() lifts it to 9.43, which converts back to 65.0035 and
+        # gets rejected — so the UI would offer a maximum the server refuses. A
+        # floored bound is at worst a hundredth conservative, which is the right
+        # direction for a pressure limit.
+        max_disp = math.floor(self.cfg.disp(self.pressure_limit_kpa()) * 100.0) / 100.0
         return {
             "min": 0.0,
             "min_inclusive": False,
-            "max": round(self.cfg.disp(self.pressure_limit_kpa()), 2),
+            "max": max_disp,
             "max_inclusive": True,
             "units": self.cfg.units,
         }
