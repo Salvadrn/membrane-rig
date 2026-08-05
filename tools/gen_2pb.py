@@ -221,14 +221,14 @@ def build() -> str:
 
     o += module(A, "E", 2, 10, "ADS1115",
                 ["VDD", "GND", "SCL", "SDA", "ADDR", "ALRT", "A0", "A1", "A2", "A3"])
-    o += descr(A, 6, ["ADS1115 · cols 2-11",
+    o += descr(A, 6, ["ADS1115 HiLetgo · cols 2-11",
                       "una tira de 10 pines,", "no cruza el canal"], "var(--dat)")
 
     o += resistor(A, "B", 18, 21, "R1 10k")
     # R2 on row C so column 21 shows two holes: R1's leg (row B) and
     # R2's leg (row C) share the NODE, never the hole.
     o += resistor(A, "C", 21, 24, "R2 22k")
-    o += descr(A, 21, ["Divisor · cols 18-24",
+    o += descr(A, 21, ["Divisor 10k/22k, kit 1 % · cols 18-24",
                        "col 21 es el NODO", "ratio 0.6875"], "var(--res)")
 
     o += module(A, "B", 31, 3, "DS18B20", ["ROJO", "AMAR", "NEGRO"], "var(--sig)")
@@ -238,12 +238,12 @@ def build() -> str:
     o += resistor(A, "D", 32, 34, "4.7k")
     o += wire([(cx(34), cy(A, "D")), (cx(34), cy(A, "A") - 12), (cx(37), cy(A, "A") - 12),
                (cx(37), rail_y(A, "tp"))], "var(--ok)", 1.5)
-    o += descr(A, 32, ["Sonda · cols 31-33",
+    o += descr(A, 32, ["Sonda DS18B20 · cols 31-33",
                        "4.7k: col 32 (AMAR) → col 34 → 3.3 V",
                        "NUNCA de rojo a negro"], "var(--sig)")
 
     o += module(A, "B", 45, 3, "TRANSDUCTOR", ["ROJO", "VERDE", "NEGRO"], "var(--pwr)")
-    o += descr(A, 46, ["Transductor · cols 45-47",
+    o += descr(A, 46, ["Transductor 0-15 PSI 0.5-4.5 V · cols 45-47",
                        "ROJO = 5 V del pin 2", "rojo y negro NO se cambian"], "var(--pwr)")
 
     ra_p, ra_m = rail_y(A, "tp"), rail_y(A, "tm")
@@ -317,7 +317,7 @@ def build() -> str:
     o += module(B, "E", 5, 3, "IRLZ44N", ["G", "D", "S"], "var(--act)")
     o += resistor(B, "C", 2, 5, "470 Ω")
     o += resistor(B, "A", 5, 8, "10k")
-    o += descr(B, 6, ["IRLZ44N · cols 5-7",
+    o += descr(B, 6, ["IRLZ44N (el MOSFET) · cols 5-7",
                       "de frente y parado: G · D · S", "la aleta es el DRAIN"], "var(--act)")
     o += descr(B, 28, ["470 Ω  cols 2→5 · compuerta",
                        "10k  cols 5→8 · a GND",
@@ -334,7 +334,7 @@ def build() -> str:
     # drain / source leave the board through the empty bottom half
     o += wire([(cx(6), cy(B, "E")), (cx(6), cy(B, "I")), (cx(30), cy(B, "I"))], PW, 2.8)
     o.append(txt(cx(31), cy(B, "I") + 4,
-                 "D → cable directo a la bobina −   (1.08 A)", 11, fill=PW, weight="500"))
+                 "D → bobina − del solenoide 231Y-6-12VDC   (1.08 A)", 11, fill=PW, weight="500"))
     o += wire([(cx(7), cy(B, "E")), (cx(7), cy(B, "J")), (cx(30), cy(B, "J"))],
               "var(--bad)", 2.8)
     o.append(txt(cx(31), cy(B, "J") + 4,
@@ -353,7 +353,7 @@ def build() -> str:
              f'height="{zy2 - zy1:.1f}" rx="7" fill="var(--pwr)" fill-opacity=".05" '
              f'stroke="var(--pwr)" stroke-width="1.6" stroke-dasharray="7 4"/>')
     zmx = (zx1 + zx2) / 2
-    o.append(txt(zmx, zy1 + 16, "ZONA V1738 — bloque enchufable de la bobina", 10.5,
+    o.append(txt(zmx, zy1 + 16, "ZONA V1738 — plug de la bobina del 231Y-6-12VDC", 10.5,
                  fill="var(--pwr)", anchor="middle", weight="500"))
     o.append(txt(zmx, zy1 + 31, "plantar aquí SOLO si su pitch mide 5.08 mm (Stage 0.6)", 9.5,
                  anchor="middle", op=".75"))
