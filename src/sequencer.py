@@ -102,6 +102,11 @@ class _Accum:
 
 class Sequencer:
     def __init__(self, cfg) -> None:
+        # config values are the DEFAULTS every run falls back to — kept so a run
+        # started without explicit parameters cannot silently inherit the previous
+        # run's (see start()).
+        self._defaults = (cfg.test.tolerance_pct, cfg.test.dwell_s,
+                          cfg.test.collection_s, cfg.test.stabilize_timeout_s)
         self.tolerance_pct = cfg.test.tolerance_pct
         self.dwell_s = cfg.test.dwell_s
         self.collection_s = cfg.test.collection_s
@@ -120,14 +125,17 @@ class Sequencer:
     def start(self, setpoints_kpa: List[float], now: float,
               tolerance_pct=None, dwell_s=None, collection_s=None,
               stabilize_timeout_s=None) -> None:
-        if tolerance_pct is not None:
-            self.tolerance_pct = tolerance_pct
-        if dwell_s is not None:
-            self.dwell_s = dwell_s
-        if collection_s is not None:
-            self.collection_s = collection_s
-        if stabilize_timeout_s is not None:
-            self.stabilize_timeout_s = stabilize_timeout_s
+        # Every parameter is resolved for EVERY run: given -> use it, omitted ->
+        # fall back to config. It used to keep whatever the last run set, so a run
+        # started with no parameters silently inherited them — a 60 s collection
+        # announced by /config could run for 8 s because the previous item asked
+        # for that, and the resulting Q would be computed over the wrong window.
+        d_tol, d_dwell, d_coll, d_timeout = self._defaults
+        self.tolerance_pct = d_tol if tolerance_pct is None else tolerance_pct
+        self.dwell_s = d_dwell if dwell_s is None else dwell_s
+        self.collection_s = d_coll if collection_s is None else collection_s
+        self.stabilize_timeout_s = (d_timeout if stabilize_timeout_s is None
+                                    else stabilize_timeout_s)
         # The plant rises fast but falls SLOWLY (permeation-only once the valve
         # closes), so run points low->high: we never sit waiting for a slow fall.
         self._setpoints = sorted(setpoints_kpa) if self.sort_ascending else list(setpoints_kpa)
@@ -216,7 +224,15 @@ class Sequencer:
 
         sp = self._current()
         tol = self._tol()
-        in_band = abs(pressure_kpa - sp) <= tol
+        # A non-finite reading tells us NOTHING about the band. Comparing it gives
+        # False, which used to look identical to "out of band" and reset the dwell
+        # — so with glitches arriving faster than dwell_s (and safety tolerating
+        # them by design, within fault_grace_reads) no point could ever reach
+        # COLLECTING and every setpoint died of stabilize_timeout. Same contract as
+        # _Accum.add and pid.update: an unusable read advances nothing, and in
+        # particular must not UNDO progress already earned.
+        usable = math.isfinite(pressure_kpa)
+        in_band = usable and abs(pressure_kpa - sp) <= tol
 
         if self.phase == Phase.STABILIZING:
             if in_band:
@@ -224,7 +240,7 @@ class Sequencer:
                     self._band_since = now
                 elif now - self._band_since >= self.dwell_s:
                     self._enter_collecting(now)
-            else:
+            elif usable:
                 self._band_since = None
 
             if self.phase == Phase.STABILIZING and now - self._phase_start >= self.stabilize_timeout_s:

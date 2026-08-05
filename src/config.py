@@ -413,5 +413,14 @@ class Config:
                 errs.append(f"setpoint {sp:.1f} kPa exceeds the pressure limit ({limit:.1f} kPa)")
         if self.pid.output_max <= self.pid.output_min:
             errs.append("pid.output_max must be > output_min")
+        # The valve command range must stay a subset of 0..100 with min below max.
+        # Inverted or lifted ends passed validation before: harmless for the servo
+        # driver (full_close bypasses the range) but not for the pwm topology, and
+        # a min above 0 means the "closed" end of the control range never actually
+        # commands closed.
+        v = self.valve
+        if not (0.0 <= v.min_command < v.max_command <= 100.0):
+            errs.append(f"valve.min_command/max_command must satisfy "
+                        f"0 <= min < max <= 100 (got {v.min_command}/{v.max_command})")
         if errs:
             raise ValueError("Invalid config:\n  - " + "\n  - ".join(errs))

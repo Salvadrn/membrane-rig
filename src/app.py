@@ -223,7 +223,13 @@ class RigController:
             self.playlist.membrane_limit_kpa = 0.0
         else:
             kpa = self.cfg.to_internal(float(limit_display))
-            self.playlist.membrane_limit_kpa = min(kpa, self.cfg.safety.max_pressure_kpa)
+            # Clamp to the CONFIGURED specimen limit, not just the global cutoff:
+            # otherwise a value above it was accepted and stored while
+            # pressure_limit_kpa() quietly kept using the smaller configured one,
+            # so what the queue persisted was not what applied. Storing only what
+            # actually binds keeps "the UI can only tighten" true of the stored
+            # state too, not just of its effect.
+            self.playlist.membrane_limit_kpa = min(kpa, self.cfg.specimen_limit_kpa())
         self.playlist.save()
         return {"ok": True, "limit": round(self.cfg.disp(self.pressure_limit_kpa()), 2)}
 
@@ -274,7 +280,13 @@ class RigController:
             self._held = False
             self._held_alarm = None
             self._hold_count = 0
-            self._hold_point_idx = None
+            # A run always starts on point 0. Leaving this None meant a run that
+            # holds on its FIRST tick (residual pressure from the previous item
+            # already above the new ceiling) never recorded which point the hold
+            # belonged to, so the first OK tick after a retry saw index != None and
+            # zeroed the budget — the operator silently got an extra retry before
+            # the three-strike backstop began counting.
+            self._hold_point_idx = 0
             self._ceiling_raised = False
             self._raise_note = ""
             self._prev_p = None
