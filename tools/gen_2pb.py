@@ -211,6 +211,9 @@ def build() -> str:
         o.append(txt(x, hy + 61, nm, 10, fill=c, anchor="middle", op=".85"))
     o.append(txt((px["6"] + px["14"]) / 2, hy + 74, "DAÑADOS — no metas cable", 9.5,
                  fill="var(--bad)", anchor="middle", weight="500"))
+    o.append(txt(px["12"], hy + 74, "directo al servo,", 9, fill="var(--sig)", anchor="middle", op=".8"))
+    o.append(txt(px["12"], hy + 86, "no toca protoboard", 9, fill="var(--sig)", anchor="middle", op=".8"))
+    o.append(txt(px["16"], hy + 74, "va a la placa B", 9, fill="var(--act)", anchor="middle", op=".8"))
 
     # ---------------- board A ----------------
     o += board(A, "PROTOBOARD A — sensado",
@@ -222,14 +225,22 @@ def build() -> str:
                       "una tira de 10 pines,", "no cruza el canal"], "var(--dat)")
 
     o += resistor(A, "B", 18, 21, "R1 10k")
-    o += resistor(A, "B", 21, 24, "R2 22k")
+    # R2 on row C so column 21 shows two holes: R1's leg (row B) and
+    # R2's leg (row C) share the NODE, never the hole.
+    o += resistor(A, "C", 21, 24, "R2 22k")
     o += descr(A, 21, ["Divisor · cols 18-24",
                        "col 21 es el NODO", "ratio 0.6875"], "var(--res)")
 
     o += module(A, "B", 31, 3, "DS18B20", ["ROJO", "AMAR", "NEGRO"], "var(--sig)")
-    o += resistor(A, "D", 31, 33, "4.7k")
-    o += descr(A, 32, ["Sonda + pull-up · 31-33",
-                       "4.7k de AMAR a ROJO", "puntas trenzadas: estañar"], "var(--sig)")
+    # Pull-up: DATA (col 32) to VDD (col 34, jumpered to the 3.3 V rail below).
+    # NOT 31->33: those are VDD and GND, and a resistor there is a 0.7 mA heater
+    # that leaves the 1-Wire line floating. The pull-up IS the bus's idle high.
+    o += resistor(A, "D", 32, 34, "4.7k")
+    o += wire([(cx(34), cy(A, "D")), (cx(34), cy(A, "A") - 12), (cx(37), cy(A, "A") - 12),
+               (cx(37), rail_y(A, "tp"))], "var(--ok)", 1.5)
+    o += descr(A, 32, ["Sonda · cols 31-33",
+                       "4.7k: col 32 (AMAR) → col 34 → 3.3 V",
+                       "NUNCA de rojo a negro"], "var(--sig)")
 
     o += module(A, "B", 45, 3, "TRANSDUCTOR", ["ROJO", "VERDE", "NEGRO"], "var(--pwr)")
     o += descr(A, 46, ["Transductor · cols 45-47",
@@ -252,7 +263,7 @@ def build() -> str:
                (cx(8), cy(A, "E"))], DT, 2.2)
     o.append(txt(cx(15), cy(A, "A") - 29, "nodo (col 21) → A0 (col 8)", 10,
                  fill=DT, anchor="middle", weight="500"))
-    o += wire([(cx(24), cy(A, "B")), (cx(24), cy(A, "D")), (cx(27), cy(A, "D")),
+    o += wire([(cx(24), cy(A, "C")), (cx(24), cy(A, "D")), (cx(27), cy(A, "D")),
                (cx(27), ra_m)], GN, 1.5)
 
     # transducer green -> R1
@@ -264,8 +275,8 @@ def build() -> str:
     # probe / transducer power and grounds
     o += wire([(cx(31), cy(A, "B")), (cx(31), cy(A, "A") - 12), (cx(29), cy(A, "A") - 12),
                (cx(29), ra_p)], OK, 1.5)
-    o += wire([(cx(33), cy(A, "B")), (cx(33), cy(A, "C")), (cx(36), cy(A, "C")),
-               (cx(36), ra_m)], GN, 1.5)
+    o += wire([(cx(33), cy(A, "B")), (cx(33), cy(A, "C")), (cx(39), cy(A, "C")),
+               (cx(39), ra_m)], GN, 1.5)
     o += wire([(cx(47), cy(A, "B")), (cx(47), cy(A, "C")), (cx(50), cy(A, "C")),
                (cx(50), ra_m)], GN, 1.5)
 
@@ -315,7 +326,7 @@ def build() -> str:
     rb_m = rail_y(B, "tm")
     o += wire([(cx(8), cy(B, "A")), (cx(8), cy(B, "A") - 26), (cx(11), cy(B, "A") - 26),
                (cx(11), rb_m)], GN, 1.5)
-    o += wire([(cx(5), cy(B, "E")), (cx(5), cy(B, "A"))], "var(--act)", 1.8)
+    # NO jumper G->10k->470R: they already share column 5 (one node, three holes).
     o += wire([(cx(2), 40.0), (cx(2), cy(B, "C"))], "var(--act)", 2.0, dash="5 3")
     o.append(txt(cx(2) + 10, 44.0, "← pin 16 del header (GPIO23) → 470 Ω → compuerta", 11,
                  fill="var(--act)", weight="500"))

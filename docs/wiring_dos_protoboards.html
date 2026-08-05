@@ -115,6 +115,9 @@
 <text x="958.0" y="72.0" font-size="11" fill="var(--bad)" text-anchor="middle" font-weight="500">pin 14</text>
 <text x="958.0" y="87.0" font-size="10" fill="var(--bad)" text-anchor="middle" opacity=".85">GND</text>
 <text x="912.0" y="100.0" font-size="9.5" fill="var(--bad)" text-anchor="middle" font-weight="500">DAÑADOS — no metas cable</text>
+<text x="682.0" y="100.0" font-size="9" fill="var(--sig)" text-anchor="middle" opacity=".8">directo al servo,</text>
+<text x="682.0" y="112.0" font-size="9" fill="var(--sig)" text-anchor="middle" opacity=".8">no toca protoboard</text>
+<text x="774.0" y="100.0" font-size="9" fill="var(--act)" text-anchor="middle" opacity=".8">va a la placa B</text>
 <rect x="70.0" y="200.0" width="940.0" height="378.0" rx="10" fill="currentColor" fill-opacity=".045" stroke="var(--ok)" stroke-width="1.8" stroke-opacity=".55"/>
 <rect x="78.0" y="386.0" width="924.0" height="34.0" fill="currentColor" fill-opacity=".07"/>
 <line x1="82.0" y1="214.0" x2="998.0" y2="214.0" stroke="var(--ok)" stroke-width="2.4" stroke-opacity=".35"/>
@@ -1063,11 +1066,11 @@
 <circle cx="336.5" cy="318.0" r="4.2" fill="var(--res)"/>
 <circle cx="380.0" cy="318.0" r="4.2" fill="var(--res)"/>
 <text x="358.2" y="306.0" font-size="10.5" fill="var(--res)" text-anchor="middle" font-weight="500">R1 10k</text>
-<line x1="380.0" y1="318.0" x2="423.5" y2="318.0" stroke="var(--res)" stroke-width="1.8"/>
-<rect x="386.0" y="312.0" width="31.5" height="12" rx="3" fill="var(--res)" fill-opacity=".28" stroke="var(--res)" stroke-width="1.3"/>
-<circle cx="380.0" cy="318.0" r="4.2" fill="var(--res)"/>
-<circle cx="423.5" cy="318.0" r="4.2" fill="var(--res)"/>
-<text x="401.8" y="306.0" font-size="10.5" fill="var(--res)" text-anchor="middle" font-weight="500">R2 22k</text>
+<line x1="380.0" y1="336.0" x2="423.5" y2="336.0" stroke="var(--res)" stroke-width="1.8"/>
+<rect x="386.0" y="330.0" width="31.5" height="12" rx="3" fill="var(--res)" fill-opacity=".28" stroke="var(--res)" stroke-width="1.3"/>
+<circle cx="380.0" cy="336.0" r="4.2" fill="var(--res)"/>
+<circle cx="423.5" cy="336.0" r="4.2" fill="var(--res)"/>
+<text x="401.8" y="324.0" font-size="10.5" fill="var(--res)" text-anchor="middle" font-weight="500">R2 22k</text>
 <line x1="380.0" y1="380.0" x2="380.0" y2="428.0" stroke="var(--res)" stroke-width="1" stroke-dasharray="2 3" stroke-opacity=".7"/>
 <text x="380.0" y="440.0" font-size="10" fill="var(--res)" text-anchor="middle" font-weight="500">Divisor · cols 18-24</text>
 <text x="380.0" y="454.0" font-size="10" fill="currentColor" text-anchor="middle" opacity=".62">col 21 es el NODO</text>
@@ -1080,15 +1083,16 @@
 <text x="539.5" y="286.0" font-size="9.5" fill="var(--sig)" text-anchor="middle" transform="rotate(-90 539.5 286.0)">AMAR</text>
 <circle cx="554.0" cy="318.0" r="4.2" fill="var(--sig)"/>
 <text x="554.0" y="286.0" font-size="9.5" fill="var(--sig)" text-anchor="middle" transform="rotate(-90 554.0 286.0)">NEGRO</text>
-<line x1="525.0" y1="354.0" x2="554.0" y2="354.0" stroke="var(--res)" stroke-width="1.8"/>
-<rect x="531.0" y="348.0" width="17.0" height="12" rx="3" fill="var(--res)" fill-opacity=".28" stroke="var(--res)" stroke-width="1.3"/>
-<circle cx="525.0" cy="354.0" r="4.2" fill="var(--res)"/>
-<circle cx="554.0" cy="354.0" r="4.2" fill="var(--res)"/>
-<text x="539.5" y="342.0" font-size="10.5" fill="var(--res)" text-anchor="middle" font-weight="500">4.7k</text>
+<line x1="539.5" y1="354.0" x2="568.5" y2="354.0" stroke="var(--res)" stroke-width="1.8"/>
+<rect x="545.5" y="348.0" width="17.0" height="12" rx="3" fill="var(--res)" fill-opacity=".28" stroke="var(--res)" stroke-width="1.3"/>
+<circle cx="539.5" cy="354.0" r="4.2" fill="var(--res)"/>
+<circle cx="568.5" cy="354.0" r="4.2" fill="var(--res)"/>
+<text x="554.0" y="342.0" font-size="10.5" fill="var(--res)" text-anchor="middle" font-weight="500">4.7k</text>
+<path d="M568.5 354.0 L568.5 288.0 L612.0 288.0 L612.0 214.0" fill="none" stroke="var(--ok)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 <line x1="539.5" y1="380.0" x2="539.5" y2="428.0" stroke="var(--sig)" stroke-width="1" stroke-dasharray="2 3" stroke-opacity=".7"/>
-<text x="539.5" y="440.0" font-size="10" fill="var(--sig)" text-anchor="middle" font-weight="500">Sonda + pull-up · 31-33</text>
-<text x="539.5" y="454.0" font-size="10" fill="currentColor" text-anchor="middle" opacity=".62">4.7k de AMAR a ROJO</text>
-<text x="539.5" y="468.0" font-size="10" fill="currentColor" text-anchor="middle" opacity=".62">puntas trenzadas: estañar</text>
+<text x="539.5" y="440.0" font-size="10" fill="var(--sig)" text-anchor="middle" font-weight="500">Sonda · cols 31-33</text>
+<text x="539.5" y="454.0" font-size="10" fill="currentColor" text-anchor="middle" opacity=".62">4.7k: col 32 (AMAR) → col 34 → 3.3 V</text>
+<text x="539.5" y="468.0" font-size="10" fill="currentColor" text-anchor="middle" opacity=".62">NUNCA de rojo a negro</text>
 <rect x="720.0" y="292.0" width="45.0" height="22" rx="4" fill="var(--pwr)" fill-opacity=".16" stroke="var(--pwr)" stroke-width="1.4"/>
 <text x="742.5" y="307.0" font-size="11" fill="var(--pwr)" text-anchor="middle" font-weight="500">TRANSDUCTOR</text>
 <circle cx="728.0" cy="318.0" r="4.2" fill="var(--pwr)"/>
@@ -1107,11 +1111,11 @@
 <text x="220.5" y="331.0" font-size="9.5" fill="var(--gnd)" text-anchor="middle">ADDR → GND = 0x48</text>
 <path d="M380.0 318.0 L380.0 276.0 L191.5 276.0 L191.5 372.0" fill="none" stroke="var(--dat)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
 <text x="293.0" y="271.0" font-size="10" fill="var(--dat)" text-anchor="middle" font-weight="500">nodo (col 21) → A0 (col 8)</text>
-<path d="M423.5 318.0 L423.5 354.0 L467.0 354.0 L467.0 232.0" fill="none" stroke="var(--gnd)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M423.5 336.0 L423.5 354.0 L467.0 354.0 L467.0 232.0" fill="none" stroke="var(--gnd)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M742.5 318.0 L742.5 262.0 L336.5 262.0 L336.5 318.0" fill="none" stroke="var(--dat)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
 <text x="539.5" y="257.0" font-size="10" fill="var(--dat)" text-anchor="middle" font-weight="500">VERDE (col 46) → R1 (col 18)</text>
 <path d="M525.0 318.0 L525.0 288.0 L496.0 288.0 L496.0 214.0" fill="none" stroke="var(--ok)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M554.0 318.0 L554.0 336.0 L597.5 336.0 L597.5 232.0" fill="none" stroke="var(--gnd)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M554.0 318.0 L554.0 336.0 L641.0 336.0 L641.0 232.0" fill="none" stroke="var(--gnd)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M757.0 318.0 L757.0 336.0 L800.5 336.0 L800.5 232.0" fill="none" stroke="var(--gnd)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M130.0 102.0 L130.0 148.0 L92.5 148.0 L92.5 214.0" fill="none" stroke="var(--ok)" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 3"/>
 <path d="M590.0 102.0 L590.0 160.0 L670.0 160.0 L670.0 232.0" fill="none" stroke="var(--gnd)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 3"/>
@@ -2069,7 +2073,6 @@
 <text x="481.5" y="404.0" font-size="10" fill="currentColor" text-anchor="middle" opacity=".62">10k  cols 5→8 · a GND</text>
 <text x="481.5" y="418.0" font-size="10" fill="currentColor" text-anchor="middle" opacity=".62">3.3/470 = 7 mA &lt; 8 mA del Pi 4</text>
 <path d="M191.5 250.0 L191.5 224.0 L235.0 224.0 L235.0 182.0" fill="none" stroke="var(--gnd)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M148.0 322.0 L148.0 250.0" fill="none" stroke="var(--act)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M104.5 40.0 L104.5 286.0" fill="none" stroke="var(--act)" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 3"/>
 <text x="114.5" y="44.0" font-size="11" fill="var(--act)" font-weight="500">← pin 16 del header (GPIO23) → 470 Ω → compuerta</text>
 <path d="M162.5 322.0 L162.5 438.0 L510.5 438.0" fill="none" stroke="var(--pwr)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
