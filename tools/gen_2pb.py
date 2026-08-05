@@ -312,7 +312,7 @@ def build() -> str:
              f'aria-label="Protoboard B de control: IRLZ44N en las columnas 5 a 7 con '
              f'su red de compuerta">')
     o += board(B, "PROTOBOARD B — control",
-               "var(--act)", "solo la compuerta · µA · NADA de 12 V en esta placa")
+               "var(--act)", "compuerta (µA) + zona del V1738 · 12 V solo en las columnas del V1738")
 
     o += module(B, "E", 5, 3, "IRLZ44N", ["G", "D", "S"], "var(--act)")
     o += resistor(B, "C", 2, 5, "470 Ω")
@@ -344,6 +344,24 @@ def build() -> str:
                  "ninguno de los dos toca un riel, y nada más se planta en esas columnas",
                  9.5, op=".62"))
 
+    # V1738 reserved zone: NOT drawn into specific columns because its pitch is
+    # unmeasured (Stage 0.6). 5.08 mm straddles alternating columns and plants;
+    # 3.5/3.81 mm does not fit the 0.1" grid and stays off-board in the harness.
+    zx1, zx2 = cx(40) - 10, cx(58) + 10
+    zy1, zy2 = cy(B, "F") - 18, cy(B, "H") + 14
+    o.append(f'<rect x="{zx1:.1f}" y="{zy1:.1f}" width="{zx2 - zx1:.1f}" '
+             f'height="{zy2 - zy1:.1f}" rx="7" fill="var(--pwr)" fill-opacity=".05" '
+             f'stroke="var(--pwr)" stroke-width="1.6" stroke-dasharray="7 4"/>')
+    zmx = (zx1 + zx2) / 2
+    o.append(txt(zmx, zy1 + 16, "ZONA V1738 — bloque enchufable de la bobina", 10.5,
+                 fill="var(--pwr)", anchor="middle", weight="500"))
+    o.append(txt(zmx, zy1 + 31, "plantar aquí SOLO si su pitch mide 5.08 mm (Stage 0.6)", 9.5,
+                 anchor="middle", op=".75"))
+    o.append(txt(zmx, zy1 + 45, "polo 1 ← +12 V del fusible · polo 2 → drain · polo 3 MUERTO (llave)", 9.5,
+                 anchor="middle", op=".75"))
+    o.append(txt(zmx, zy1 + 59, "si mide 3.5/3.81 mm NO entra al grid: se queda fuera, en el arnés", 9.5,
+                 anchor="middle", op=".75"))
+
     # el riel − de B se puentea al de A: una sola entrada de tierra en todo el sistema
     o += wire([(cx(63) + 16, rb_m), (cx(63) + 30, rb_m), (cx(63) + 30, rb_m - 46),
                (cx(52), rb_m - 46)], GN, 2.2)
@@ -353,7 +371,7 @@ def build() -> str:
                  anchor="end", op=".62"))
 
     o.append(txt(W / 2, HB - 14,
-                 "En esta placa NO hay 12 V. Lo único que entra es GPIO23 y la tierra.",
+                 "Si el V1738 se planta aquí, los 12 V viven SOLO en sus dos columnas — jamás en un riel.",
                  11.5, anchor="middle", op=".65"))
     o.append("</svg>")
     return "\n".join(o)

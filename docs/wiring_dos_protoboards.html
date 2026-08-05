@@ -2045,7 +2045,7 @@
 <text x="64.0" y="442.0" font-size="10" fill="currentColor" text-anchor="end" opacity=".45">I</text>
 <text x="64.0" y="460.0" font-size="10" fill="currentColor" text-anchor="end" opacity=".45">J</text>
 <text x="70.0" y="120.0" font-size="15" fill="var(--act)" font-weight="500">PROTOBOARD B — control</text>
-<text x="70.0" y="137.0" font-size="11.5" fill="currentColor" opacity=".62">solo la compuerta · µA · NADA de 12 V en esta placa</text>
+<text x="70.0" y="137.0" font-size="11.5" fill="currentColor" opacity=".62">compuerta (µA) + zona del V1738 · 12 V solo en las columnas del V1738</text>
 <rect x="140.0" y="296.0" width="45.0" height="22" rx="4" fill="var(--act)" fill-opacity=".16" stroke="var(--act)" stroke-width="1.4"/>
 <text x="162.5" y="311.0" font-size="11" fill="var(--act)" text-anchor="middle" font-weight="500">IRLZ44N</text>
 <circle cx="148.0" cy="322.0" r="4.2" fill="var(--act)"/>
@@ -2080,10 +2080,15 @@
 <path d="M177.0 322.0 L177.0 456.0 L510.5 456.0" fill="none" stroke="var(--bad)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
 <text x="525.0" y="460.0" font-size="11" fill="var(--bad)" font-weight="500">S → cable directo al TORNILLO ESTRELLA   (1.08 A de retorno)</text>
 <text x="525.0" y="476.0" font-size="9.5" fill="currentColor" opacity=".62">ninguno de los dos toca un riel, y nada más se planta en esas columnas</text>
+<rect x="645.5" y="366.0" width="281.0" height="68.0" rx="7" fill="var(--pwr)" fill-opacity=".05" stroke="var(--pwr)" stroke-width="1.6" stroke-dasharray="7 4"/>
+<text x="786.0" y="382.0" font-size="10.5" fill="var(--pwr)" text-anchor="middle" font-weight="500">ZONA V1738 — bloque enchufable de la bobina</text>
+<text x="786.0" y="397.0" font-size="9.5" fill="currentColor" text-anchor="middle" opacity=".75">plantar aquí SOLO si su pitch mide 5.08 mm (Stage 0.6)</text>
+<text x="786.0" y="411.0" font-size="9.5" fill="currentColor" text-anchor="middle" opacity=".75">polo 1 ← +12 V del fusible · polo 2 → drain · polo 3 MUERTO (llave)</text>
+<text x="786.0" y="425.0" font-size="9.5" fill="currentColor" text-anchor="middle" opacity=".75">si mide 3.5/3.81 mm NO entra al grid: se queda fuera, en el arnés</text>
 <path d="M1005.0 182.0 L1019.0 182.0 L1019.0 136.0 L829.5 136.0" fill="none" stroke="var(--gnd)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
 <text x="815.0" y="132.0" font-size="10.5" fill="var(--gnd)" text-anchor="end" font-weight="500">→ riel − de la placa A</text>
 <text x="815.0" y="146.0" font-size="9.5" fill="currentColor" text-anchor="end" opacity=".62">B nunca toca el tornillo estrella</text>
-<text x="560.0" y="606.0" font-size="11.5" fill="currentColor" text-anchor="middle" opacity=".65">En esta placa NO hay 12 V. Lo único que entra es GPIO23 y la tierra.</text>
+<text x="560.0" y="606.0" font-size="11.5" fill="currentColor" text-anchor="middle" opacity=".65">Si el V1738 se planta aquí, los 12 V viven SOLO en sus dos columnas — jamás en un riel.</text>
 </svg>
 <!--SVG:END-->
 </div>
@@ -2145,6 +2150,14 @@
   La señal del servo (naranja → pin 12) sí es de µA, pero conviene llevarla directa del header al
   conector: si el servo trae los tres cables en un solo plug, partirlo para meter uno al protoboard
   no gana nada.
+</p>
+<p class="why" style="margin:12px 0 0">
+  <b>¿Y el V1738?</b> Los cables #1 y #2 rematan en sus polos, y dónde viven esos polos lo decide el
+  <b>Stage 0.6</b> (medir el pitch con calibrador): si mide <b>5.08 mm</b>, el bloque se planta en la
+  zona punteada de la placa B y los 12 V llegan <b>solo a sus dos columnas dedicadas</b> — el cable #2
+  se vuelve un jumper corto del polo 2 a la col 6 del drain, el mismo compromiso de un-contacto que
+  ya aceptan las patas del MOSFET. Si mide <b>3.5/3.81 mm no entra al grid</b>: se queda en el arnés
+  de la bobina y esta tabla aplica tal cual.
 </p>
 </div>
 
