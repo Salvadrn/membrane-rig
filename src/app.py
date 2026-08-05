@@ -1139,7 +1139,13 @@ class RigController:
         # ceiling was raised must be traceable in the artefacts, not just in RAM.
         note = f"{reason}; {self._raise_note}" if self._raise_note else reason
         try:
-            self.logger.finish_run(self.sequencer.results, status_note=note)
+            # Pass the parameters THIS run resolved, not config's: a playlist item
+            # carries its own, so quoting the defaults would put a meta beside its
+            # own results contradicting them. (collection_s the logger derives from
+            # the results; these two no TestResult carries.)
+            self.logger.finish_run(self.sequencer.results, status_note=note,
+                                   tolerance_pct=self.sequencer.tolerance_pct,
+                                   dwell_s=self.sequencer.dwell_s)
         except Exception:
             pass
         self.logger.close()
