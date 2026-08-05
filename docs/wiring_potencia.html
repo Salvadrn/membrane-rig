@@ -258,8 +258,9 @@
           <div class="why">nada se cuelga aquí antes del fusible. El fusible va entre la fuente y <b>todo</b> lo demás</div></div></div>
       <div class="fila"><div class="chip" style="background:var(--gnd)"></div>
         <div class="nom">tornillo − ★</div>
-        <div><div class="dst">el punto estrella: cuatro cables salen de aquí y ninguno pasa por otro</div>
-          <div class="why">riel − del protoboard · source del MOSFET · IN− del UBEC · OUT−/retorno del servo</div></div></div>
+        <div><div class="dst">el punto estrella: tres cables salen de aquí y ninguno pasa por otro</div>
+          <div class="why">riel − del protoboard · source del MOSFET · IN− del UBEC — el retorno del
+            servo NO llega aquí: remata en café → OUT− del propio UBEC (corregido 2026-08-05)</div></div></div>
 
       <div class="mide">
         <b>Mide hoy — dos cosas de la fuente, sin energizar nada:</b>
@@ -791,8 +792,15 @@
           <div class="why"><b>este nodo no toca ningún pin del Pi. Jamás.</b> 6 V en un GPIO de 3.3 V lo mata</div></div></div>
       <div class="fila"><div class="chip" style="background:var(--gnd)"></div>
         <div class="nom">UBEC OUT − / servo café</div>
-        <div><div class="dst">→ tornillo estrella</div>
-          <div class="why">dentro del UBEC IN− y OUT− son el mismo nodo (buck <b>no aislado</b>); llevar los dos al tornillo evita que el retorno del servo viaje por el cable de entrada</div></div></div>
+        <div><div class="dst">→ se quedan JUNTOS en el UBEC — no van al tornillo</div>
+          <div class="why">dentro del UBEC IN− y OUT− son el mismo nodo (buck <b>no aislado</b>), y por eso
+            al tornillo va <b>solo IN−</b>. Los pulsos del servo (~2 A al calarse) se cierran en el lazo corto
+            café → OUT− → capacitor de 1000 µF → OUT+ → rojo, sin tocar la estrella. Esta hoja decía antes
+            que llevar OUT− al tornillo "evitaba que el retorno viajara por el cable de entrada" — eso era un
+            error: <b>por el cable de entrada solo viaja la corriente de entrada (~0.95 A), en cualquiera de
+            los dos arreglos</b> (el retorno de salida circula por la etapa del buck, no por IN−). Llevar los
+            dos cables al tornillo solo agregaba un lazo externo IN−/OUT−: dos caminos al mismo nodo,
+            justo lo que esta hoja prohíbe (corregido 2026-08-05)</div></div></div>
       <div class="fila"><div class="chip" style="background:var(--ctrl)"></div>
         <div class="nom" style="color:var(--ctrl)">servo naranja</div>
         <div><div class="dst">→ <b>GPIO18 · pin físico 12</b></div>
@@ -1204,8 +1212,9 @@
     <h3 style="color:var(--good)">Con la fuente DESENCHUFADA de la pared</h3>
     <ol style="margin:0; padding-left:20px" class="why">
       <li><b>Continuidad de tierras contra el tornillo estrella</b>, una por una: riel − del
-        protoboard, source del MOSFET, IN− del UBEC, OUT−/café del servo. <b>Las cuatro deben pitar.
-        Si alguna no, no sigues.</b></li>
+        protoboard, source del MOSFET, IN− del UBEC. <b>Las tres deben pitar. Si alguna no, no sigues.</b>
+        El café del servo y OUT− también deben pitar contra el tornillo — pero <b>a través del común
+        interno del UBEC</b>, no por cable propio: si no pitan, el UBEC está desconectado o dañado.</li>
       <li><b>Aislamiento:</b> nodo +12 V contra el tornillo estrella → <b>circuito abierto</b>. Si
         pita, hay un corto y el fusible lo va a encontrar por ti.</li>
       <li><b>Dry-fit del V1738:</b> continuidad de <b>polo 1 → +12 V fusible</b>, <b>polo 2 → drain</b>

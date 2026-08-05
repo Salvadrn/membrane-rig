@@ -641,7 +641,7 @@
     <ul class="why">
       <li><strong>Continuidad de tierras primero.</strong> Un solo punto de la barra contra: GND del Pi (pin 9), IN− del UBEC, OUT− del UBEC, negativo de la fuente. Los cuatro deben pitar. Si alguno no, no sigas.</li>
       <li><strong>Mide el riel antes de conectar al receptor.</strong> Con el fusible puesto y el servo <em>desconectado</em>: 12 V en la entrada del UBEC (las fuentes baratas leen 12.3–13 V en vacío, es normal) y <strong>6.0 V ± 0.2</strong> en la salida. Anota cuál lead es + y cuál −.</li>
-      <li><strong>Recién ahí conectas el servo</strong>, y en este orden: café → barra de tierra, rojo → 6 V, naranja → GPIO18.</li>
+      <li><strong>Recién ahí conectas el servo</strong>, y en este orden: café → OUT− del UBEC (su retorno vive ahí, no en la barra), rojo → OUT+ (6 V), naranja → GPIO18.</li>
       <li><strong>Verifica el extremo de 700 µs con el servo DESACOPLADO</strong> antes de que el acople toque el vástago.</li>
     </ul>
   </div>
