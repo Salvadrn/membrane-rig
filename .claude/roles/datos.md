@@ -32,9 +32,10 @@ paper. Nadie más toca la matemática: si `k` sale mal, es tuyo. Lee primero
   Si alguien "simplifica" esto a `r.setpoint_kpa`, el instrumento deja de ser
   honesto. Mismo criterio en `playlist.py:51` (`Experiment.points()`).
 - **La cadena exacta** (`analysis.py:78-85`), no la reordenes:
-  `slope_kpa, intercept, r2 = _linfit(xs, ys)` → `slope_per_pa = slope_kpa/1000.0`
+  `slope_kpa, intercept, r2, slope_se = _linfit(xs, ys)` → `slope_per_pa = slope_kpa/1000.0`
   → `k_darcy_m2 = slope_per_pa * mu * L / A` → `pore_size_m = sqrt(32*k)`.
-  El `/1000` es la única conversión kPa→Pa del pipeline; todo lo demás es SI.
+  `slope_se` se propaga a `k_stderr_m2` con el mismo factor. El `/1000` es la única
+  conversión kPa→Pa del pipeline; todo lo demás es SI.
 - **OLS a mano, sin numpy**: `sxy/sxx` con medias, `r2 = 1 - ss_res/ss_tot`.
   Guardas contra división por cero: `sxx == 0` → slope 0; `ss_tot == 0` → r² 0.
   No metas numpy/scipy — la Pi corre con `requirements.txt` mínimo.
@@ -75,8 +76,13 @@ paper. Nadie más toca la matemática: si `k` sale mal, es tuyo. Lee primero
   responder conserva su último valor pero ya no está midiendo, y una etiqueta
   única describiría mal todas las filas de un lado de ese instante. **Si agregas
   columna, va al final** — hay CSVs viejos y scripts que leen por nombre.
-- **Tres artefactos por corrida** en `runs/`: `run_YYYYMMDD_HHMMSS.csv` (traza),
-  `_meta.json` (setpoints, PID, tolerancia, dwell, resultados por punto) y
+- **Tres artefactos por corrida** en `runs/`: `run_YYYYMMDD_HHMMSS.csv` (traza) —
+  con sufijo `_2`, `_3`… si dos corridas arrancan dentro del mismo segundo de
+  reloj, que antes se sobrescribían en silencio —,
+  `_meta.json` (setpoints, PID, tolerancia, dwell, resultados por punto;
+  `collection_s` se deriva de los `results` reales y es una **lista** si los
+  puntos usaron ventanas distintas; lo que caiga a los defaults de `config.yaml`
+  se nombra en `params_from_config_defaults` en vez de afirmarse como usado) y
   `_analysis.json` (`result.as_dict()`, que agrega `pore_size_um`). Más
   `_plot.png` y `_results.xlsx`. La playlist escribe la variante
   `playlist_latest_*`. **Nada de esto se versiona** (`.gitignore: /runs/*`).
@@ -88,8 +94,13 @@ paper. Nadie más toca la matemática: si `k` sale mal, es tuyo. Lee primero
 - **El Excel debe quedar editable.** `export_excel.py` no escribe la ecuación
   como texto: mete un `ScatterChart` nativo con `Trendline(trendlineType="linear",
   dispEq=True, dispRSqr=True)` para que Excel recalcule solo. Formato científico
-  `SCI = "0.000E+00"`. La hoja "Per point" lleva las 10 columnas de `TestResult`
-  (`setpoint_kpa … flow_m3s`) — si agregas campo a `TestResult`, actualiza `cols`.
+  `SCI = "0.000E+00"`. La trendline **solo se añade con n ≥ 2**: una "recta
+  lineal" por un solo punto es una fabricación gráfica, igual que escribir k = 0.
+  La hoja "Per point" lleva las 10 columnas de `TestResult`
+  (`setpoint_kpa … flow_m3s`) más, **al final y solo si el caller las estampa**,
+  las de procedencia: `experiment_id`, `experiment_label`, `ceiling_raised`,
+  `collected_under_raised_ceiling`. Las filas con `ceiling_raised` van resaltadas
+  en ámbar. Si agregas campo a `TestResult`, actualiza `cols`.
 - **`offline_sim.py` es determinista**: seed 7 para la corrida A (21 °C, wobble
   ±8 kPa/25 s) y seed 11 para el barrido. Regenerarlo produce `trace.csv` y
   `fig5_fit.png` byte-idénticos si nada cambió — úsalo como test de regresión:
@@ -97,7 +108,13 @@ paper. Nadie más toca la matemática: si `k` sale mal, es tuyo. Lee primero
   actual: slope 8.0361e-7 (m³/s)/kPa, R² 1.00000, k 1.4365e-12 m², poro 6.780 µm.
 - **Guardas de tamaño de muestra**: `fit_permeability` con <2 puntos devuelve
   `note = "need >= 2 flow points to fit a slope"`; `plot_permeability` requiere
-  `n >= 2`; `export_permeability_xlsx` requiere `n >= 1`. Respétalas.
+  `n >= 2`; `export_permeability_xlsx` requiere `n ≥ 1` y **con n < 2 escribe el
+  workbook pero deja TODA cantidad derivada en blanco** (slope, intercepto, R², k,
+  poro), con el veredicto puesto a la nota real de `fit_permeability` y sin
+  trendline. **Nunca escribe 0.0**: un cero fabricado es un dato falso con formato
+  de dato bueno, y antes producía un workbook que decía k = 0 con veredicto
+  "low R² — check linearity" — un ajuste que jamás ocurrió disfrazado de ajuste
+  que salió mal. Respétalas.
 - **`pore_size_m` solo si `k > 0`**, si no queda 0.0 (evita `sqrt` de negativo
   cuando la pendiente sale negativa por datos basura).
 - **LIMITACIÓN CONOCIDA, decidida por Adrián el 30-jul: `follows_darcy` no mira
