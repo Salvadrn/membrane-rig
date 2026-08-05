@@ -5,9 +5,10 @@
     <b>válvula de alivio</b> (#3). El cuerpo de esta hoja todavía los describe como faltantes en varios lugares
     — <b>ignóralo</b>. El riel de 12 V <b>ya no está bloqueado por piezas</b>.
     <br><br>
-    <b>Lo que SÍ sigue bloqueado:</b> el <b>diverter</b>, porque falta el <b>1N5819</b>. Sin ese diodo montado
-    en paralelo a la bobina no se energiza — el pico inverso puede matar el IRLZ44N en corto (diverter colectando
-    para siempre) o perforar hacia GPIO23.
+    <b>ACTUALIZACIÓN 2026-08-05: el 1N5819 YA LLEGÓ.</b> Con él, <b>cero bloqueos por pieza en todo
+    el rig</b>. Lo que sigue vigente es la condición de montaje: la bobina no se energiza hasta que el diodo
+    esté <b>MONTADO</b> en el plug del V1738 — banda (cátodo) al polo 1 — porque el pico inverso sin él mata
+    el IRLZ44N en corto (diverter colectando para siempre) o perfora hacia GPIO23.
     <br><br>
     <b>Y el alivio en la mano NO es alivio montado:</b> no protege nada hasta estar instalado <em>y tarado</em>,
     y para tararlo hace falta el rating de presión de los recipientes, que aún no está registrado.

@@ -77,9 +77,10 @@
     <b>Ya llegaron</b> fusible + portafusibles (#7), barrel jack → tornillo (#6) y válvula de
     alivio (#3). El riel de 12 V <b>ya no está bloqueado por piezas</b>.
     <br><br>
-    <b>Sigue bloqueado el diverter:</b> falta el <b>1N5819</b>. Sin ese diodo montado en paralelo
-    a la bobina no se energiza — el pico inverso puede matar el IRLZ44N en corto (diverter
-    colectando para siempre) o perforar hacia GPIO23.
+    <b>ACTUALIZACIÓN 2026-08-05: el 1N5819 YA LLEGÓ — cero bloqueos por pieza.</b> La condición
+    que queda es de montaje, no de compra: la bobina no se energiza hasta que el diodo esté
+    <b>MONTADO</b> en el plug del V1738, banda al polo 1. Sin él, el pico inverso mata el IRLZ44N
+    en corto (diverter colectando para siempre) o perfora hacia GPIO23.
     <br><br>
     <b>Antes de conectar la Pi nueva:</b> corre el <b>Stage&nbsp;0.0</b> de
     <code>COMMISSIONING.md</code>. La causa del corto que mató la primera placa sigue sin
@@ -2220,8 +2221,8 @@
       <td class="why">~12–13 V en el nodo con todo lo demás desconectado. <b>Polaridad confirmada antes</b></td></tr>
   <tr><td>7</td><td>UBEC Hobbywing 3A y servo DS3218, servo <b>desacoplado</b> del vástago</td>
       <td class="why">6 V en la salida. El servo se calibra desacoplado: al arrancar en modo hardware se va a 700 µs solo</td></tr>
-  <tr><td>8</td><td>Diverter 231Y-6-12VDC — <b>bloqueado hasta que llegue el 1N5819</b></td>
-      <td class="why">El diodo se monta antes de la primera energizada, no después</td></tr>
+  <tr><td>8</td><td>Diverter 231Y-6-12VDC — <b>ya con el 1N5819 en mano (2026-08-05)</b></td>
+      <td class="why">El diodo se monta ANTES de la primera energizada, no después — banda al polo 1</td></tr>
 </table>
 <p class="why" style="margin:12px 0 0">
   Los pasos 0 a 7 están detallados en <code>COMMISSIONING.md</code>, con los números esperados de

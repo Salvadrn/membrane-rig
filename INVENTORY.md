@@ -3,7 +3,7 @@
 Estado físico de las piezas del rig. `BOM.csv` es la lista de compra; esto es qué
 hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 
-Última actualización: 2026-08-04
+Última actualización: 2026-08-05
 
 ## En la mano
 
@@ -26,7 +26,8 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 | Sonda DS18B20 waterproof | llegó 2026-07-27; era el item #4 del pedido. Desbloquea la cadena de temperatura completa |
 | **Transductor 0–15 PSI, 0.5–4.5 V, G1/4** | llegó 2026-07-27; item #1, el prioritario. **Cierra la cadena de sensado completa**: transductor → divisor 10k/22k → ADS1115 → Pi. Para MONTARLO en el rig hace falta el adaptador G1/4 → Swagelok — **la orden de McMaster ya llegó**, falta confirmar si lo incluye |
 | Kit de capacitores electrolíticos (470 / 1000 µF) | llegó 2026-07-27; item #8. Van al punto estrella del riel de 12 V. **Ya no los bloquea ninguna pieza** — llegaron el fusible (#7) y el barrel jack (#6), que era donde aterrizaba el punto estrella |
-| **Solenoide 3 vías 231Y-6-12VDC** | llegó; item #2. **⚠ Orificio de 1.5 mm, Cv 0.09–0.21 — puede estrangular la medición.** Ver "El diverter puede invalidar la medición" abajo. No energizar: falta el 1N5819 |
+| **Solenoide 3 vías 231Y-6-12VDC** | llegó; item #2. **⚠ Orificio de 1.5 mm, Cv 0.09–0.21 — puede estrangular la medición.** Ver "El diverter puede invalidar la medición" abajo. No energizar hasta MONTAR el 1N5819 (ya en mano, 2026-08-05) |
+| **Diodo 1N5819 (flyback)** | **LLEGÓ 2026-08-05.** Era el último bloqueo por pieza del rig entero — con él, **cero bloqueos por pieza**. Se monta en el plug del V1738 junto con la bobina: banda (cátodo) al polo 1. La bobina NO se energiza hasta que esté montado |
 | Termorretráctil 650 pzas 2:1 | llegó; item #9. **Cierra el hueco de "no hay con qué aislar"** — ver la nota de herramientas |
 | Fittings Swagelok / McMaster | **LLEGARON** (confirmado por Adrián). ⚠ **Falta verificar QUÉ llegó exactamente** — si incluye el adaptador G1/4→Swagelok del transductor y la tee, la cadena de sensado se puede montar en el rig y el cuello de botella mecánico desaparece. Pedir foto o lista de empaque |
 | **Pin headers macho 2.54 mm** (110 pzas, `B0FFSRKF7W`) | **ORDENADO, sin llegar.** No estaba en `BOM.csv`. Es la solución limpia al Paso 0: soldar un pin a cada punta trenzada, en vez de sacrificar jumpers del kit |
@@ -249,7 +250,6 @@ ciclo de Roxanne** (decisión 2026-08-04).
 
 | Pieza | Por qué importa |
 |---|---|
-| **Diodo 1N5819 (flyback)** | **crítico** — confirmado por Adrián que NO ha llegado. Sin él, al cortar la bobina el pico inverso mata el IRLZ44N. El diverter no se energiza sin este diodo montado |
 | Tubería de silicón 1/4" ID | línea de permeato |
 | Kit de barbs barb-a-barb | uniones de la tubería |
 | PTFE thread-seal tape | juntas NPT del diverter |
@@ -278,7 +278,7 @@ que se compre:
 El **kit M4 (item #10) sí sirve**, pero para otra cosa: baseplate, marco que
 reacciona el par del servo y bracket.
 
-### El 1N5819 no debería bloquear tres semanas
+### El 1N5819 no debería bloquear tres semanas (RESUELTO — llegó 2026-08-05; el sustituto ya no hace falta)
 
 Es el único bloqueo por pieza que queda en todo el rig, y es un diodo de
 centavos. Si comprarlo en línea tarda, **cualquier tienda local de electrónica
@@ -316,8 +316,10 @@ vez.
   el riel invertido, el diodo de cuerpo del IRLZ44N y el 1N5819 quedan **los dos
   en directa**: corto franco desde el primer instante.
 
-- **No energizar el diverter sin el 1N5819 montado** en paralelo a la bobina.
-  Es el único bloqueo por pieza que queda.
+- **No energizar el diverter sin el 1N5819 MONTADO** en paralelo a la bobina,
+  banda al polo 1. El diodo **ya llegó (2026-08-05)** — con él, **cero bloqueos
+  por pieza en todo el rig**. Este renglón dejó de ser un bloqueo de compra y es
+  ahora un paso de armado: dos tornillos del plug del V1738.
 - **No energizar ni acoplar el servo.** `ServoValve` lo manda a 700 µs solo al
   arrancar en modo hardware y `servo_close_us` sigue en 0 (sin calibrar). La
   calibración de extremos va con la válvula DESACOPLADA del vástago.

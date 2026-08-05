@@ -5,9 +5,10 @@
     <b>válvula de alivio</b> (#3). El cuerpo de esta hoja todavía los describe como faltantes en varios lugares
     — <b>ignóralo</b>. El riel de 12 V <b>ya no está bloqueado por piezas</b>.
     <br><br>
-    <b>Lo que SÍ sigue bloqueado:</b> el <b>diverter</b>, porque falta el <b>1N5819</b>. Sin ese diodo montado
-    en paralelo a la bobina no se energiza — el pico inverso puede matar el IRLZ44N en corto (diverter colectando
-    para siempre) o perforar hacia GPIO23.
+    <b>ACTUALIZACIÓN 2026-08-05: el 1N5819 YA LLEGÓ.</b> Con él, <b>cero bloqueos por pieza en todo
+    el rig</b>. Lo que sigue vigente es la condición de montaje: la bobina no se energiza hasta que el diodo
+    esté <b>MONTADO</b> en el plug del V1738 — banda (cátodo) al polo 1 — porque el pico inverso sin él mata
+    el IRLZ44N en corto (diverter colectando para siempre) o perfora hacia GPIO23.
     <br><br>
     <b>Y el alivio en la mano NO es alivio montado:</b> no protege nada hasta estar instalado <em>y tarado</em>,
     y para tararlo hace falta el rating de presión de los recipientes, que aún no está registrado.
@@ -182,8 +183,8 @@
   <h3>Los otros dos bloqueos del lado de potencia</h3>
   <div class="cols" style="gap:1.2rem">
     <div>
-      <p style="margin:0 0 6px"><b>Diodo 1N5819 (flyback) — no ha llegado.</b>
-        Sin él, al cortar la bobina el pico inverso mata el IRLZ44N. <b>El diverter no se energiza sin
+      <p style="margin:0 0 6px"><b>Diodo 1N5819 (flyback) — YA LLEGÓ (2026-08-05), falta montarlo.</b>
+        Sin él montado, al cortar la bobina el pico inverso mata el IRLZ44N. <b>El diverter no se energiza sin
         ese diodo montado</b>, ni “para una prueba rápida”.</p>
       <p class="why" style="margin:0">El BOM lo trae en pack de 100 (<code>B079KG1TN2</code>); el pack
         no ha llegado.</p>
@@ -699,7 +700,7 @@
     <path d="M880 192 V 250" stroke="var(--bad)" stroke-width="2.2" fill="none" stroke-dasharray="6 4"/>
     <path d="M700 250 H 880" stroke="var(--bad)" stroke-width="2.2" fill="none" stroke-dasharray="6 4"/>
 
-    <text x="916" y="132" font-size="12" font-weight="500" fill="var(--bad)">1N5819 — no ha llegado</text>
+    <text x="916" y="132" font-size="12" font-weight="500" fill="var(--bad)">1N5819 en mano — falta MONTARLO</text>
     <text x="916" y="152" font-size="11.5" font-weight="500" fill="var(--bad)">la BANDA va ARRIBA</text>
     <text x="916" y="168" font-size="11" fill="currentColor" opacity=".7">banda = cátodo → bobina + = +12 V</text>
     <text x="916" y="190" font-size="11" fill="currentColor" opacity=".7">en reposo está en INVERSA:</text>
