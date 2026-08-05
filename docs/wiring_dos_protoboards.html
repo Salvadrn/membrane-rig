@@ -1,0 +1,409 @@
+<div class="hoja-2pb">
+
+<style>
+.hoja-2pb {
+  --sig: #8a6d00; --pwr: #1f5e8b; --act: #7a2f2f; --ok: #1e7d32;
+  --bad: #b3261e; --dat: #6b3fa0; --off: #9e9e9e; --res: #b8860b;
+  --gnd: #1a1a1a;
+  --ink: var(--text-primary, #1a1a1a);
+  --ink2: var(--text-secondary, #5b5b5b);
+  --surf: var(--surface-1, #ffffff);
+  --line: var(--border, #dcdcdc);
+  color: var(--ink);
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif);
+  font-size: 14px; line-height: 1.6; font-weight: 400;
+  max-width: 1280px; margin: 0 auto; padding: 10px 14px 32px;
+  background: var(--surface-0, #ffffff); border-radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  .hoja-2pb { --ink: var(--text-primary, #ececec); --ink2: var(--text-secondary, #a6a6a6);
+    --surf: var(--surface-1, #1c1c1e); --line: var(--border, #3a3a3c);
+    --sig: #d4ac3c; --pwr: #74b3df; --act: #e39292; --ok: #6cc784;
+    --bad: #f0908a; --dat: #b89ce8; --off: #8e8e8e; --res: #d8ab44; --gnd: #d8d8d8;
+    background: var(--surface-0, #16161a); }
+}
+.hoja-2pb h1 { font-size: 22px; font-weight: 500; margin: 0 0 6px; line-height: 1.3; }
+.hoja-2pb h2 { font-size: 16px; font-weight: 500; margin: 34px 0 12px;
+  letter-spacing: .04em; text-transform: uppercase; }
+.hoja-2pb h3 { font-size: 14.5px; font-weight: 500; margin: 0 0 8px; }
+.hoja-2pb .sub { color: var(--ink2); font-size: 14px; margin: 0 0 18px; }
+.hoja-2pb code { font-size: 12.5px; padding: 1px 4px; border-radius: 3px;
+  background: color-mix(in srgb, currentColor 9%, transparent); }
+.hoja-2pb svg { width: 100%; height: auto; display: block; color: var(--ink); }
+.hoja-2pb .board { border: 1px solid var(--line); border-radius: 10px; padding: 6px 4px;
+  background: var(--surf); overflow-x: auto; }
+.hoja-2pb .board svg { min-width: 1150px; }
+.hoja-2pb .comp { background: var(--surf); border: 1px solid var(--line);
+  border-left: 4px solid var(--c, var(--line)); border-radius: 8px; padding: 14px 16px; }
+.hoja-2pb .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.hoja-2pb .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) {
+  .hoja-2pb .grid2, .hoja-2pb .grid3 { grid-template-columns: 1fr; }
+}
+.hoja-2pb table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 6px 0 0; }
+.hoja-2pb th { text-align: left; font-weight: 500; color: var(--ink2);
+  border-bottom: 1px solid var(--line); padding: 5px 8px 5px 0; font-size: 12px;
+  text-transform: uppercase; letter-spacing: .03em; }
+.hoja-2pb td { padding: 5px 8px 5px 0; border-bottom: 1px solid var(--line);
+  vertical-align: top; }
+.hoja-2pb td:first-child { font-weight: 500; white-space: nowrap; }
+.hoja-2pb .why { color: var(--ink2); font-size: 12.5px; }
+.hoja-2pb .pill { display: inline-block; font-size: 11.5px; font-weight: 500; color: var(--c);
+  border: 1.5px solid var(--c); border-radius: 999px; padding: 0 8px; white-space: nowrap; }
+.hoja-2pb .banda { border: 2px solid var(--c); border-left-width: 6px; border-radius: 8px;
+  padding: 14px 18px; margin: 0 0 20px;
+  background: color-mix(in srgb, var(--c) 8%, transparent); }
+.hoja-2pb .banda h3 { color: var(--c); margin: 0 0 8px; font-size: 15px; }
+.hoja-2pb .legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 12px 0 0;
+  font-size: 13px; color: var(--ink2); align-items: center; }
+.hoja-2pb .sw { display: inline-block; width: 22px; height: 4px; border-radius: 2px;
+  vertical-align: middle; margin-right: 6px; }
+</style>
+
+<h1>Cableado en dos protoboards — hoja por componente</h1>
+<p class="sub">
+  Decisión de Adrián (2026-08-04): <b>todo va en protoboard, dos placas unidas, sin circuitos
+  adicionales.</b> Esta hoja parte el rig en bloques separados para que cada componente se
+  identifique solo. Nada aquí se ha armado todavía.
+</p>
+
+<div class="banda" style="--c:var(--ok)">
+  <h3>ESTADO AL 2026-08-04 — esto manda sobre cualquier hoja anterior</h3>
+  <div>
+    <b>La tierra del header es el pin 9</b>, no el pin 6. Esta Raspberry Pi llegó con los
+    <b>pines 6 y 14 dañados</b> — los dos son tierra. No metas un cable en ninguno de los dos.
+    <br><br>
+    <b>Ya llegaron</b> fusible + portafusibles (#7), barrel jack → tornillo (#6) y válvula de
+    alivio (#3). El riel de 12 V <b>ya no está bloqueado por piezas</b>.
+    <br><br>
+    <b>Sigue bloqueado el diverter:</b> falta el <b>1N5819</b>. Sin ese diodo montado en paralelo
+    a la bobina no se energiza — el pico inverso puede matar el IRLZ44N en corto (diverter
+    colectando para siempre) o perforar hacia GPIO23.
+    <br><br>
+    <b>Antes de conectar la Pi nueva:</b> corre el <b>Stage&nbsp;0.0</b> de
+    <code>COMMISSIONING.md</code>. La causa del corto que mató la primera placa sigue sin
+    determinarse; si está en el protoboard, ésta muere igual.
+  </div>
+</div>
+
+<h2>El mapa — qué vive dónde</h2>
+
+<div class="board">
+<svg viewBox="0 0 1300 900" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Mapa de bloques: header del Pi, protoboard A de sensado, protoboard B de control, y el dominio de 12 V fuera de protoboard">
+
+  <!-- ============ RASPBERRY PI ============ -->
+  <rect x="24" y="70" width="200" height="470" rx="10" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".55"/>
+  <text x="124" y="96" text-anchor="middle" font-size="14" font-weight="500" fill="currentColor">Raspberry Pi 4</text>
+  <text x="124" y="114" text-anchor="middle" font-size="11" fill="currentColor" opacity=".6">header de 40 pines</text>
+
+  <rect x="40" y="130" width="168" height="26" rx="4" fill="var(--ok)" fill-opacity=".13"/>
+  <text x="50" y="148" font-size="12" fill="currentColor">1 · 3.3 V</text>
+  <text x="198" y="148" text-anchor="end" font-size="11" fill="currentColor" opacity=".65">→ A</text>
+
+  <rect x="40" y="162" width="168" height="26" rx="4" fill="var(--pwr)" fill-opacity=".13"/>
+  <text x="50" y="180" font-size="12" fill="currentColor">2 · 5 V</text>
+  <text x="198" y="180" text-anchor="end" font-size="11" fill="currentColor" opacity=".65">→ A</text>
+
+  <rect x="40" y="194" width="168" height="26" rx="4" fill="var(--dat)" fill-opacity=".13"/>
+  <text x="50" y="212" font-size="12" fill="currentColor">3 · SDA1</text>
+  <text x="198" y="212" text-anchor="end" font-size="11" fill="currentColor" opacity=".65">→ A</text>
+
+  <rect x="40" y="226" width="168" height="26" rx="4" fill="var(--dat)" fill-opacity=".13"/>
+  <text x="50" y="244" font-size="12" fill="currentColor">5 · SCL1</text>
+  <text x="198" y="244" text-anchor="end" font-size="11" fill="currentColor" opacity=".65">→ A</text>
+
+  <rect x="40" y="258" width="168" height="26" rx="4" fill="var(--dat)" fill-opacity=".13"/>
+  <text x="50" y="276" font-size="12" fill="currentColor">7 · GPIO4</text>
+  <text x="198" y="276" text-anchor="end" font-size="11" fill="currentColor" opacity=".65">→ A</text>
+
+  <rect x="40" y="290" width="168" height="26" rx="4" fill="var(--gnd)" fill-opacity=".16"/>
+  <text x="50" y="308" font-size="12" font-weight="500" fill="currentColor">9 · GND</text>
+  <text x="198" y="308" text-anchor="end" font-size="11" fill="currentColor" opacity=".65">→ A</text>
+
+  <rect x="40" y="322" width="168" height="26" rx="4" fill="var(--sig)" fill-opacity=".13"/>
+  <text x="50" y="340" font-size="12" fill="currentColor">12 · GPIO18</text>
+  <text x="198" y="340" text-anchor="end" font-size="11" fill="currentColor" opacity=".65">→ servo</text>
+
+  <rect x="40" y="354" width="168" height="26" rx="4" fill="var(--act)" fill-opacity=".13"/>
+  <text x="50" y="372" font-size="12" fill="currentColor">16 · GPIO23</text>
+  <text x="198" y="372" text-anchor="end" font-size="11" fill="currentColor" opacity=".65">→ B</text>
+
+  <line x1="40" y1="398" x2="208" y2="398" stroke="currentColor" stroke-width="1" opacity=".3"/>
+  <rect x="40" y="412" width="168" height="26" rx="4" fill="var(--bad)" fill-opacity=".16"/>
+  <text x="50" y="430" font-size="12" fill="var(--bad)">6 · GND</text>
+  <text x="198" y="430" text-anchor="end" font-size="11" font-weight="500" fill="var(--bad)">✗ DAÑADO</text>
+
+  <rect x="40" y="444" width="168" height="26" rx="4" fill="var(--bad)" fill-opacity=".16"/>
+  <text x="50" y="462" font-size="12" fill="var(--bad)">14 · GND</text>
+  <text x="198" y="462" text-anchor="end" font-size="11" font-weight="500" fill="var(--bad)">✗ DAÑADO</text>
+
+  <text x="124" y="498" text-anchor="middle" font-size="11" fill="var(--bad)">no metas cable</text>
+  <text x="124" y="514" text-anchor="middle" font-size="11" fill="var(--bad)">en el 6 ni en el 14</text>
+
+  <!-- ============ PROTOBOARD A ============ -->
+  <rect x="280" y="70" width="420" height="330" rx="10" fill="var(--ok)" fill-opacity=".04" stroke="var(--ok)" stroke-width="1.8"/>
+  <text x="296" y="96" font-size="14" font-weight="500" fill="var(--ok)">PROTOBOARD A — sensado</text>
+  <text x="296" y="114" font-size="11" fill="currentColor" opacity=".6">3.3 V y 5 V · µA–mA · nada que conmute</text>
+
+  <rect x="300" y="128" width="180" height="122" rx="7" fill="var(--surf)" stroke="currentColor" stroke-width="1.2" opacity=".85"/>
+  <text x="312" y="150" font-size="12.5" font-weight="500" fill="currentColor">ADS1115</text>
+  <text x="312" y="170" font-size="11" fill="currentColor" opacity=".75">VDD → 3.3 V (pin 1)</text>
+  <text x="312" y="187" font-size="11" fill="currentColor" opacity=".75">SCL → pin 5 · SDA → pin 3</text>
+  <text x="312" y="204" font-size="11" fill="currentColor" opacity=".75">ADDR → GND  ⇒ 0x48</text>
+  <text x="312" y="221" font-size="11" fill="currentColor" opacity=".75">GND → riel −</text>
+  <text x="312" y="238" font-size="11" font-weight="500" fill="var(--dat)">A0 ← nodo del divisor</text>
+
+  <rect x="500" y="128" width="180" height="122" rx="7" fill="var(--surf)" stroke="currentColor" stroke-width="1.2" opacity=".85"/>
+  <text x="512" y="150" font-size="12.5" font-weight="500" fill="currentColor">Divisor 10k / 22k</text>
+  <text x="512" y="170" font-size="11" fill="currentColor" opacity=".75">verde del transductor</text>
+  <text x="512" y="187" font-size="11" fill="currentColor" opacity=".75">↓ R1 = 10 kΩ</text>
+  <text x="512" y="204" font-size="11" font-weight="500" fill="var(--dat)">nodo → A0</text>
+  <text x="512" y="221" font-size="11" fill="currentColor" opacity=".75">↓ R2 = 22 kΩ → riel −</text>
+  <text x="512" y="238" font-size="11" fill="var(--res)">ratio 0.6875 · 4.5 V ⇒ 3.094 V</text>
+
+  <rect x="300" y="266" width="180" height="118" rx="7" fill="var(--surf)" stroke="currentColor" stroke-width="1.2" opacity=".85"/>
+  <text x="312" y="288" font-size="12.5" font-weight="500" fill="currentColor">DS18B20 (temperatura)</text>
+  <text x="312" y="308" font-size="11" fill="currentColor" opacity=".75">rojo → 3.3 V</text>
+  <text x="312" y="325" font-size="11" fill="currentColor" opacity=".75">negro → riel −</text>
+  <text x="312" y="342" font-size="11" fill="currentColor" opacity=".75">amarillo → pin 7</text>
+  <text x="312" y="359" font-size="11" font-weight="500" fill="var(--res)">+ 4.7 kΩ de amarillo a 3.3 V</text>
+  <text x="312" y="376" font-size="10.5" fill="currentColor" opacity=".6">las 3 puntas son trenzadas</text>
+
+  <rect x="500" y="266" width="180" height="118" rx="7" fill="var(--surf)" stroke="currentColor" stroke-width="1.2" opacity=".85"/>
+  <text x="512" y="288" font-size="12.5" font-weight="500" fill="currentColor">Transductor 0–15 PSI</text>
+  <text x="512" y="308" font-size="11" font-weight="500" fill="var(--pwr)">rojo → 5 V (pin 2)</text>
+  <text x="512" y="325" font-size="11" fill="currentColor" opacity=".75">negro → riel −</text>
+  <text x="512" y="342" font-size="11" fill="currentColor" opacity=".75">verde → R1 del divisor</text>
+  <text x="512" y="359" font-size="10.5" fill="var(--bad)">rojo y negro NO se intercambian</text>
+  <text x="512" y="376" font-size="10.5" fill="currentColor" opacity=".6">ratiométrico: depende del riel de 5 V</text>
+
+  <!-- ============ PROTOBOARD B ============ -->
+  <rect x="280" y="440" width="420" height="290" rx="10" fill="var(--act)" fill-opacity=".04" stroke="var(--act)" stroke-width="1.8"/>
+  <text x="296" y="466" font-size="14" font-weight="500" fill="var(--act)">PROTOBOARD B — control</text>
+  <text x="296" y="484" font-size="11" fill="currentColor" opacity=".6">solo la compuerta y el bloque de terminales · µA</text>
+
+  <rect x="300" y="498" width="180" height="130" rx="7" fill="var(--surf)" stroke="currentColor" stroke-width="1.2" opacity=".85"/>
+  <text x="312" y="520" font-size="12.5" font-weight="500" fill="currentColor">IRLZ44N (TO-220)</text>
+  <text x="312" y="540" font-size="11" fill="currentColor" opacity=".75">de frente, parado: G · D · S</text>
+  <text x="312" y="557" font-size="11" fill="currentColor" opacity=".75">G ← 470 Ω ← pin 16</text>
+  <text x="312" y="574" font-size="11" fill="currentColor" opacity=".75">D (centro, aleta) → bobina −</text>
+  <text x="312" y="591" font-size="11" font-weight="500" fill="var(--bad)">S → tornillo estrella</text>
+  <text x="312" y="608" font-size="10.5" fill="var(--bad)">S por cable directo, NO por el riel</text>
+  <text x="312" y="622" font-size="10.5" fill="currentColor" opacity=".6">por ahí vuelven 1.08 A</text>
+
+  <rect x="500" y="498" width="180" height="130" rx="7" fill="var(--surf)" stroke="currentColor" stroke-width="1.2" opacity=".85"/>
+  <text x="512" y="520" font-size="12.5" font-weight="500" fill="currentColor">Red de compuerta</text>
+  <text x="512" y="540" font-size="11" fill="currentColor" opacity=".75">470 Ω en serie: pin 16 → G</text>
+  <text x="512" y="557" font-size="11" fill="var(--ok)">3.3 / 470 = 7 mA ✓ &lt; 8 mA</text>
+  <text x="512" y="574" font-size="11" fill="currentColor" opacity=".75">10 kΩ de G a riel −</text>
+  <text x="512" y="591" font-size="10.5" fill="currentColor" opacity=".6">mantiene el diverter en desecho</text>
+  <text x="512" y="608" font-size="10.5" fill="currentColor" opacity=".6">mientras la Pi arranca</text>
+
+  <rect x="300" y="644" width="380" height="66" rx="7" fill="var(--surf)" stroke="currentColor" stroke-width="1.2" opacity=".85"/>
+  <text x="312" y="666" font-size="12.5" font-weight="500" fill="currentColor">V1738 — bloque de 3 polos</text>
+  <text x="312" y="686" font-size="11" fill="currentColor" opacity=".75">polo 1 = bobina +   ·   polo 2 = bobina −   ·   polo 3 = MUERTO</text>
+  <text x="312" y="702" font-size="10.5" fill="var(--ok)">el polo muerto es la llave anti-inversión: al revés no conecta nada</text>
+
+  <!-- ============ DOMINIO 12 V ============ -->
+  <rect x="760" y="70" width="510" height="660" rx="10" fill="var(--pwr)" fill-opacity=".04" stroke="var(--pwr)" stroke-width="1.8" stroke-dasharray="7 4"/>
+  <text x="776" y="96" font-size="14" font-weight="500" fill="var(--pwr)">FUERA DE PROTOBOARD — cable directo</text>
+  <text x="776" y="114" font-size="11" fill="currentColor" opacity=".6">amperes. Ningún contacto de protoboard aguanta esto</text>
+
+  <rect x="780" y="128" width="470" height="130" rx="7" fill="var(--surf)" stroke="currentColor" stroke-width="1.2" opacity=".85"/>
+  <text x="792" y="150" font-size="12.5" font-weight="500" fill="currentColor">Fuente 12 V → barrel jack (#6) → fusible 3 A (#7)</text>
+  <text x="792" y="172" font-size="11" fill="currentColor" opacity=".75">tornillo + → entrada del portafusibles → nodo +12 V</text>
+  <text x="792" y="192" font-size="11.5" font-weight="500" fill="var(--bad)">tornillo − = PUNTO ESTRELLA</text>
+  <text x="792" y="210" font-size="11" fill="currentColor" opacity=".75">aquí llegan: IN− del UBEC · source del MOSFET · riel − (un solo cable)</text>
+  <text x="792" y="230" font-size="10.5" fill="var(--bad)">confirmar centro-positivo con el multímetro ANTES de enchufar</text>
+  <text x="792" y="247" font-size="10.5" fill="currentColor" opacity=".6">el barril nunca se ha medido — puede no ser 5.5×2.1</text>
+
+  <rect x="780" y="274" width="228" height="150" rx="7" fill="var(--surf)" stroke="currentColor" stroke-width="1.2" opacity=".85"/>
+  <text x="792" y="296" font-size="12.5" font-weight="500" fill="currentColor">UBEC 12 V → 6 V · 3 A</text>
+  <text x="792" y="316" font-size="11" fill="currentColor" opacity=".75">IN+ ← nodo +12 V</text>
+  <text x="792" y="333" font-size="11" fill="currentColor" opacity=".75">IN− → estrella</text>
+  <text x="792" y="350" font-size="11" font-weight="500" fill="var(--res)">jumper en 6 V</text>
+  <text x="792" y="367" font-size="11" fill="currentColor" opacity=".75">OUT+ → rojo del servo</text>
+  <text x="792" y="384" font-size="11" fill="currentColor" opacity=".75">OUT− → negro del servo</text>
+  <text x="792" y="404" font-size="10.5" fill="var(--bad)">los dos por cable directo</text>
+
+  <rect x="1022" y="274" width="228" height="150" rx="7" fill="var(--surf)" stroke="currentColor" stroke-width="1.2" opacity=".85"/>
+  <text x="1034" y="296" font-size="12.5" font-weight="500" fill="currentColor">Servo DS3218</text>
+  <text x="1034" y="316" font-size="11" fill="currentColor" opacity=".75">rojo → OUT+ del UBEC</text>
+  <text x="1034" y="333" font-size="11" fill="currentColor" opacity=".75">negro/café → OUT− del UBEC</text>
+  <text x="1034" y="350" font-size="11" fill="var(--sig)">naranja → pin 12 (GPIO18)</text>
+  <text x="1034" y="372" font-size="10.5" font-weight="500" fill="var(--bad)">la tierra del servo NUNCA</text>
+  <text x="1034" y="388" font-size="10.5" font-weight="500" fill="var(--bad)">pasa por el Pi</text>
+  <text x="1034" y="406" font-size="10.5" fill="currentColor" opacity=".6">1.67 A pico al calarse</text>
+
+  <rect x="780" y="440" width="470" height="132" rx="7" fill="var(--surf)" stroke="currentColor" stroke-width="1.2" opacity=".85"/>
+  <text x="792" y="462" font-size="12.5" font-weight="500" fill="currentColor">Bobina del diverter + 1N5819</text>
+  <text x="792" y="482" font-size="11" fill="currentColor" opacity=".75">nodo +12 V → V1738 polo 1 → bobina</text>
+  <text x="792" y="499" font-size="11" fill="currentColor" opacity=".75">bobina → V1738 polo 2 → drain del MOSFET</text>
+  <text x="792" y="519" font-size="11" font-weight="500" fill="var(--bad)">1N5819 en paralelo a la bobina</text>
+  <text x="792" y="536" font-size="11" fill="currentColor" opacity=".75">banda (cátodo) al lado de +12 V</text>
+  <text x="792" y="556" font-size="10.5" fill="var(--bad)">SIN el diodo no se energiza. 1.08 A pasa de largo el riel</text>
+
+  <rect x="780" y="588" width="470" height="122" rx="7" fill="var(--surf)" stroke="currentColor" stroke-width="1.2" opacity=".85"/>
+  <text x="792" y="610" font-size="12.5" font-weight="500" fill="currentColor">Capacitores (item #8)</text>
+  <text x="792" y="630" font-size="11" fill="currentColor" opacity=".75">1000 µF en la salida del UBEC (6 V)</text>
+  <text x="792" y="647" font-size="11" fill="currentColor" opacity=".75">470–1000 µF en la entrada de 12 V</text>
+  <text x="792" y="667" font-size="10.5" fill="var(--bad)">son polarizados: la banda es el negativo</text>
+  <text x="792" y="686" font-size="10.5" fill="currentColor" opacity=".6">van lo más cerca posible del punto estrella</text>
+
+  <!-- ============ LINEAS ============ -->
+  <!-- Pi -> A -->
+  <path d="M224 240 H 252 V 200 H 280" fill="none" stroke="var(--dat)" stroke-width="2"/>
+  <text x="252" y="192" text-anchor="middle" font-size="10.5" fill="var(--dat)">1·2·3·5·7·9</text>
+  <!-- Pi -> B -->
+  <path d="M224 367 H 252 V 540 H 280" fill="none" stroke="var(--act)" stroke-width="2"/>
+  <text x="256" y="533" font-size="10.5" fill="var(--act)">pin 16</text>
+  <!-- Pi -> servo -->
+  <path d="M224 335 H 240 V 760 H 1136 V 424" fill="none" stroke="var(--sig)" stroke-width="2" stroke-dasharray="5 3"/>
+  <text x="700" y="776" text-anchor="middle" font-size="11" fill="var(--sig)">pin 12 → señal del servo (naranja) · cable directo, no toca protoboard</text>
+  <!-- A <-> B rieles -->
+  <path d="M490 400 V 440" fill="none" stroke="var(--gnd)" stroke-width="2.4"/>
+  <text x="500" y="426" font-size="10.5" fill="currentColor" opacity=".7">rieles unidos: + con + y − con −</text>
+  <!-- B -> estrella -->
+  <path d="M700 591 H 730 V 200 H 760" fill="none" stroke="var(--bad)" stroke-width="2.4"/>
+  <text x="736" y="330" font-size="10.5" fill="var(--bad)" transform="rotate(-90 736 330)">source → estrella (1.08 A)</text>
+  <!-- riel - -> estrella -->
+  <path d="M700 676 H 716 V 222 H 760" fill="none" stroke="var(--gnd)" stroke-width="2" stroke-dasharray="4 3"/>
+  <!-- B -> bobina -->
+  <path d="M700 686 H 748 V 500 H 780" fill="none" stroke="var(--pwr)" stroke-width="2"/>
+
+  <text x="650" y="856" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".65">
+    Regla de una línea: si por un cable pasan más de ~1 A, ese cable no toca el protoboard.
+  </text>
+</svg>
+</div>
+
+<div class="legend">
+  <span><span class="sw" style="background:var(--ok)"></span><b>3.3 V</b></span>
+  <span><span class="sw" style="background:var(--pwr)"></span><b>5 V y 12 V</b></span>
+  <span><span class="sw" style="background:var(--res)"></span><b>6 V (servo)</b></span>
+  <span><span class="sw" style="background:var(--dat)"></span><b>datos / I²C</b></span>
+  <span><span class="sw" style="background:var(--sig)"></span><b>señal del servo</b></span>
+  <span><span class="sw" style="background:var(--bad)"></span><b>corriente alta o peligro</b></span>
+</div>
+
+<h2>Por qué se parte así</h2>
+
+<div class="grid3">
+  <div class="comp" style="--c:var(--ok)">
+    <h3>Protoboard A — sensado</h3>
+    <p class="why" style="margin:0">
+      Todo lo que mide. Corrientes de µA a mA: un contacto de protoboard le sobra.
+      Va separado del diverter porque <b>el que conmuta es la fuente de ruido y el ADC es la
+      víctima</b>. Si de todos modos son dos placas, separarlos es gratis.
+    </p>
+  </div>
+  <div class="comp" style="--c:var(--act)">
+    <h3>Protoboard B — control</h3>
+    <p class="why" style="margin:0">
+      Solo la <b>compuerta</b> del MOSFET y el bloque de terminales. La compuerta consume µA.
+      Lo que <b>no</b> vive aquí es el camino de potencia: drain y source llevan 1.08 A y salen
+      por cable.
+    </p>
+  </div>
+  <div class="comp" style="--c:var(--pwr)">
+    <h3>Fuera de protoboard</h3>
+    <p class="why" style="margin:0">
+      Cinco cables punto a punto. <b>No son circuitos nuevos</b> — son cables que se saltan el
+      riel porque un contacto de protoboard está dado a <b>~1 A</b> y por ahí pasan más.
+    </p>
+  </div>
+</div>
+
+<h2>Los cinco cables que NO tocan el protoboard</h2>
+
+<div class="comp" style="--c:var(--bad)">
+<table>
+  <tr><th style="width:4%">#</th><th style="width:30%">De</th><th style="width:30%">A</th><th>Corriente y por qué</th></tr>
+  <tr><td>1</td><td>Salida del fusible (+12 V)</td><td>V1738 polo 1 (bobina +)</td>
+      <td class="why"><b>1.08 A</b> — pasa de largo el ~1 A del contacto</td></tr>
+  <tr><td>2</td><td>V1738 polo 2 (bobina −)</td><td>Drain del IRLZ44N (pata central)</td>
+      <td class="why"><b>1.08 A</b> — mismo camino, del otro lado de la bobina</td></tr>
+  <tr><td>3</td><td>Source del IRLZ44N</td><td>Tornillo estrella</td>
+      <td class="why"><b>1.08 A de retorno.</b> Si se va por el riel −, la caída se suma a lo que mide el ADC</td></tr>
+  <tr><td>4</td><td>OUT+ del UBEC (6 V)</td><td>Rojo del servo</td>
+      <td class="why"><b>1.67 A pico</b> al calarse el servo</td></tr>
+  <tr><td>5</td><td>OUT− del UBEC</td><td>Negro/café del servo</td>
+      <td class="why"><b>1.67 A de retorno.</b> Nunca por el Pi — ver abajo</td></tr>
+</table>
+<p class="why" style="margin:12px 0 0">
+  La señal del servo (naranja → pin 12) sí es de µA, pero conviene llevarla directa del header al
+  conector: si el servo trae los tres cables en un solo plug, partirlo para meter uno al protoboard
+  no gana nada.
+</p>
+</div>
+
+<h2>Tres cosas que te pueden morder</h2>
+
+<div class="grid2" style="margin-bottom:16px">
+  <div class="comp" style="--c:var(--bad)">
+    <h3>1 · La tierra del servo no pasa por el Pi</h3>
+    <p class="why" style="margin:0">
+      En protoboard <b>todas las tierras se ven iguales</b>, y ésa es la trampa. Si el retorno del
+      servo encuentra camino por <b>GPIO18</b>, son ~2 A por un pin dado a <b>8 mA</b> en la Pi 4:
+      GPIO muerto al instante, y posiblemente la placa.
+      <br><br>
+      El servo tiene su propio par de cables al UBEC. Del Pi solo sale la <b>señal</b>.
+    </p>
+  </div>
+  <div class="comp" style="--c:var(--bad)">
+    <h3>2 · La tierra entra por UN solo punto</h3>
+    <p class="why" style="margin:0">
+      Une el riel − de A con el de B, y de ahí <b>un solo cable</b> al tornillo estrella. Si
+      amarras las dos placas al tornillo por separado haces un <b>lazo de tierra</b>, que es
+      justo lo que el diseño de un-solo-punto evita.
+      <br><br>
+      El source del MOSFET es la excepción: va directo al tornillo porque lleva amperes, no
+      porque sea otra tierra.
+    </p>
+  </div>
+</div>
+
+<div class="comp" style="--c:var(--res)">
+  <h3>3 · Ahora son hasta cuatro segmentos de riel, no dos</h3>
+  <p class="why" style="margin:0">
+    Muchas placas de 830 puntos traen los rieles <b>partidos a la mitad</b> y no se nota a simple
+    vista. Con dos placas eso se duplica: <b>cuatro tramos de + y cuatro de −</b> en el peor caso.
+    Mide continuidad de extremo a extremo en cada riel de cada placa <b>antes</b> de conectar
+    nada, y puentea los que estén partidos. Un riel partido a la mitad significa que
+    <b>la mitad de tus tierras no son tierra</b> — y el síntoma aparece hasta que algo no
+    funciona por razones que parecen de software.
+  </p>
+</div>
+
+<h2>Orden de armado</h2>
+
+<div class="comp" style="--c:var(--ok)">
+<table>
+  <tr><th style="width:5%">#</th><th style="width:34%">Paso</th><th>Qué confirma antes de seguir</th></tr>
+  <tr><td>0</td><td><b>Stage 0.0 — post-mortem</b>, con la Pi desconectada</td>
+      <td class="why">Óhmetro en frío: 3.3 ↔ GND y 3.3 ↔ 5 V, en las dos placas. Si alguna suena, <b>el banco mató la primera Pi</b> y matará ésta</td></tr>
+  <tr><td>1</td><td>Rieles de las dos placas: continuidad y puentes</td>
+      <td class="why">Los cuatro tramos. Ver arriba</td></tr>
+  <tr><td>2</td><td>Resistencias medidas antes de plantarlas</td>
+      <td class="why">10 k, 22 k, 4.7 k, 470 Ω, 10 k. Anota R1 y R2 a cuatro dígitos: dan el ratio del divisor sin medir voltajes</td></tr>
+  <tr><td>3</td><td>Pi sola, sin nada en el header</td>
+      <td class="why">pin 1 → pin 9 = 3.3 V · pin 2 → pin 9 = 5.0 V. <b>Contra el pin 9</b>, no el 6</td></tr>
+  <tr><td>4</td><td>Protoboard A por bloques: ADS1115 → divisor → sonda → transductor</td>
+      <td class="why">Apagando entre bloques. Rieles y temperatura después de cada uno. El transductor va al final: es el que mete los 5 V</td></tr>
+  <tr><td>5</td><td>Protoboard B: compuerta y V1738, <b>sin 12 V</b></td>
+      <td class="why">470 Ω y 10 k medidos en sitio. El MOSFET aún sin bobina</td></tr>
+  <tr><td>6</td><td>Riel de 12 V: barrel jack, fusible, estrella, capacitores</td>
+      <td class="why">~12–13 V en el nodo con todo lo demás desconectado. <b>Polaridad confirmada antes</b></td></tr>
+  <tr><td>7</td><td>UBEC y servo, servo <b>desacoplado</b> del vástago</td>
+      <td class="why">6 V en la salida. El servo se calibra desacoplado: al arrancar en modo hardware se va a 700 µs solo</td></tr>
+  <tr><td>8</td><td>Diverter — <b>bloqueado hasta que llegue el 1N5819</b></td>
+      <td class="why">El diodo se monta antes de la primera energizada, no después</td></tr>
+</table>
+<p class="why" style="margin:12px 0 0">
+  Los pasos 0 a 7 están detallados en <code>COMMISSIONING.md</code>, con los números esperados de
+  cada medición. Esta tabla es el orden; ese archivo es la aceptación.
+</p>
+</div>
+
+</div>
