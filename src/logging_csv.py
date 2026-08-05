@@ -30,7 +30,17 @@ class RunLogger:
 
     def start_run(self, setpoints_kpa: List[float]) -> str:
         self._start_dt = datetime.now()
-        self.name = self._start_dt.strftime("run_%Y%m%d_%H%M%S")
+        base = self._start_dt.strftime("run_%Y%m%d_%H%M%S")
+        # Two runs started inside the same clock second would share every
+        # artefact name (csv, meta, plot, xlsx) and the first one's data would be
+        # overwritten with no error. Suffix instead of widening the timestamp, so
+        # the ordinary name — which the operator reads and the meta quotes —
+        # keeps its familiar shape.
+        self.name = base
+        n = 2
+        while (self.dir / f"{self.name}.csv").exists():
+            self.name = f"{base}_{n}"
+            n += 1
         self.ts_path = self.dir / f"{self.name}.csv"
         self.meta_path = self.dir / f"{self.name}_meta.json"
         self._fh = self.ts_path.open("w", newline="")
@@ -70,7 +80,19 @@ class RunLogger:
         ])
         self._fh.flush()
 
-    def finish_run(self, results, status_note: str = "completed") -> Optional[str]:
+    def finish_run(self, results, status_note: str = "completed", *,
+                   tolerance_pct=None, dwell_s=None) -> Optional[str]:
+        """Write runs/<name>_meta.json.
+
+        The test parameters must describe THIS run, not config.yaml: a playlist
+        item carries its own tolerance/dwell/collection, so quoting the config
+        defaults produced a meta that contradicted the results sitting beside it
+        in the same file. collection_s is taken from the results themselves, so
+        it is right whether or not the caller passes anything; the two that no
+        TestResult carries are accepted as arguments, and whatever still falls
+        back to config is named in `params_from_config_defaults` rather than
+        being asserted as if it had been used.
+        """
         if self.meta_path is None or self._start_dt is None:
             return None
         end_dt = datetime.now()
@@ -83,6 +105,24 @@ class RunLogger:
                 d[f"{key}_{u}"] = round(self.cfg.disp(d[f"{key}_kpa"]), 4)
             return d
 
+        # collection_s comes from the points that actually ran; a list if they
+        # differed, so the meta never flattens a varied run into one number
+        seen = sorted({round(r.collection_s, 3) for r in results
+                       if getattr(r, "collection_s", 0)})
+        fell_back = []
+        if seen:
+            coll = seen[0] if len(seen) == 1 else seen
+        else:
+            coll = self.cfg.test.collection_s
+            fell_back.append("collection_s")
+        tol, dwl = tolerance_pct, dwell_s
+        if tol is None:
+            tol = self.cfg.test.tolerance_pct
+            fell_back.append("tolerance_pct")
+        if dwl is None:
+            dwl = self.cfg.test.dwell_s
+            fell_back.append("dwell_s")
+
         meta = {
             "run": self.name,
             "units": u,
@@ -92,12 +132,14 @@ class RunLogger:
             "duration_s": round((end_dt - self._start_dt).total_seconds(), 1),
             "status": status_note,
             "pid": {"kp": self.cfg.pid.kp, "ki": self.cfg.pid.ki, "kd": self.cfg.pid.kd},
-            "tolerance_pct": self.cfg.test.tolerance_pct,
-            "dwell_s": self.cfg.test.dwell_s,
-            "collection_s": self.cfg.test.collection_s,
+            "tolerance_pct": tol,
+            "dwell_s": dwl,
+            "collection_s": coll,
             "timeseries_csv": self.ts_path.name if self.ts_path else None,
             "results": [result_row(r) for r in results],
         }
+        if fell_back:
+            meta["params_from_config_defaults"] = fell_back
         self.meta_path.write_text(json.dumps(meta, indent=2))
         return str(self.meta_path)
 

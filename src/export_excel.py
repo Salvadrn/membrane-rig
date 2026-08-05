@@ -128,20 +128,36 @@ def export_permeability_xlsx(result, out_path, *, title: str = "Q vs ΔP",
     series = Series(yref, xref, title="Q")
     series.marker = Marker(symbol="circle", size=6)
     series.graphicalProperties.line.noFill = True  # markers only (scatter)
-    series.trendline = Trendline(trendlineType="linear", dispEq=True, dispRSqr=True)
+    if result.n >= 2:
+        # a "linear trendline" through a single point is the same fabrication
+        # as writing k = 0 — Excel would draw a line nothing supports
+        series.trendline = Trendline(trendlineType="linear", dispEq=True, dispRSqr=True)
     chart.series.append(series)
     ws.add_chart(chart, f"E{head_row}")
 
     # --- results block --------------------------------------------------------
     r = last + 2
-    verdict = "follows Darcy's law" if result.follows_darcy else "low R² — check linearity"
+    # With fewer than two points there is no line to fit, so every derived
+    # quantity is absent — NOT zero. fit_permeability leaves them at 0.0 as
+    # struct defaults and says so in .note; writing those defaults out produced
+    # a workbook stating k = 0 with a verdict of "low R² — check linearity",
+    # which reads as a fit that came out badly rather than a fit that never
+    # happened. Blank cells and the real note instead. plot_permeability already
+    # refuses n < 2; the two artefacts from one call must not disagree.
+    fitted = result.n >= 2
+    if fitted:
+        verdict = ("follows Darcy's law" if result.follows_darcy
+                   else "low R² — check linearity")
+    else:
+        verdict = result.note or "not enough points to fit a slope"
     rows = [
-        ("slope (m³/s per kPa)", result.slope_per_kpa, SCI),
-        ("intercept (m³/s)", result.intercept_m3s, SCI),
-        ("R²", round(result.r2, 6), None),
-        ("Darcy permeability using the slope (m²)", result.k_darcy_m2, SCI),
-        ("Mean hydraulic pore size (m)", result.pore_size_m, SCI),
-        ("Mean hydraulic pore size (µm)", round(result.pore_size_m * 1e6, 4), None),
+        ("slope (m³/s per kPa)", result.slope_per_kpa if fitted else None, SCI),
+        ("intercept (m³/s)", result.intercept_m3s if fitted else None, SCI),
+        ("R²", round(result.r2, 6) if fitted else None, None),
+        ("Darcy permeability using the slope (m²)", result.k_darcy_m2 if fitted else None, SCI),
+        ("Mean hydraulic pore size (m)", result.pore_size_m if fitted else None, SCI),
+        ("Mean hydraulic pore size (µm)",
+         round(result.pore_size_m * 1e6, 4) if fitted else None, None),
         ("verdict", verdict, None),
     ]
     # How well the slope is pinned down, which R² alone does not say. Omitted
