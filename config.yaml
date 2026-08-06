@@ -74,7 +74,7 @@ sensor:
 # type: pwm    -> a MOSFET-driven proportional solenoid (see src/hal/pwm_valve.py)
 valve:
   type: servo
-  invert: false        # 2026-08-06: false is CORRECT on this rig — 0% (the abort state) = 520 us = 93 deg = SHUT, confirmed at the handle
+  invert: true         # 2026-08-06, Adrián at the handle: SHUT is the 180 deg end. 0% (startup/abort/sensor-fault) = 1167 us = 180 deg = SHUT
   min_command: 0.0
   max_command: 100.0
 

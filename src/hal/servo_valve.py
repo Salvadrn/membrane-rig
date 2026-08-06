@@ -59,18 +59,50 @@ class ServoValve(ProportionalValve):
             raise RuntimeError("pigpio daemon not running (start it: sudo pigpiod)")
         self.to_safe()
 
+    def _travel_us(self) -> tuple[int, int]:
+        """The ONLY pulse widths this driver may ever emit, low..high.
+
+        Calibrated by hand at the valve: the operator drove the servo until the
+        stem reached each end of the quarter turn and read the angle off the
+        handle. Outside that band the horn is pushing the ball against a seat or
+        the servo against its own stop — which stalls it, and a stalled servo
+        overheats in seconds with nobody watching.
+        """
+        lo, hi = int(self.cfg.servo_min_us), int(self.cfg.servo_max_us)
+        return (lo, hi) if lo <= hi else (hi, lo)
+
+    def _write_us(self, us: float) -> None:
+        """Every pulse this driver emits goes through here, clamped.
+
+        The clamp is deliberately at the WRITE, not at the callers. Adrián's
+        instruction was that the servo must never leave the calibrated band "por
+        nada del mundo", and a rule enforced at each caller is a rule that the
+        next caller forgets. Two live holes it closes today:
+          * `servo_close_us` is a raw microsecond override, so a typo there used
+            to drive the stem straight past the seat.
+          * `min_command`/`max_command` bound the COMMAND, not the pulse, so they
+            cannot protect a path that writes microseconds directly.
+        Clamping silently is right here: refusing to move is not safer than
+        moving to the nearest legal position, and this runs in the control loop
+        where raising would abort a healthy run over an arithmetic edge.
+        """
+        lo, hi = self._travel_us()
+        self._pi.set_servo_pulsewidth(self.cfg.servo_pin, int(max(lo, min(hi, us))))
+
     def _apply(self, command: float) -> None:
         command = max(self.cfg.min_command, min(self.cfg.max_command, command))
         frac = command / 100.0
         if self.cfg.invert:
             frac = 1.0 - frac
-        us = self.cfg.servo_min_us + frac * (self.cfg.servo_max_us - self.cfg.servo_min_us)
-        self._pi.set_servo_pulsewidth(self.cfg.servo_pin, int(us))
+        self._write_us(self.cfg.servo_min_us
+                       + frac * (self.cfg.servo_max_us - self.cfg.servo_min_us))
 
     def _shut_pulse_us(self) -> int:
         """Pulse width that SEATS the valve. `servo_close_us` overrides the end
         of the control range so the valve can be driven a little past where
-        regulation stops — 0 (unset) keeps the old behaviour exactly."""
+        regulation stops — 0 (unset) means "use the 0% end". Whatever it says,
+        `_write_us` still clamps it into the calibrated travel: seating a little
+        harder is a legitimate ask, leaving the band is not."""
         if self.cfg.servo_close_us:
             return int(self.cfg.servo_close_us)
         return int(self.cfg.servo_max_us if self.cfg.invert else self.cfg.servo_min_us)
@@ -83,7 +115,7 @@ class ServoValve(ProportionalValve):
         self._apply(0.0)
 
     def full_close(self) -> None:
-        self._pi.set_servo_pulsewidth(self.cfg.servo_pin, self._shut_pulse_us())
+        self._write_us(self._shut_pulse_us())
 
     def close(self) -> None:
         try:

@@ -23,8 +23,9 @@ SAFETY
   * If the servo buzzes without moving it is stalled against a stop — CUT ITS
     POWER. A stalled servo overheats in seconds and this tool holds position
     for as long as you asked.
-  * Do not exceed the travel you have already confirmed by eye. The tool clamps
-    to 0-270 deg, which is the SERVO's limit, not your valve's.
+  * The tool refuses angles outside the CALIBRATED travel in config.yaml. That
+    is the valve's limit, not the servo's 0-270. Use --beyond only when you are
+    deliberately recalibrating, and watch it while it moves.
 """
 from __future__ import annotations
 
@@ -46,11 +47,17 @@ def us_for(deg: float) -> int:
     return int(round(US_AT_ZERO + deg * US_PER_DEG))
 
 
+def deg_for(us: float) -> float:
+    return (us - US_AT_ZERO) / US_PER_DEG
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("angle", type=float, help="angulo absoluto en grados (0-270)")
     ap.add_argument("--hold", type=float, default=6.0, help="segundos a sostener")
     ap.add_argument("--config", default=str(ROOT / "config.yaml"))
+    ap.add_argument("--beyond", action="store_true",
+                    help="permitir salir del recorrido calibrado (solo para recalibrar)")
     args = ap.parse_args()
 
     if not 0.0 <= args.angle <= 270.0:
@@ -59,6 +66,20 @@ def main() -> int:
 
     cfg = Config.load(args.config)
     us = us_for(args.angle)
+
+    # Refuse to leave the calibrated travel unless the operator says so out loud.
+    # This tool is how the endpoints were FOUND, so it cannot simply clamp — but
+    # it is also the easiest way to drive the stem past its seat by fat-fingering
+    # an angle, and the standing instruction is that the servo never leaves the
+    # band. So: inside the band is free, outside needs --beyond and prints why.
+    lo, hi = sorted((int(cfg.valve.servo_min_us), int(cfg.valve.servo_max_us)))
+    if not lo <= us <= hi and not args.beyond:
+        print(f"  {args.angle:.0f} grados = {us} us — FUERA del recorrido calibrado "
+              f"({lo}-{hi} us = {deg_for(lo):.0f}-{deg_for(hi):.0f} grados).")
+        print("  Ahi el vastago topa contra el asiento o el servo contra su tope, y")
+        print("  un servo calado se calienta en segundos. Para recalibrar a proposito:")
+        print(f"      --beyond   (y vigilalo: si zumba sin moverse, CORTA LA CORRIENTE)")
+        return 2
 
     import pigpio  # noqa: E402
     pi = pigpio.pi()
