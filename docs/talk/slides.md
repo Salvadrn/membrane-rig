@@ -104,6 +104,30 @@ Solenoid **diverter** times collection.
 
 ---
 
+# One loop, twenty times a second
+
+**Read** pressure → **PID** → **valve**. Every 50 ms.
+
+A **sequencer** walks the pressures; the **diverter** times each collection on that same clock.
+
+A **safety layer** reads every sample — a lost sensor **vents**, it never "reads low".
+
+The same code runs in **simulation** and on **hardware** — only the driver layer swaps underneath.
+
+---
+
+# A 3.3 V pin, moving water
+
+GPIO23 can't drive a **12 V solenoid coil** — so it drives a **MOSFET** that can.
+
+Pin **HIGH** → coil energises → the three-way valve sends flow to the **collection cylinder**.
+
+Pin **LOW** → coil off → flow falls back to **waste**. De-energised = waste = **fail-safe**.
+
+A **flyback diode** swallows the coil's reverse kick at switch-off.
+
+---
+
 # Validation — in simulation
 
 **±8 kPa** supply disturbance → held to **0.21–0.69 kPa**.

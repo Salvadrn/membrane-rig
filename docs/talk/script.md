@@ -54,7 +54,15 @@ Slides 1, 3–4 and 9–11 are text only — delete their placeholders. Regenera
 > _FIGURE: talk_system.png_
 "Here's the build. The existing vessel is left untouched — everything attaches around it. A hobby servo turns the air-inlet ball valve, driven by a PID loop at 20 Hz. Pressure goes through a divider into a 16-bit ADC; a digital probe reads water temperature for the viscosity correction. A three-way solenoid is the diverter that times collection. About three hundred dollars in parts, and the vessel itself is never modified."
 
-### 9 · Validation, in simulation — 5:40–6:50
+### 8a · How the code works — 5:40–6:20  ← ADDED (pushes total to ~9:20)
+"Under that hardware is one idea repeated. Twenty times a second, the software reads the pressure, runs it through a PID controller, and moves the valve — one loop, every fifty milliseconds. On top of that loop a sequencer walks through the pressures I want, and the diverter times each collection window on that exact same clock, which is what kills the timing error. Watching all of it, a safety layer looks at every single sample — and the key rule is that a sensor that drops out is treated as a fault and vents the vessel; it is never read as 'low pressure'. And the same code you're looking at runs in simulation and on the real rig — only the bottom driver layer swaps out. That's why I could trust it before a single wire was connected."
+> _If short on time, this is the first cut: the loop idea already appears on slide 5. Keep 8b — the MOSFET is the concrete "how" people ask about._
+
+### 8b · How the diverter switches — 6:20–7:00  ← ADDED
+"One piece worth zooming in on, because it's the part people ask about: how does a 3.3-volt computer pin move water? It doesn't — directly it can't, the diverter is a twelve-volt solenoid coil pulling about an amp. So the pin drives a MOSFET, a voltage-controlled switch. Pin high, the gate opens, the coil energizes, and the three-way valve routes the flow into the collection cylinder. Pin low, the coil de-energizes and the flow falls back to waste — and notice that de-energized equals waste, so if anything loses power the rig fails to the safe state on its own. The one subtlety is the coil is an inductor: when you switch it off it kicks back a reverse voltage spike, so a flyback diode sits across it to swallow that spike and protect the transistor. It does not reverse any polarity — it's a switch, driven by a pin."
+> _The last line is deliberate: if asked "does it flip polarity?", the answer is no — it switches a coil on and off. Don't claim polarity reversal; there's no H-bridge in this design._
+
+### 9 · Validation, in simulation — 6:50–8:00  (was 5:40–6:50)
 "Now the results — and these are all from **simulation**, running the exact production code against a modeled plant. Against a ±8 kPa oscillating supply — worse than the real bench should be — the loop held each setpoint to **two-tenths to seven-tenths of a kPa**. Across a 15 °C sweep the derived k held constant to **five significant figures** while the raw slope moved **39%** — the cancellation you just saw, proven end to end. And it reproduced a real, hand-taken dataset: k of 1.44e-12, pore size 6.8 microns, R-squared 0.994."
 
 ### 10 · Trusted before built, and honest — 6:50–7:45
