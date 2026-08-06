@@ -35,7 +35,10 @@ from src.hal import build_hal          # noqa: E402
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--seconds", type=float, default=60.0)
-    ap.add_argument("--hz", type=float, default=10.0)
+    ap.add_argument("--hz", type=float, default=20.0,
+                    help="muestreo (default 20, igual que el lazo de control)")
+    ap.add_argument("--print-hz", type=float, default=5.0,
+                    help="cuántas líneas por segundo imprimir (default 5)")
     ap.add_argument("--config", default=str(ROOT / "config.yaml"))
     args = ap.parse_args()
 
@@ -66,7 +69,8 @@ def main() -> int:
     while (t := time.time()) - t0 < args.seconds:
         r = sensor.read()
         rows.append((t - t0, r.raw, r.pressure_kpa, int(r.healthy)))
-        if len(rows) % int(args.hz) == 0:
+        every = max(1, int(round(args.hz / max(args.print_hz, 0.1))))
+        if len(rows) % every == 0:
             print(f"  {t - t0:5.1f} s   {r.raw:7.4f} V   {r.pressure_kpa:8.2f} kPa"
                   f"   {'ok' if r.healthy else 'FALLA'}")
         nxt += period
