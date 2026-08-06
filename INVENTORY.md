@@ -3,7 +3,7 @@
 Estado físico de las piezas del rig. `BOM.csv` es la lista de compra; esto es qué
 hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 
-Última actualización: 2026-08-05
+Última actualización: 2026-08-06
 
 ## En la mano
 
@@ -49,6 +49,42 @@ hay realmente en la mano. Adrián reporta las llegadas conforme caen.
 > forma de meterlo y hay que desoldar. Ensarta un tramo en cada cable antes de acercar el cautín, y
 > déjalo lejos de la punta mientras sueldas para que no se encoja antes de tiempo. Cinta de aislar
 > sigue sin estar en el BOM; ya no bloquea nada, pero vale como consumible de taller.
+
+## ✅ PRIMER HECHO MEDIDO EN HARDWARE — 2026-08-06
+
+**`i2cdetect -y 1` devolvió `48`.** Es la primera verificación en hardware real de
+todo el proyecto: hasta hoy cada número del rig, incluidos los del paper, venía
+de simulación.
+
+Ese solo número valida cuatro cosas a la vez:
+
+- el **ADS1115** está vivo y responde en el bus
+- el **cableado I²C** está correcto (SDA→pin 3, SCL→pin 5)
+- **ADDR quedó aterrizado** — por eso `0x48` y no `0x49`/`0x4A`/`0x4B`, que es
+  justo la dirección que el driver espera al construir `ADS.ADS1115(i2c)` sin
+  argumento
+- la **protoboard A no tiene cortos ni cruces**
+
+Estado de la Pi ese día (Raspberry Pi OS **Trixie**, Debian 13):
+
+| Comprobación | Resultado |
+|---|---|
+| `/dev/i2c-1` | ✅ existe |
+| `w1_bus_master1` | ✅ existe (sin sonda conectada aún, sin `28-…`) |
+| deps de Python (incl. `adafruit_ads1x15`) | ✅ `deps ok` |
+| `pigpiod` | ⚠️ `inactive` — ver abajo |
+
+**`install.sh` corrió por primera vez en la historia del repo**, y falló tres
+veces antes de completarse. Las tres quedaron arregladas (`295894a`, `a747b9d`,
+`ec2bb24`): `pigpio` ya no existe en Trixie, faltaba `swig` para compilar
+`lgpio`, y faltaba `liblgpio-dev` para enlazarlo. Cada una solo aparece cuando la
+anterior se resuelve — así fallan las cadenas de compilación.
+
+**Bloqueo que esto deja abierto para la etapa 6:** `pigpiod` no corre en Trixie.
+Solo afecta al **servo**; el sensado completo funciona sin él. `GPIO18` es pin de
+PWM por hardware, así que el camino de reemplazo probable es el PWM del kernel y
+no `lgpio` (cuyo PWM por software tiembla lo suficiente como para que un
+actuador de válvula lo muestre). Es trabajo de Control.
 
 ## Se puede hacer HOY — sin que falte nada
 
