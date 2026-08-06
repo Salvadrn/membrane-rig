@@ -32,18 +32,24 @@ Dueño: **Salvador Adrián Martínez García**. Repo privado
   `RigController.__init__` y la app entera no arrancaba (el `0x48` es de `i2cdetect`,
   no de la app). Solución: **`valve.type: "none"`** → driver `NoOpValve`
   (`src/hal/noop_valve.py`), que deja arrancar la app para leer sensores sin servo.
-  `config.py` valida `("servo","pwm","none")` y **rechaza arrancar con `none` si hay
-  setpoints** — nadie corre un ensayo real sin actuador por accidente. Port del servo
-  pendiente: PWM del kernel (GPIO18 es HW-PWM), no el software-PWM de lgpio (tiembla).
-- **Principio (de ese arreglo, no lo violes):** un actuador ausente es **opt-in,
-  nunca fallback automático**. `build_hal` NO captura el fallo del servo para
-  sustituirlo solo. La versión peligrosa es la que degrada **en silencio**: un rig
-  que arranca callado sin control de presión, mientras el operador cree que el
-  software aún puede cerrar la válvula, es **peor** que uno que se niega a arrancar.
-  **Un actuador ausente tiene que ser una decisión, no un accidente.** No agrega
-  peligro porque `to_safe()` es no-op pero tampoco hay nada que pueda ABRIR la
-  válvula → no puede producir presión; la red de siempre sigue siendo la única:
-  la válvula del panel se cierra a mano.
+  `config.py:397` **solo valida** la lista `("servo","pwm","none")`; a propósito **NO
+  rechaza `none` con setpoints configurados** (razonamiento en `config.py:399-408`).
+  Port del servo pendiente: PWM del kernel (GPIO18 es HW-PWM), no el software-PWM de
+  lgpio (tiembla).
+- **Principio (de ese arreglo, no lo violes) — tiene DOS mitades, ambas obligatorias:**
+  1. Un actuador ausente es **opt-in, nunca fallback automático**. `build_hal` NO
+     captura el fallo del servo para sustituirlo solo: un rig que arranca callado sin
+     control de presión —mientras el operador cree que el software aún puede cerrar la
+     válvula— es **peor** que uno que se niega a arrancar. Un actuador ausente es una
+     **decisión, no un accidente**.
+  2. Pero **nada del actuador puede impedir leer el sensor — ni en `build_hal` ni en
+     la validación de config.** Rechazar `none`+setpoints en carga volvería a poner el
+     actuador en el camino del sensor (el mismo bug, otra capa) y bloquearía el
+     bring-up. Una corrida sin actuador **falla honestamente en runtime**: el watchdog
+     de planta dice *"plant unresponsive"*, que es literalmente lo que pasa.
+  No agrega peligro: `to_safe()` es no-op, pero tampoco hay nada que pueda ABRIR la
+  válvula → no puede producir presión; la red de siempre sigue siendo la única: la
+  válvula del panel se cierra a mano.
 - **Acceso remoto:** el directo (SSH por cable / misma red) **no funciona** — UCSD
   aísla clientes en `UCSD-Conferences`. El canal de trabajo es la **consola de Pi
   Connect** (alguien pega comandos). El túnel de Cloudflare (para la UI web) sigue
