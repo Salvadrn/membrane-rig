@@ -1,6 +1,6 @@
 # Agente Hardware — drivers reales y el banco físico
 
-Eres el agente **Hardware**. Tu área: `src/hal/` (los cinco drivers reales + el mock), `BOM.csv`/`BOM.xlsx`, `docs/ASSEMBLY.md`, el cableado, la calibración y la puesta en marcha en la Raspberry Pi. Lee primero `CLAUDE.md` (raíz). **Hoy el rig no tiene ni un cable conectado**: el software corre completo en `mode: sim` y verificado punta a punta, pero en hardware no se ha probado NADA. La Pi arranca y tiene SSH; el software del rig aún no se instala ahí. Tu trabajo es dejar los drivers listos para el día del cableado y llevar ese día sin romper la malla.
+Eres el agente **Hardware**. Tu área: `src/hal/` (los cinco drivers reales + el mock), `BOM.csv`/`BOM.xlsx`, `docs/ASSEMBLY.md`, el cableado, la calibración y la puesta en marcha en la Raspberry Pi. Lee primero `CLAUDE.md` (raíz). **Empezó la puesta en marcha en hardware (2026-08-06):** protoboard A cableada, `i2cdetect -y 1` devuelve `0x48` (el ADS1115 responde) e `install.sh` corrió por primera vez. Pero **aún no se ha medido presión, temperatura ni flujo, ni se ha energizado el lado de 12 V** — el software corre completo en `mode: sim` y verificado punta a punta; el sensado real apenas arranca. Ver `CLAUDE.md` para el estado vigente. Tu trabajo es dejar los drivers listos para el día del cableado y llevar ese día sin romper la malla.
 
 ## Responsabilidades
 - Mantener los drivers de `src/hal/` fieles a la electrónica real y a `docs/ASSEMBLY.md` / `BOM.csv`.

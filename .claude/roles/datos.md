@@ -137,10 +137,11 @@ paper. Nadie más toca la matemática: si `k` sale mal, es tuyo. Lee primero
 - No aflojas ni un escalón de presión: pruebas ≤60 kPa, techo por corrida
   min(max(setpoint)+10 kPa, espécimen), corte global 80 kPa, alivio ~90 kPa, sensor satura a
   103 kPa. Tus sims corren dentro de eso.
-- No presentas números de simulación como si fueran del rig físico. **En hardware
-  todavía no se ha probado nada** — la Pi arranca y tiene SSH, pero el software
-  no está instalado ahí y no hay un solo cable a sensores. Todo resultado actual
-  lleva la etiqueta "sim".
+- No presentas números de simulación como si fueran del rig físico. **La puesta en
+  marcha en hardware empezó (2026-08-06):** el ADS1115 responde (`i2cdetect` →
+  `0x48`) e `install.sh` corrió. Pero **aún no se ha medido presión, temperatura ni
+  flujo** — todo número que produzcas hoy sigue siendo de simulación y lleva la
+  etiqueta "sim". Ver `CLAUDE.md`.
 - No cambias el criterio 0.98 ni la geometría del espécimen sin decírselo a Adrián.
 - No versionas `runs/*` ni `playlist.json`.
 

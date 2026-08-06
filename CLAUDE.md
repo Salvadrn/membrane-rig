@@ -17,11 +17,28 @@ Dueño: **Salvador Adrián Martínez García**. Repo privado
 
 - El software corre **completo en simulación** (`mode: sim`) y está verificado de
   punta a punta: playlist, análisis, gráfica, Excel.
-- En **hardware no se ha probado nada**. La Raspberry Pi ya arranca y tiene SSH,
-  pero el software del rig **aún no se instala en ella** y **no hay ni un cable
-  conectado** a sensores o válvulas.
-- **Todos los números publicados son de simulación.** El paper lo declara
-  explícitamente. No presentes resultados de sim como si fueran del rig físico.
+- **Empezó la puesta en marcha en hardware (2026-08-06).** Primer hecho **MEDIDO**
+  en el banco: `i2cdetect -y 1` devuelve **`0x48`** (commit `57c8ec4`) — el ADS1115
+  responde, el I²C está bien cableado (SDA pin 3, SCL pin 5), el ADDR quedó
+  aterrizado (por eso `0x48` y no `0x49`, que es lo que el driver asume) y la
+  protoboard A no tiene cortos. `install.sh` corrió por primera vez en la historia
+  del repo (con parches para Trixie: pigpio fuera, `swig` + `liblgpio-dev`
+  añadidos). **Aún NO se ha medido presión, temperatura ni flujo, ni se ha
+  energizado el lado de 12 V** — los chequeos en frío siguen pendientes.
+- **Servo bloqueado en Trixie:** `pigpiod` ya no existe en Raspberry Pi OS Trixie
+  (Debian 13), así que el servo (GPIO18) no actúa todavía; **el sensado completo
+  funciona sin él**. Camino probable de port: PWM del kernel (GPIO18 es PWM por
+  hardware), no el PWM por software de lgpio, que tiembla lo suficiente para que un
+  actuador de válvula lo muestre.
+- **Acceso remoto:** el directo (SSH por cable / misma red) **no funciona** — UCSD
+  aísla clientes en `UCSD-Conferences`. El canal de trabajo es la **consola de Pi
+  Connect** (alguien pega comandos). El túnel de Cloudflare (para la UI web) sigue
+  pendiente; Cloudflare sí es alcanzable desde esa red, así que el túnel es viable
+  cuando se monte.
+- **Todos los números PUBLICADOS siguen siendo de simulación.** El paper lo declara
+  explícitamente. No presentes resultados de sim como si fueran del rig físico —
+  y no presentes el `0x48` como una medición de permeabilidad: dice que el chip
+  responde, nada más.
 
 ## Sistema de agentes (multi-sesión)
 

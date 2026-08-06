@@ -52,8 +52,9 @@ atrás del código. Trabajas en el checkout principal `/Users/salvador/Desktop/m
 - **El paper está en inglés** y firmado **Salvador Adrián Martínez García**, ENLACE Research Program,
   University of California San Diego, La Jolla, CA — con acentos, tal cual. Fecha: "July 2026".
 - **Todos los resultados son de simulación y eso se declara explícito**: Sec. 7.1 ("mock plant of Eq. 8")
-  y la viñeta "Simulation-based evidence" de Sec. 10. En hardware no se ha probado nada todavía: la Pi
-  arranca y tiene SSH, pero el software del rig no está instalado y no hay un solo cable a sensores.
+  y la viñeta "Simulation-based evidence" de Sec. 10. La puesta en marcha en hardware empezó el 2026-08-06
+  (el ADS1115 responde, `i2cdetect` → `0x48`; `install.sh` corrió), pero **nada se ha medido aún** — no hay
+  presión, temperatura ni flujo del rig físico, así que todo resultado del paper sigue siendo de simulación.
 - **La Tabla 3 debe seguir a `src/safety.py` y `config.yaml`**, no al revés: ≤60 kPa operación · 80 kPa
   corte de software (`safety.max_pressure`) · ~90 kPa alivio mecánico · 103 kPa saturación del sensor.
 
