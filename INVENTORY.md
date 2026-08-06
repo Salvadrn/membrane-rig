@@ -124,6 +124,53 @@ ninguna gráfica.
 
 **Hasta cerrar esto, ningún `k` de este rig es publicable.**
 
+## 🎉 EL RIG MIDIO PRESION — 2026-08-06
+
+**Primera medicion de presion en hardware de la historia del proyecto.**
+`runs/pressure_demo_20260806-125029.csv` + `.png`.
+
+Tres ciclos de presion aplicada a soplido, con la traza completa:
+
+| t (s) | V | kPa |
+|---|---|---|
+| 9.9 | 0.9189 | **10.83** |
+| 13.9 | 0.4986 | −0.04 |
+| 20.9 | 0.9274 | **11.05** |
+| 23.9 | 0.4984 | −0.04 |
+| 25.9 | 0.8933 | **10.17** |
+| 27.9 | 0.4979 | −0.05 |
+
+Lo que lo vuelve una medicion y no una lectura: **vuelve al cero cada vez**,
+dentro de ±0.05 kPa, sin deriva ni histeresis visible. Un sensor que sube es
+facil; uno que regresa al mismo cero tres veces seguidas es un instrumento.
+
+Corrio por el **camino de software completo** — `Config`, `build_hal`,
+`Ads1115Sensor` reales — asi que es evidencia sobre el codigo que se publica,
+no sobre un script auxiliar.
+
+### Numeros de calibracion de ESTE banco
+
+| Cantidad | Valor | Como se obtuvo |
+|---|---|---|
+| `divider_ratio` | **0.7346** | medido: verde 0.500 V (multimetro) → A0 0.3673 V |
+| Cero | **0.01 kPa** | con el ratio medido puesto |
+| Ruido de fondo | **±0.04 kPa** | pico a pico en reposo |
+| Resolucion util | ~1 parte en 1000 | contra ensayos de 35 kPa |
+
+**Advertencia sobre el resumen del propio tool:** imprime "reposo 7.854 kPa"
+porque promedia el primer 20 % de la corrida, y ahi Adrian ya estaba soplando.
+El cero real son los tramos sueltos. El tool documenta ese supuesto; queda como
+recordatorio de que un "piso de ruido" calculado sobre una ventana que no estaba
+quieta no es un piso de ruido.
+
+### Lo que sigue sin estar probado
+
+Presion **medida**, no **controlada**: no hay servo (pigpiod no existe en
+Trixie), no hay diverter (falta montar el 1N5819), y el riel de 12 V sigue sin
+energizar porque los chequeos en frio del Stage 0.0/0.2 siguen pendientes.
+No hay ningun par (ΔP, Q) todavia, asi que **no hay k medida** — solo la cadena
+que la va a producir.
+
 ## Se puede hacer HOY — sin que falte nada
 
 La cadena de sensado de baja tensión **no depende del riel de 12 V**, así que no la
