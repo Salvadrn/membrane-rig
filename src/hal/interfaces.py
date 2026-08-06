@@ -32,7 +32,14 @@ class PressureSensor(ABC):
 
 class ProportionalValve(ABC):
     """Pressure-control valve. `command` is 0..100 'pressure authority':
-    0 == fully vented (SAFE), 100 == driving toward maximum pressure."""
+    0 == lowest pressure (SAFE), 100 == driving toward maximum pressure.
+
+    Deliberately not "vented": this interface covers both plumbing topologies,
+    and only one of them vents. A bleed-to-waste valve really does open an
+    escape at 0%; the inline feed throttle this rig uses merely shuts the
+    supply, and the vessel then falls by permeation through the membrane — or
+    does not fall at all, if the mesh is blocked. Naming a mechanism here would
+    promise the servo topology an escape path it does not have."""
 
     @abstractmethod
     def set_command(self, command: float) -> None:
@@ -40,7 +47,7 @@ class ProportionalValve(ABC):
 
     @abstractmethod
     def to_safe(self) -> None:
-        """Drive the valve to its fail-safe (vent) state."""
+        """Drive the valve to its fail-safe state."""
 
     def full_close(self) -> None:
         """Seat the valve SHUT, past the regulating range.

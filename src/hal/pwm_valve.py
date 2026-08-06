@@ -16,7 +16,10 @@ A 1 kHz carrier is a good starting point; some proportional valves prefer a
 
 VALVE SENSE
 -----------
-`command` is 0..100 pressure authority (0 = vent/SAFE, 100 = max pressure).
+`command` is 0..100 pressure authority (0 = lowest pressure = SAFE, 100 = max).
+Not "vent": this driver serves either topology. The RECOMMENDED wiring below does
+vent at 0%, but an inverted one does not, and naming the mechanism here would
+promise an escape path that half the configurations lack.
 For the recommended NORMALLY-OPEN bleed valve, energising it CLOSES it and
 raises pressure, so duty == command. If your valve is wired/behaves the other
 way, set `valve.invert: true` and the mapping flips.
@@ -49,12 +52,16 @@ class PwmValve(ProportionalValve):
         self._apply(command)
 
     def to_safe(self) -> None:
-        # command 0 == vented. With invert this still maps to the vent duty.
+        # command 0 == lowest pressure. With invert this still maps to the safe
+        # duty — which vents only on the normally-open bleed wiring.
         self._apply(0.0)
 
     def full_close(self) -> None:
-        # A solenoid has no travel to over-drive: 0% already de-energises it to
-        # its shut position, so seating it is the same action as going safe.
+        # A solenoid has no travel to over-drive: 0% already drives it to its
+        # LOWEST-PRESSURE state, so seating it is the same action as going safe.
+        # Not "its shut position" — on the recommended normally-open bleed valve
+        # the safe state is the valve OPEN, venting. What is shut is the path to
+        # pressure, not the valve.
         self._apply(0.0)
 
     def close(self) -> None:

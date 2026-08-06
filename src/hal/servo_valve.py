@@ -30,15 +30,23 @@ the control range, which is where regulation stops, not necessarily where the
 valve seals — with backlash in a printed coupling it can sit slightly cracked.
 Set servo_close_us a little past 0% so the end of a run SEATS the valve. Find it
 by hand: step the pulse down until flow stops with the supply on, then add a
-small margin. Do NOT jam it into the mechanical stop — the controller holds this
-position for as long as the rig sits idle, and a stalled servo overheats.
+small margin. It is CLAMPED to the calibrated travel by `_write_us()`, so a value
+outside servo_min_us..servo_max_us seats at the band edge rather than jamming the
+stem into the mechanical stop — the controller holds this position for as long as
+the rig sits idle, and a stalled servo overheats. If seating needs a pulse the
+band does not contain, the ENDPOINTS are wrong; recalibrate them rather than
+widening the clamp.
 
-Note: a servo HOLDS position on power loss (it does not spring to safe), so it
-is not a fail-safe by itself. The mechanical relief valve is meant to cover that
-case — it is now IN HAND but **not fitted**, and it protects nothing until it is
-mounted and its crack pressure is set. Until then the panel valve is the only
-human shutoff and the regulator setting is the only bound. `to_safe()` actively
-drives to the lowest-pressure stop while powered.
+Note: a servo is not a fail-safe by itself. It does not spring to safe — and
+on this rig it does not even stay put: measured 2026-08-06, released, it DRIFTS
+off the commanded angle, so losing power leaves the valve at an angle nobody
+chose and nobody has yet measured (COMMISSIONING 10.7 records it). That is why
+`close()` keeps driving the shut pulse instead of releasing. The mechanical
+relief valve is meant to cover the power-loss case — it is now IN HAND but
+**not fitted**, and it protects nothing until it is mounted and its crack
+pressure is set. Until then the panel valve is the only human shutoff and the
+regulator setting is the only bound. `to_safe()` actively drives to the
+lowest-pressure stop while powered.
 
 pigpio is imported lazily so this file imports fine on a laptop.
 """
