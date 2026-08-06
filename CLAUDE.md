@@ -25,17 +25,25 @@ Dueño: **Salvador Adrián Martínez García**. Repo privado
   del repo (con parches para Trixie: pigpio fuera, `swig` + `liblgpio-dev`
   añadidos). **Aún NO se ha medido presión, temperatura ni flujo, ni se ha
   energizado el lado de 12 V** — los chequeos en frío siguen pendientes.
-- **Servo bloqueado en Trixie — y hoy TUMBA LA APP ENTERA (no solo el servo):**
-  `pigpio`/`pigpiod` ya no existen en Raspberry Pi OS Trixie (Debian 13).
-  `ServoValve.__init__` lanza (`ImportError` sin `pigpio`, o `RuntimeError` sin el
-  demonio), y `build_hal` (`src/hal/__init__.py`) construye la válvula **antes** que
-  el `Ads1115Sensor` → `RigController.__init__` lanza → **la app no arranca**. Por
-  eso ojo: el `0x48` es de `i2cdetect` (línea de comandos), pero **la presión NO se
-  puede leer por la app** hasta que `build_hal` degrade (un `valve.type: none` no-op,
-  o capturar el fallo del actuador y seguir). Ese arreglo desbloquea lo que más vale
-  ahora: medir el `divider_ratio` real (gating para un k publicable) y la cadena de
-  temperatura. Port del servo: PWM del kernel (GPIO18 es HW-PWM), no el software-PWM
-  de lgpio, que tiembla lo suficiente para que un actuador de válvula lo muestre.
+- **Servo bloqueado en Trixie — RESUELTO para el bring-up (`76f3f97` + validación de
+  Control):** `pigpio`/`pigpiod` ya no existen en Trixie (Debian 13), y
+  `ServoValve.__init__` lanza al importarlos. Como `build_hal` (`src/hal/__init__.py`)
+  construye la válvula **antes** que el `Ads1115Sensor`, eso tumbaba
+  `RigController.__init__` y la app entera no arrancaba (el `0x48` es de `i2cdetect`,
+  no de la app). Solución: **`valve.type: "none"`** → driver `NoOpValve`
+  (`src/hal/noop_valve.py`), que deja arrancar la app para leer sensores sin servo.
+  `config.py` valida `("servo","pwm","none")` y **rechaza arrancar con `none` si hay
+  setpoints** — nadie corre un ensayo real sin actuador por accidente. Port del servo
+  pendiente: PWM del kernel (GPIO18 es HW-PWM), no el software-PWM de lgpio (tiembla).
+- **Principio (de ese arreglo, no lo violes):** un actuador ausente es **opt-in,
+  nunca fallback automático**. `build_hal` NO captura el fallo del servo para
+  sustituirlo solo. La versión peligrosa es la que degrada **en silencio**: un rig
+  que arranca callado sin control de presión, mientras el operador cree que el
+  software aún puede cerrar la válvula, es **peor** que uno que se niega a arrancar.
+  **Un actuador ausente tiene que ser una decisión, no un accidente.** No agrega
+  peligro porque `to_safe()` es no-op pero tampoco hay nada que pueda ABRIR la
+  válvula → no puede producir presión; la red de siempre sigue siendo la única:
+  la válvula del panel se cierra a mano.
 - **Acceso remoto:** el directo (SSH por cable / misma red) **no funciona** — UCSD
   aísla clientes en `UCSD-Conferences`. El canal de trabajo es la **consola de Pi
   Connect** (alguien pega comandos). El túnel de Cloudflare (para la UI web) sigue
