@@ -394,8 +394,18 @@ class Config:
             errs.append(f"mode must be sim or hardware, got {self.mode!r}")
         if self.sensor.type not in ("current_loop", "voltage_divider"):
             errs.append(f"sensor.type must be current_loop or voltage_divider")
-        if self.valve.type not in ("servo", "pwm"):
-            errs.append(f"valve.type must be servo or pwm, got {self.valve.type!r}")
+        if self.valve.type not in ("servo", "pwm", "none"):
+            errs.append(f"valve.type must be servo, pwm or none, got {self.valve.type!r}")
+        # "none" = no actuator, for sensor bring-up: the rig reads pressure and
+        # temperature while nothing can move the valve. Opt-in only — never a
+        # fallback for a failed actuator, because a rig that quietly starts
+        # without pressure control, while the operator believes the software can
+        # still shut the valve, is worse than one that refuses to start.
+        # Deliberately NOT rejected alongside configured setpoints: refusing to
+        # load would put the actuator back in the way of the sensor, which is the
+        # exact problem this type exists to remove. A run attempted without an
+        # actuator fails honestly at runtime — the plant-response watchdog says
+        # "plant unresponsive", which is precisely what is happening.
         if self.temperature.source not in ("manual", "probe"):
             errs.append(f"temperature.source must be manual or probe, got {self.temperature.source!r}")
         if self.sensor.range_max_kpa <= self.sensor.range_min_kpa:
