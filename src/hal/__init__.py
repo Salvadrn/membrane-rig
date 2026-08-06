@@ -21,7 +21,13 @@ def build_hal(cfg):
     from .ads1115_sensor import Ads1115Sensor
     from .gpio_diverter import GpioDiverter
 
-    if cfg.valve.type == "servo":
+    if cfg.valve.type == "none":
+        # Opt-in ONLY, never a fallback: see noop_valve.py. Lets sensor bring-up
+        # proceed on a board where the actuator cannot be built (e.g. no pigpiod
+        # on Trixie) without the actuator blocking the ADC and the probe.
+        from .noop_valve import NoOpValve
+        valve = NoOpValve(cfg)
+    elif cfg.valve.type == "servo":
         from .servo_valve import ServoValve
         valve = ServoValve(cfg)
     else:
