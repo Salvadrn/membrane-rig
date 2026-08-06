@@ -92,14 +92,26 @@ class ServoValve(ProportionalValve):
             # there before the process exits — a servo travels ~0.15 s/60°, and
             # releasing the instant we command it would leave it mid-travel.
             time.sleep(max(0.0, float(self.cfg.close_hold_s)))
-            # 0 pulse width releases the servo (stops sending pulses). It keeps
-            # its position by friction: a servo does NOT spring shut on power
-            # loss. The mechanical relief is meant to cover that, but it is in
-            # hand and NOT FITTED — so today the PANEL valve being closed by hand
-            # at the end is the whole failsafe, not a backup to one
-            # (the ball valve's handle is off — the panel is the only human shutoff)
-            # of a session.
-            self._pi.set_servo_pulsewidth(self.cfg.servo_pin, 0)
+            # KEEP DRIVING the shut position. This used to release the servo
+            # (pulse width 0) on the assumption that friction would hold the
+            # stem — the old comment said so outright. Adrián's bench disproved
+            # it on 2026-08-06: released, the servo drifts off the commanded
+            # angle, so "close and release" did NOT leave the valve shut.
+            #
+            # That matters because close() is what runs when a test ends or the
+            # process exits, and a valve that drifts open afterwards is the one
+            # failure this driver exists to prevent. Holding costs a powered
+            # servo; drifting costs an unattended open feed.
+            #
+            # Holding is only safe because the endpoints are now calibrated to
+            # the stem's real travel (servo_min_us/max_us), so shut is a
+            # position the servo can reach rather than a stop it grinds against.
+            # A servo held against a hard stop overheats — if this ever buzzes
+            # at rest, the endpoints are wrong, not this choice.
+            #
+            # Unchanged: the mechanical relief is in hand and NOT FITTED, so
+            # closing the PANEL valve by hand at the end of a session is still
+            # the whole failsafe, not a backup to one.
             self._pi.stop()
         except Exception:
             pass
