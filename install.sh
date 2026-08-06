@@ -9,7 +9,12 @@ cd "$(dirname "$0")"
 
 echo "==> System packages"
 sudo apt-get update
-sudo apt-get install -y git python3-venv python3-pip i2c-tools
+# swig + python3-dev + build-essential: lgpio arrives as a transitive dependency
+# of adafruit-blinka and ships no aarch64 wheel, so pip COMPILES it. Without
+# these three the whole pip stage dies at "command 'swig' failed", after apt has
+# already succeeded — which reads like a Python problem and is not one.
+sudo apt-get install -y git python3-venv python3-pip i2c-tools \
+                        swig python3-dev build-essential
 
 # pigpio: NOT available on Raspberry Pi OS Trixie (Debian 13) and later — the
 # package was dropped upstream (unmaintained, no Pi 5 support). It is only
