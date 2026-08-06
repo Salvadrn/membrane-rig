@@ -86,6 +86,44 @@ PWM por hardware, así que el camino de reemplazo probable es el PWM del kernel 
 no `lgpio` (cuyo PWM por software tiembla lo suficiente como para que un
 actuador de válvula lo muestre). Es trabajo de Control.
 
+## ✅ SEGUNDO HECHO MEDIDO — cadena de sensado completa (2026-08-06)
+
+**A0 = 0.3675 V, estable en ±0.0004 V, con el transductor sin presión.** La cadena
+entera quedó probada en hardware:
+
+    transductor → divisor 10k/22k → ADS1115 → I²C → driver → kPa
+
+La prueba de que es señal real y no un pin al aire: A0 quedó **clavado** en 0.3675
+mientras A1/A2/A3 —sin nada conectado— siguen derivando entre 0.7 y 1.7 V. Antes de
+cablearlo, A0 derivaba igual que ellos. Esa diferencia de comportamiento, no el
+valor, es lo que distingue medición de ruido.
+
+También quedó probado en hardware, en la misma corrida: **`build_hal` construye
+completo** con `valve.type: none` (el arreglo de `76f3f97`), y el bug de la API de
+Adafruit (`ADS.P0` → `Pin.A0`, commit `2e62105`) está cerrado.
+
+### ⚠ Discrepancia abierta: el cero no cuadra con el ratio nominal
+
+Con `divider_ratio: 0.6875`, ese 0.3675 V implica que el transductor entrega
+**0.5345 V** en reposo, no los 0.500 V de su especificación — **+6.9 %**.
+
+Descartado que sea el riel: para explicarlo, los 5 V tendrían que estar en
+**5.345 V**, fuera de especificación para una Pi.
+
+Quedan dos hipótesis, y se separan midiendo:
+
+| Hipótesis | Cómo se confirma |
+|---|---|
+| **El ratio real no es 0.6875** | medir R1 y R2 con óhmetro. Un ratio de 0.735 corresponde a R2≈27 kΩ, no 22 kΩ — posible banda de color mal leída |
+| **El transductor tiene offset propio** | medir su salida directo con el multímetro contra el riel |
+
+**Esto NO es cosmético.** Con 0.6875 configurado y 0.735 real, el rig reportaría
+**+0.89 kPa a presión cero** y sesgaría toda la pendiente de Darcy — con R²
+intacto. Es exactamente el error que `config.yaml` documenta y que no se ve en
+ninguna gráfica.
+
+**Hasta cerrar esto, ningún `k` de este rig es publicable.**
+
 ## Se puede hacer HOY — sin que falte nada
 
 La cadena de sensado de baja tensión **no depende del riel de 12 V**, así que no la
