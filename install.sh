@@ -9,14 +9,34 @@ cd "$(dirname "$0")"
 
 echo "==> System packages"
 sudo apt-get update
-sudo apt-get install -y git python3-venv python3-pip pigpio i2c-tools
+sudo apt-get install -y git python3-venv python3-pip i2c-tools
+
+# pigpio: NOT available on Raspberry Pi OS Trixie (Debian 13) and later — the
+# package was dropped upstream (unmaintained, no Pi 5 support). It is only
+# needed by ServoValve/PwmValve, which are Stage 6+; the whole sensing chain
+# (ADS1115, DS18B20) works without it. So this is a WARNING, not a failure:
+# a missing servo driver must not block commissioning the sensors.
+if sudo apt-get install -y pigpio 2>/dev/null; then
+  PIGPIO_OK=1
+else
+  PIGPIO_OK=0
+  echo ""
+  echo "  !! pigpio NO disponible en este OS (normal en Trixie/Debian 13)."
+  echo "     El SENSADO funciona igual. Lo que queda bloqueado es el SERVO."
+  echo "     Ver docs/ASSEMBLY.md -> 'pigpio y el servo en Trixie'."
+  echo ""
+fi
 
 echo "==> Enabling I2C (ADS1115) and 1-Wire (DS18B20)"
 sudo raspi-config nonint do_i2c 0
 sudo raspi-config nonint do_onewire 0
 
-echo "==> pigpio daemon (hardware-timed servo pulses)"
-sudo systemctl enable --now pigpiod
+if [ "${PIGPIO_OK:-0}" = "1" ]; then
+  echo "==> pigpio daemon (hardware-timed servo pulses)"
+  sudo systemctl enable --now pigpiod
+else
+  echo "==> pigpiod omitido (pigpio no instalado) — el servo no funcionará todavía"
+fi
 
 echo "==> Python environment"
 python3 -m venv .venv
