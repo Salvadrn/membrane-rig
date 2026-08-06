@@ -72,8 +72,8 @@ you start a run. If you are not physically at the rig, you cannot do this — se
 
 | What you see | What it means | What to do |
 |---|---|---|
-| **Sensor fault** | The pressure reading is missing or implausible. The rig has already vented and aborted. | Safe. Check the transducer's wiring before restarting. A disconnected sensor reads −12.93 kPa, which is what triggers this. |
-| **Overpressure** | Pressure exceeded the ceiling for this run. Already vented and aborted. | Safe. Do not raise any limit to make it go away — find out why it overshot. |
+| **Sensor fault** | The pressure reading is missing or implausible. The rig has already shut the feed and aborted. | Safe. Check the transducer's wiring before restarting. A disconnected sensor reads −12.93 kPa, which is what triggers this. |
+| **Overpressure** | Pressure exceeded the ceiling for this run. Already shut the feed and aborted. | Safe. Do not raise any limit to make it go away — find out why it overshot. |
 | **Frozen signal** | The sensor is returning bit-identical values: it is stuck, not steady. Aborted. | Safe. The probe or the I²C bus is dead. Do **not** disable this check; if it fires spuriously, raise `safety.frozen_raw_reads`. |
 | **Plant watchdog** | The valve is commanded open but pressure never moved. Either the valve is stuck or the supply is shut. Aborted. | Safe. Check the supply and the servo coupling. |
 | **⚠ Valve may not have closed** | **This is the one that needs a human.** The run ended, the software commanded the valve shut, and pressure did not fall. The feed may still be open with the cell pressurised. | **Go and close the panel valve by hand.** The software has already done everything it can. |

@@ -134,6 +134,13 @@ Para pasar trabajo entre sesiones, usa la herramienta de mensajes entre sesiones
   actúa sin software y sin energía**, y cerrar el suministro a mano al terminar
   sigue siendo obligatorio. La tarada del regulador de aire sigue sin
   documentarse y sigue gateando cinco decisiones.
+  - **Vocabulario — "ventear" está reservado.** Solo el **alivio mecánico** ventea
+    (libera presión por un camino de escape). El software **cierra la alimentación**;
+    la presión baja por **permeación** a través de la membrana (~20 s), o —con una
+    malla tapada o muy fina— **no baja**. No escribas que el software o un aborto
+    "ventea/vents": describe lo que pasa (cierra el aire; el vaso decae por
+    permeación, o no). Decidido con Paper el 2026-08-06 tras encontrarlo en 5+
+    lugares que prometían un mecanismo y una velocidad inexistentes.
 - **Verificar antes de decir "listo".** Corre el sim, corre el test, mira la
   salida. Nada de "debería funcionar".
 - **Al cambiar una constante, un COMPORTAMIENTO o una DECISIÓN, barre lo
