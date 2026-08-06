@@ -17,14 +17,23 @@ Dueño: **Salvador Adrián Martínez García**. Repo privado
 
 - El software corre **completo en simulación** (`mode: sim`) y está verificado de
   punta a punta: playlist, análisis, gráfica, Excel.
-- **Empezó la puesta en marcha en hardware (2026-08-06).** Primer hecho **MEDIDO**
-  en el banco: `i2cdetect -y 1` devuelve **`0x48`** (commit `57c8ec4`) — el ADS1115
-  responde, el I²C está bien cableado (SDA pin 3, SCL pin 5), el ADDR quedó
-  aterrizado (por eso `0x48` y no `0x49`, que es lo que el driver asume) y la
-  protoboard A no tiene cortos. `install.sh` corrió por primera vez en la historia
-  del repo (con parches para Trixie: pigpio fuera, `swig` + `liblgpio-dev`
-  añadidos). **Aún NO se ha medido presión, temperatura ni flujo, ni se ha
-  energizado el lado de 12 V** — los chequeos en frío siguen pendientes.
+- **Puesta en marcha en hardware avanzando (2026-08-06). El rig MIDIÓ PRESIÓN** por
+  el camino de software completo (`Config → build_hal → Ads1115Sensor` reales, no un
+  script auxiliar): commit `57c8ec4` (`i2cdetect` → `0x48`) y **`b37d2a2`** (presión).
+  Tres ciclos a soplido: picos **10.83 / 11.05 / 10.17 kPa**, regresos a
+  **−0.04 / −0.04 / −0.05** — el regreso repetible al mismo cero es lo que lo vuelve
+  **medición**, no lectura (sin deriva ni histéresis visible; CSV+PNG en `runs/`).
+- **Calibración de ESTE banco, medida y no asumida (`config.yaml`):** `divider_ratio`
+  **= 0.7346** (verde 0.500 V con multímetro → A0 0.3673 V), cero **0.01 kPa**, ruido
+  de fondo **±0.04 kPa** p-p, ~1 parte en 1000 contra 35 kPa. Ese 0.7346 contra el
+  nominal 0.6875 es **6.8 %** — con el nominal el rig reportaba **+7 kPa a presión
+  cero**. La procedencia está en el comentario de `config.yaml`: **no lo "corrijas" de
+  vuelta a 0.6875** viendo resistencias marcadas 10k/22k; el medido manda.
+- **Lo que SIGUE sin existir (no lo contradigas):** **no hay ningún `k` medido.** La
+  presión está **medida, no controlada** — sin servo (pigpiod fuera de Trixie), sin
+  diverter (falta montar el 1N5819), y el riel de 12 V **sin energizar** (chequeos en
+  frío del Stage 0.0 pendientes). **No existe ni un par (ΔP, Q).** Todo resultado
+  **publicado** (paper, charla) sigue siendo de simulación.
 - **Servo bloqueado en Trixie — RESUELTO para el bring-up (`76f3f97` + validación de
   Control):** `pigpio`/`pigpiod` ya no existen en Trixie (Debian 13), y
   `ServoValve.__init__` lanza al importarlos. Como `build_hal` (`src/hal/__init__.py`)

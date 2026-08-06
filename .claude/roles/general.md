@@ -78,10 +78,10 @@ requirements.txt          run.py                  .gitignore
   poco fiable en el campus. Red actual: `UCSD-Conferences`.
 
 **Bloquea por piezas — Hardware:**
-- [ ] Medir el **`divider_ratio` real** sobre el divisor ya soldado y pasárselo a
-  Paper. Sin esto, `k` queda sesgado en silencio (ver `hardware.md`: 0.667 sobre
-  un divisor de 0.6875 sesga k −2.98 % con R² intacto en 1.000000). **Es gating
-  para publicar un k.**
+- [x] **Medido el `divider_ratio` real: `0.7346`** (2026-08-06, commit `b37d2a2`;
+  6.8 % arriba del nominal 0.6875 — con el nominal el rig reportaba +7 kPa a cero).
+  En `config.yaml` con procedencia. Destraba el sesgo silencioso de `k`; sigue
+  siendo **gating para publicar un k**, y aún NO hay ningún `k` medido.
 - [ ] Medir el **par de arranque del vástago** antes de diseñar el acoplamiento.
 - [ ] Calibrar `servo_close_us` (hoy `0` = sin calibrar), con el servo
   **desacoplado** del vástago.
