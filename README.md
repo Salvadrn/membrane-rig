@@ -164,9 +164,10 @@ down through the membrane; if it hasn't dropped by `safety.close_check_min`
 within `safety.close_check_s`, the UI raises *"valve may not have closed"*
 instead of leaving a pressurised specimen sitting there unnoticed.
 
-> **Still close the panel valve by hand when you're done for the day.** A servo
-> holds position but does not seal on power loss, so once the Pi is off nothing
-> is actively holding the feed shut. Reach for the **panel** valve: the control
+> **Still close the panel valve by hand when you're done for the day.** Measured
+> on the bench 2026-08-06: released, the servo does **not** hold the commanded
+> angle — it drifts off it. So once the Pi is off the air valve neither seals nor
+> stays put, and nobody has measured which way it goes or how far. Reach for the **panel** valve: the control
 > valve has its handle removed so the servo can turn the stem, so it is not the
 > one a human can shut. The UI reminds you when a playlist finishes.
 
@@ -238,8 +239,9 @@ servo horn ──[coupler/bracket]── valve stem
 ```
 pigpio sends clean servo pulses; `servo_min_us`/`servo_max_us` calibrate the
 endpoints. command 0% → lowest pressure (inline throttle: valve CLOSED), 100% →
-highest (open). **A servo holds position on power loss** (no spring-return), and the
-mechanical relief valve that would cover that case is **on order, not fitted** — so if the Pi
+highest (open). **A servo neither seals nor holds position on power loss** — measured on the
+bench: released, it drifts off the commanded angle, and how far is
+uncharacterised. The mechanical relief valve that would cover that case is **on order, not fitted** — so if the Pi
 dies with the valve open, nothing closes it. Close the panel valve by hand. Mechanical note: a hobby servo
 only turns ~180°, so pair it with a **quarter-turn (90°) metering/ball valve** so
 the servo's travel spans the valve's full range (a multi-turn needle valve gives
