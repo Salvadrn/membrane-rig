@@ -63,7 +63,7 @@ exactly why it is written down here. The control, hardware and interface session
 jointly recommended exempting `POST /stop`: stopping only ever moves the rig
 towards safe, Control verified by attack that no phase exists from which stopping
 leaves it worse, and Hardware pointed out that with no relief valve fitted, a
-servo that holds position instead of sealing when it loses power, and the ball
+servo that neither seals nor holds its angle when it loses power, and the ball
 valve's handle removed so the servo can turn the stem, **`/stop` is one of only
 two things that can stop pressurisation — the other being a person at the panel**.
 
@@ -164,9 +164,11 @@ and the parts below exist specifically for it.
   are making: if the software cannot act and you are not at the bench, nothing
   else will.
 - **The panel valve still has to be closed by hand**, and remotely *nobody can
-  do that*. The servo only holds position; it does not seal when it loses power.
-  So a remote session is never fully "put away" until someone walks to the bench.
-  Plan the end of a remote run around that.
+  do that*. The servo neither seals nor stays put when it loses power — measured
+  on the bench on 2026-08-06, released it drifts off the commanded angle — so the
+  feed can be left part open at a position nobody chose. A remote session is
+  never fully "put away" until someone walks to the bench. Plan the end of a
+  remote run around that.
 - **A page that loses contact says so.** If two polls in a row fail, the readings
   dim, the phase reads *no link*, and Stop is disabled — because a control that
   cannot reach the rig must not look like one that can. The numbers on screen are

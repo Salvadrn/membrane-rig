@@ -153,8 +153,10 @@ class LoginRequest(BaseModel):
 # The control, hardware and interface sessions jointly recommended exempting
 # POST /stop. Stopping only ever moves the rig towards safe; Control verified by
 # attack that there is no phase from which stopping leaves it worse; and
-# Hardware pointed out that with no relief valve fitted, a servo that does not
-# seal on power loss, and the ball valve's handle removed, /stop is one of only
+# Hardware pointed out that with no relief valve fitted, a servo that neither
+# seals NOR holds its angle when it loses power (measured on the bench
+# 2026-08-06 — released, it drifts off the commanded angle), and the ball
+# valve's handle removed, /stop is one of only
 # two things that can stop pressurisation — the other being a person at the
 # panel. The recommendation was unanimous and the exemption was verified
 # harmless.
@@ -1571,7 +1573,8 @@ function renderGate(d){
   } else {
     body+=`${body?"<br>":""}<b style="color:var(--ink)">Playlist finished</b> — nothing pending. `+
           `The rig has shut its feed valve; <b style="color:var(--ink)">close the panel valve by `+
-          `hand</b> before you leave, since the servo only holds position and does not seal on power loss.`;
+          `hand</b> before you leave — the servo neither seals nor stays put when it loses `+
+          `power: it drifts to an angle nobody has measured, so the feed can be left part open.`;
   }
   $("gateTitle").textContent=title||"Ready";
   $("gateBody").innerHTML=body;
