@@ -52,9 +52,13 @@ stops pressurisation regardless of software, power, or network.
 It matters more here than on most rigs, for two reasons you should know before
 you need them:
 
-- **The control valve does not spring shut.** It is a ball valve turned by a
-  servo, and a servo *holds its position* when it loses power. Killing power to
-  the rig does not close it. If it was open, air keeps flowing.
+- **The control valve does not spring shut — and it does not hold position
+  either.** It is a ball valve turned by a servo. Measured on the bench
+  (2026-08-06): on power loss the servo *drifts off the commanded angle*, to a
+  position nobody chose — it neither seals nor stays put. Killing power to the rig
+  does **not** make it safe: the feed can be left open, or part open, at an angle
+  you did not set. Which way it drifts and how far is **not yet measured**
+  (COMMISSIONING 10.7), so assume the worst and close the panel valve by hand.
 - **The mechanical relief valve is on order but NOT FITTED.** Until it is
   mounted and set, no layer of protection acts without the controller being
   alive. A line on a purchase order is not a protective layer.
