@@ -30,7 +30,18 @@ class Ads1115Sensor(PressureSensor):
         i2c = busio.I2C(board.SCL, board.SDA)
         ads = ADS.ADS1115(i2c)
         ads.gain = self.cfg.ads_gain
-        channel = {0: ADS.P0, 1: ADS.P1, 2: ADS.P2, 3: ADS.P3}[self.cfg.ads_channel]
+
+        # Single-ended input pin. adafruit-circuitpython-ads1x15 3.x moved these
+        # constants out of the ads1115 module and renamed them: what used to be
+        # ADS.P0..P3 is now Pin.A0..A3 in adafruit_ads1x15.ads1x15. The old form
+        # raised AttributeError on the real board — found on hardware, since no
+        # test exercises this path off a Pi. Both spellings are tried so the
+        # driver works on either library generation.
+        try:
+            from adafruit_ads1x15.ads1x15 import Pin  # type: ignore
+            channel = {0: Pin.A0, 1: Pin.A1, 2: Pin.A2, 3: Pin.A3}[self.cfg.ads_channel]
+        except (ImportError, AttributeError):
+            channel = {0: ADS.P0, 1: ADS.P1, 2: ADS.P2, 3: ADS.P3}[self.cfg.ads_channel]
         self._chan = AnalogIn(ads, channel)
 
     def _signal_to_pressure(self) -> tuple[float, float]:
