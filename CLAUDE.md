@@ -25,11 +25,17 @@ Dueño: **Salvador Adrián Martínez García**. Repo privado
   del repo (con parches para Trixie: pigpio fuera, `swig` + `liblgpio-dev`
   añadidos). **Aún NO se ha medido presión, temperatura ni flujo, ni se ha
   energizado el lado de 12 V** — los chequeos en frío siguen pendientes.
-- **Servo bloqueado en Trixie:** `pigpiod` ya no existe en Raspberry Pi OS Trixie
-  (Debian 13), así que el servo (GPIO18) no actúa todavía; **el sensado completo
-  funciona sin él**. Camino probable de port: PWM del kernel (GPIO18 es PWM por
-  hardware), no el PWM por software de lgpio, que tiembla lo suficiente para que un
-  actuador de válvula lo muestre.
+- **Servo bloqueado en Trixie — y hoy TUMBA LA APP ENTERA (no solo el servo):**
+  `pigpio`/`pigpiod` ya no existen en Raspberry Pi OS Trixie (Debian 13).
+  `ServoValve.__init__` lanza (`ImportError` sin `pigpio`, o `RuntimeError` sin el
+  demonio), y `build_hal` (`src/hal/__init__.py`) construye la válvula **antes** que
+  el `Ads1115Sensor` → `RigController.__init__` lanza → **la app no arranca**. Por
+  eso ojo: el `0x48` es de `i2cdetect` (línea de comandos), pero **la presión NO se
+  puede leer por la app** hasta que `build_hal` degrade (un `valve.type: none` no-op,
+  o capturar el fallo del actuador y seguir). Ese arreglo desbloquea lo que más vale
+  ahora: medir el `divider_ratio` real (gating para un k publicable) y la cadena de
+  temperatura. Port del servo: PWM del kernel (GPIO18 es HW-PWM), no el software-PWM
+  de lgpio, que tiembla lo suficiente para que un actuador de válvula lo muestre.
 - **Acceso remoto:** el directo (SSH por cable / misma red) **no funciona** — UCSD
   aísla clientes en `UCSD-Conferences`. El canal de trabajo es la **consola de Pi
   Connect** (alguien pega comandos). El túnel de Cloudflare (para la UI web) sigue
