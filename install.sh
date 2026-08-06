@@ -27,13 +27,25 @@ sudo apt-get install -y git python3-venv python3-pip i2c-tools \
 # a missing servo driver must not block commissioning the sensors.
 if sudo apt-get install -y pigpio 2>/dev/null; then
   PIGPIO_OK=1
+elif command -v pigpiod >/dev/null 2>&1; then
+  PIGPIO_OK=1   # ya compilado desde fuente en una corrida anterior
 else
-  PIGPIO_OK=0
-  echo ""
-  echo "  !! pigpio NO disponible en este OS (normal en Trixie/Debian 13)."
-  echo "     El SENSADO funciona igual. Lo que queda bloqueado es el SERVO."
-  echo "     Ver docs/ASSEMBLY.md -> 'pigpio y el servo en Trixie'."
-  echo ""
+  # Trixie dropped the package, but pigpio still BUILDS and runs on a Pi 4
+  # (BCM2711) — it is only the Pi 5's RP1 it cannot drive, and this rig is
+  # pinned to a Pi 4 anyway. Verified on Adrián's board 2026-08-06:
+  # pigpio.pi().connected == True, hardware rev 0xc03115.
+  #
+  # Built single-threaded ON PURPOSE. 'make -j4' saturates all four cores and
+  # starves the Raspberry Pi Connect agent, which drops the remote shell
+  # mid-build and takes the session with it. -j1 with nice is slower and
+  # survives.
+  echo "==> pigpio no esta en apt (normal en Trixie) — compilando desde fuente"
+  ( cd /tmp && rm -rf pigpio \
+    && git clone -q --depth 1 https://github.com/joan2937/pigpio.git \
+    && cd pigpio && nice -n 15 make -j1 && sudo make install ) \
+    && PIGPIO_OK=1 || PIGPIO_OK=0
+  [ "$PIGPIO_OK" = "1" ] && echo "  pigpio compilado e instalado en /usr/local/bin/pigpiod" \
+                        || echo "  !! fallo la compilacion — el SERVO queda bloqueado, el sensado NO"
 fi
 
 echo "==> Enabling I2C (ADS1115) and 1-Wire (DS18B20)"
