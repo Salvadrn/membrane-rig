@@ -157,8 +157,9 @@ and the parts below exist specifically for it.
   valve and routes permeate to waste. The cell then bleeds down through the
   membrane.
 - **Nothing on this rig protects it without the software.** The mechanical relief
-  valve is on order and **not fitted**, and the servo holds its position rather
-  than sealing when it loses power. So every layer that can stop a pressure
+  valve is on order and **not fitted**, and the servo neither seals nor holds its
+  angle when it loses power (measured 2026-08-06 — released, it drifts off the
+  commanded angle). So every layer that can stop a pressure
   excursion — the run ceiling, the global cutoff, the sensor checks — needs the
   controller powered and running. Operating remotely, that is the assumption you
   are making: if the software cannot act and you are not at the bench, nothing
