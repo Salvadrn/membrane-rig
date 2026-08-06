@@ -260,8 +260,10 @@ resistance — the Miller plateau (~2.5 V) leaves only ~0.8 V of overdrive, so t
 switching edge is several µs (≈7 µs at 470 Ω, ≈15 µs at 1 kΩ), larger than the
 1 µs duty step. Fine control needs a **gate driver**, not a particular resistor
 value; the 470 Ω is only pin-current protection. A **12 V normally-open** bleed
-solenoid fails safe (power loss → open → vent). Set `valve.invert: true` if your
-valve/linkage behaves the opposite way (applies to both types).
+solenoid fails safe (power loss → open → vent). `valve.invert` is **already `true`** for this rig — measured
+2026-08-06, because with the direct sense the 0% command (the state the rig
+falls back to on every abort, at start-up and on sensor fault) landed OPEN.
+Flip it only if your own linkage turns the other way.
 
 **Diverter (3-way solenoid):** same MOSFET+flyback (or a relay module) on
 `GPIO23`. **De-energised = waste** (fail-safe); energised = measured container.
@@ -534,7 +536,10 @@ e.g. `test.setpoints: [15, 15, 20, 20, 30, 30]`.
   4–20 mA loop) trigger vent+abort after `fault_grace_reads` consecutive bad
   reads — a single glitch won't abort a run, but a real fault will.
 - Ctrl+C, unhandled exceptions and process shutdown all drive the valves to the
-  safe state (valve vented, diverter to waste).
+  safe state (air valve closed, diverter to waste) — but that path needs the
+  process to still be running. **A power cut has no such path**: the diverter
+  de-energises to waste by itself, the servo does not, and it drifts off the
+  angle it was holding.
 - **There is no hardware-only protection on this rig.** The mechanical relief
   valve is on order but **not yet fitted**, so until it is mounted and set
   **every** limit above — run
