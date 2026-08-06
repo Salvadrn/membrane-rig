@@ -44,7 +44,13 @@ sensor:
   # and biases k by -2.98% — with R2 UNCHANGED at 1.000000 and follows_darcy
   # still true. Nothing in the plot reveals it. Safe for the mesh (it
   # over-reports, so it aborts early), silently wrong for the result.
-  divider_ratio: 0.6875
+  # MEDIDO EN EL BANCO 2026-08-06, no nominal. Con el transductor en reposo
+  # (0.500 V confirmado con multimetro en el cable verde) A0 leyo 0.3673 V,
+  # asi que el ratio real es 0.3673/0.500 = 0.7346 — un 6.8 % arriba del
+  # nominal 0.6875 que dan R1=10k y R2=22k ideales. Con el nominal el rig
+  # reportaba +7 kPa a presion cero; con el medido reporta 0.01 kPa.
+  # Ruido de fondo verificado: ±0.04 kPa.
+  divider_ratio: 0.7346
   v_signal_min: 0.5    # V at range_min
   v_signal_max: 4.5    # V at range_max
 
