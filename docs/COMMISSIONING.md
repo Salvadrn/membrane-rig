@@ -689,11 +689,15 @@ housekeeping. Each check forces a real fault and demands the documented response
       with `pressure … exceeded run ceiling 30.0 kPa`.** Nothing delicate is exposed,
       because there is no membrane in the rig.
 - [ ] **10.7 Power-cut behaviour, at pressure.** Pull the 12 V with the cell
-      pressurised. **Expected: the diverter drops to waste (de-energised = waste), and
-      the servo holds position — it does NOT seal.** That is the designed behaviour,
-      not a bug, and it is precisely why the supply gets closed by hand at the end of
-      every session. With no mechanical relief, **nothing automatic vents the cell
-      after a power cut.**
+      pressurised. **Expected: the diverter drops to waste (de-energised = waste).
+      The servo does NOT seal — and it does not hold, either:** released, it drifts
+      off the commanded angle (measured 2026-08-06 on the bench, air off). That is
+      the designed behaviour of a servo, not a bug, and it is precisely why the
+      supply gets closed by hand at the end of every session. With no mechanical
+      relief, **nothing automatic vents the cell after a power cut.**
+      **RECORD the angle it drifts to, and which way.** That number is what the rig
+      is actually left at after a power cut, it is currently unknown, and it decides
+      whether a cut leaves the feed shut or cracked open: ____ deg, toward ____.
 - [ ] **10.8 Ctrl+C / process kill** with a run active → valves to safe state, coil
       de-energised.
 

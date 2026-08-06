@@ -506,10 +506,13 @@ Before soldering:
   modelled, a healthy sensor can repeat a value and trip a spurious fault. If
   that happens, **raise N** — the script tells you to what — rather than
   removing the check.
-- Servo power loss: the valve **holds position**, it does not spring shut. With
-  no relief valve, nothing covers this case automatically — the bound is the
-  regulator setting, and the remedy is shutting the panel valve by hand. This is
-  also what `close_warning` is telling you when it fires.
+- Servo power loss: the valve does not spring shut — **and it does not hold
+  either.** Measured 2026-08-06: released, this servo drifts off the commanded
+  angle rather than staying put, so a power cut leaves the valve wherever the
+  stem settles. Which way and how far is still unmeasured (COMMISSIONING 10.7
+  records it). With no relief valve, nothing covers this case automatically —
+  the bound is the regulator setting, and the remedy is shutting the panel valve
+  by hand. This is also what `close_warning` is telling you when it fires.
 - V1738 dry-fit, rail de-energised: meter continuity from header pole 1 to the
   fused +12 V and pole 2 to the MOSFET drain, and confirm pole 3 reaches nothing.
   Then plug it in backwards on purpose once and confirm the coil stays silent.

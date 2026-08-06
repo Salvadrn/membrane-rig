@@ -74,19 +74,26 @@ sensor:
 # type: pwm    -> a MOSFET-driven proportional solenoid (see src/hal/pwm_valve.py)
 valve:
   type: servo
-  invert: false        # set true if the servo turns the valve the other way
+  invert: true         # measured 2026-08-06: with false, 0% (the abort state) landed OPEN
   min_command: 0.0
   max_command: 100.0
 
   # --- servo on the air-inlet ball valve (type: servo) ---
-  # Calibrate the endpoints to the ball valve's useful sub-range (NOT hard stops -
-  # over-driving stalls/cooks the servo). Servo needs its OWN 5-6V supply (UBEC),
-  # not the Pi rail; it holds position on power loss. The mechanical relief is
-  # meant to cover that case but is IN HAND, NOT FITTED — until it is mounted and
-  # set, the panel valve closed by hand is the only remedy.
+  # Endpoints below are MEASURED on the rig (2026-08-06), not nominal: they are
+  # the ends of the ball valve's useful sub-range, NOT hard stops — over-driving
+  # stalls and cooks the servo. In the frame marked on the valve, 0% is 180 deg
+  # (shut) and 100% is 93 deg (open); the servo's own zero reads as 90 there.
+  # Servo needs its OWN 5-6V supply (UBEC), not the Pi rail.
+  #
+  # It does NOT seal without power — and it does not hold either. Measured
+  # 2026-08-06: released, this servo DRIFTS off the commanded angle instead of
+  # staying put, so a power cut leaves the valve at an angle nobody has
+  # characterised yet (COMMISSIONING 10.7 now records it). The mechanical relief
+  # is meant to cover that case but is IN HAND, NOT FITTED — until it is mounted
+  # and set, the panel valve closed by hand is the only remedy.
   servo_pin: 18        # BCM hardware-PWM pin: 12, 13, 18 or 19
-  servo_min_us: 700    # pulse (us) at 0%   -> LOWEST pressure (inline: closed / bleed: open)
-  servo_max_us: 2300   # pulse (us) at 100% -> HIGHEST pressure (inline: open / bleed: closed)
+  servo_min_us: 520    # pulse (us) at 0%   -> LOWEST pressure (inline: closed / bleed: open)
+  servo_max_us: 1167   # pulse (us) at 100% -> HIGHEST pressure (inline: open / bleed: closed)
   # SEATS the valve when a test ends. 0% above is the bottom of the CONTROL
   # range — where regulation stops, not necessarily where the valve seals; with
   # backlash in the printed coupling it can sit slightly cracked. Calibrate:
