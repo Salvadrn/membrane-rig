@@ -57,10 +57,14 @@ sudo raspi-config nonint do_onewire 0
 # before any rig software runs, and keeps thrashing until some program claims
 # the pin. Two causes, fixed together because they are both one line:
 #
-#   gpio=18=op,dl   Until pigpio claims it, GPIO18 is an INPUT. The servo's
-#                   signal wire then floats next to a 12 V rail and a switching
-#                   MOSFET, reads the noise as pulse commands, and hunts.
-#                   Driven low from boot = no valid pulses = the servo sits still.
+#   dtoverlay=pwm   Routes GPIO18 to PWM0 and lets the KERNEL own the pin from
+#                   boot, so it never floats. This replaced an earlier
+#                   `gpio=18=op,dl`, which also stopped the float but forced the
+#                   pin to a plain output and BEAT THE PWM OVERLAY — the pulse
+#                   was generated perfectly and never reached the wire. Two of my
+#                   own fixes fighting each other cost an evening, and the
+#                   symptom was indistinguishable from a dead servo. Do not add a
+#                   `gpio=18=` line back: the overlay is the guard now.
 #   audio=off       The onboard audio driver (snd_bcm2835) claims the PWM block
 #                   that pigpio uses to time its pulses. This rig has no audio;
 #                   the servo is the entire purpose of that pin.
@@ -74,13 +78,16 @@ if [ -f "$CFG" ]; then
   echo "==> Servo pin boot config ($CFG)"
   sudo cp -n "$CFG" "$CFG.bak-preinstall" || true
   sudo sed -i 's/^dtparam=audio=on/dtparam=audio=off/' "$CFG"
-  if ! grep -q '^gpio=18=' "$CFG"; then
+  # Any leftover gpio=18= line must GO: it wins over the overlay and silently
+  # steals the pin back from the PWM block.
+  sudo sed -i '/^gpio=18=/d' "$CFG"
+  if ! grep -q '^dtoverlay=pwm,pin=18' "$CFG"; then
     # Appended under [all] explicitly: a bare append can land inside a
     # conditional section ([pi5], [cm4]) and then silently does nothing.
-    printf '\n[all]\n# servo signal: driven low from boot so it cannot float (see install.sh)\ngpio=18=op,dl\n' \
+    printf '\n[all]\n# servo signal on GPIO18 driven by the KERNEL PWM (see src/hal/servo_kpwm_valve.py)\ndtoverlay=pwm,pin=18,func=2\n' \
       | sudo tee -a "$CFG" >/dev/null
   fi
-  grep -nE '^(dtparam=audio|gpio=18)' "$CFG" | sed 's/^/    /'
+  grep -nE '^(dtparam=audio|dtoverlay=pwm|gpio=18)' "$CFG" | sed 's/^/    /'
 else
   echo "!! no encontré config.txt — aplica a mano: dtparam=audio=off y gpio=18=op,dl"
 fi
