@@ -73,7 +73,12 @@ sensor:
 # type: servo  -> a servo turning the existing ball valve
 # type: pwm    -> a MOSFET-driven proportional solenoid (see src/hal/pwm_valve.py)
 valve:
-  type: servo
+  # servo_kpwm = el mismo servo, pero los pulsos los genera el PWM del kernel.
+  # pigpio queda como 'servo' por si alguna vez sirve, pero en esta Pi (Trixie)
+  # el servo se comporta mal con cada pulso que pigpio genera — medido
+  # desacoplado y sin carga, con los dos periféricos de reloj.
+  # Requiere en config.txt: dtoverlay=pwm,pin=18,func=2  y NINGUNA linea gpio=18=
+  type: servo_kpwm
   invert: true         # 2026-08-06, Adrián at the handle: SHUT is the 180 deg end of travel.
                        # 0% (startup/abort/sensor-fault) = 1130 us = 175 deg = SHUT, held 5 deg
                        # short of the stop so the servo is not pushing on it forever.

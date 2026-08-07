@@ -27,6 +27,11 @@ def build_hal(cfg):
         # on Trixie) without the actuator blocking the ADC and the probe.
         from .noop_valve import NoOpValve
         valve = NoOpValve(cfg)
+    elif cfg.valve.type == "servo_kpwm":
+        # Kernel hardware PWM on GPIO18. Needs `dtoverlay=pwm,pin=18,func=2` in
+        # config.txt, no `gpio=18=` line, and write access to /sys/class/pwm.
+        from .servo_kpwm_valve import ServoKernelPwmValve
+        valve = ServoKernelPwmValve(cfg)
     elif cfg.valve.type == "servo":
         from .servo_valve import ServoValve
         valve = ServoValve(cfg)
