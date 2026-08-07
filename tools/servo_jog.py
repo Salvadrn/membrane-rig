@@ -41,6 +41,7 @@ from src.config import Config  # noqa: E402
 
 US_PER_DEG = 2000.0 / 270.0      # DS3218: 270 deg spans 500-2500 us
 US_AT_ZERO = 500.0
+HIS_OFFSET = 90.0                # the servo's 0 deg reads as 90 on the valve dial
 
 
 def us_for(deg: float) -> int:
@@ -53,19 +54,28 @@ def deg_for(us: float) -> float:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("angle", type=float, help="angulo absoluto en grados (0-270)")
+    ap.add_argument("angle", type=float, help="angulo absoluto en grados")
+    ap.add_argument("--dial", action="store_true",
+                    help="el angulo va en TU marco (el que lees en la manija), no en el del servo")
     ap.add_argument("--hold", type=float, default=6.0, help="segundos a sostener")
     ap.add_argument("--config", default=str(ROOT / "config.yaml"))
     ap.add_argument("--beyond", action="store_true",
                     help="permitir salir del recorrido calibrado (solo para recalibrar)")
     args = ap.parse_args()
 
-    if not 0.0 <= args.angle <= 270.0:
-        print(f"angulo fuera del rango del servo (0-270): {args.angle}")
+    # --dial lets the operator type the number painted on the valve instead of
+    # the servo's own. Mixing the two frames has caused three wrong calibrations
+    # on this rig, every one of them because a human did the +90 in their head
+    # and one of us used the other frame. The tool does the arithmetic now.
+    deg = args.angle - HIS_OFFSET if args.dial else args.angle
+    if not 0.0 <= deg <= 270.0:
+        lo_d, hi_d = (HIS_OFFSET, 270.0 + HIS_OFFSET) if args.dial else (0.0, 270.0)
+        print(f"angulo fuera del rango del servo: {args.angle} "
+              f"(permitido {lo_d:.0f}-{hi_d:.0f} en este marco)")
         return 2
 
     cfg = Config.load(args.config)
-    us = us_for(args.angle)
+    us = us_for(deg)
 
     # Refuse to leave the calibrated travel unless the operator says so out loud.
     # This tool is how the endpoints were FOUND, so it cannot simply clamp — but
@@ -75,7 +85,7 @@ def main() -> int:
     lo, hi = sorted((int(cfg.valve.servo_min_us), int(cfg.valve.servo_max_us)))
     if not lo <= us <= hi and not args.beyond:
         print(f"  {args.angle:.0f} grados = {us} us — FUERA del recorrido calibrado "
-              f"({lo}-{hi} us = {deg_for(lo):.0f}-{deg_for(hi):.0f} grados).")
+              f"({lo}-{hi} us = tus {deg_for(lo) + HIS_OFFSET:.0f}-{deg_for(hi) + HIS_OFFSET:.0f} grados).")
         print("  Ahi el vastago topa contra el asiento o el servo contra su tope, y")
         print("  un servo calado se calienta en segundos. Para recalibrar a proposito:")
         print(f"      --beyond   (y vigilalo: si zumba sin moverse, CORTA LA CORRIENTE)")
@@ -88,7 +98,9 @@ def main() -> int:
         return 1
 
     pin = cfg.valve.servo_pin
-    print(f"  {args.angle:.0f} grados  =  {us} us   (GPIO{pin})")
+    marco = "tuyos (manija)" if args.dial else "del servo"
+    print(f"  {args.angle:.0f} grados {marco}  =  {deg + HIS_OFFSET:.0f} en tu marco "
+          f"/ {deg:.0f} en el del servo  =  {us} us   (GPIO{pin})")
     print(f"  sosteniendo {args.hold:.0f} s — MIRA la manija de la valvula")
     try:
         pi.set_servo_pulsewidth(pin, us)
