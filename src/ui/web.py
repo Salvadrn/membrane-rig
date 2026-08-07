@@ -27,6 +27,7 @@ import hmac
 import json
 import re
 import secrets
+import socket
 import sys
 import time
 from pathlib import Path
@@ -547,6 +548,90 @@ def create_app(cfg: Config) -> FastAPI:
     return app
 
 
+def _local_addresses() -> List[str]:
+    """Every IPv4 address this machine answers on, best effort.
+
+    Plugging in an Ethernet cable gives the Pi a NEW address on a DIFFERENT
+    interface, and the one thing the operator needs at that moment is the URL to
+    type. Asking them to SSH in and read `ip addr` defeats the point, so the
+    server says it itself.
+
+    Deliberately dependency-free and wrapped in blanket excepts: this is a
+    convenience banner, and a banner must never be the reason the rig fails to
+    start.
+    """
+    found: List[str] = []
+
+    def add(ip: str) -> None:
+        if ip and not ip.startswith("127.") and ip not in found:
+            found.append(ip)
+
+    # Linux (the Pi): walk the real interfaces. Catches eth0 and wlan0 at once,
+    # including an Ethernet link that came up after wifi.
+    try:
+        import fcntl
+        import struct
+        SIOCGIFADDR = 0x8915
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            for _, name in socket.if_nameindex():
+                try:
+                    packed = struct.pack("256s", name[:15].encode())
+                    add(socket.inet_ntoa(fcntl.ioctl(s.fileno(), SIOCGIFADDR, packed)[20:24]))
+                except Exception:
+                    continue
+        finally:
+            s.close()
+    except Exception:
+        pass
+
+    # Fallbacks that also work on macOS: whatever the hostname resolves to, plus
+    # the address the kernel would use to reach the outside world.
+    try:
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            add(info[4][0])
+    except Exception:
+        pass
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(("192.0.2.1", 9))      # TEST-NET-1: routed nowhere, never sends
+            add(s.getsockname()[0])
+        finally:
+            s.close()
+    except Exception:
+        pass
+    return found
+
+
+def _print_banner(host: str, port: int, mode: str) -> None:
+    """Say where the rig can actually be opened, not just that it started.
+
+    Written to stderr, and flushed. Under systemd stdout is a pipe, so it is
+    block-buffered and a banner printed there sits in the buffer of a process
+    that never exits — `journalctl` would show the warnings and not the one line
+    the operator actually needs. Learned by running it, not by reading it.
+    """
+    lines = [f"\n  Membrane rig — mode: {mode}"]
+    if host in ("127.0.0.1", "localhost", "::1"):
+        lines.append(f"  Open:  http://localhost:{port}")
+        lines.append("  This machine only. To reach it from a laptop on the same network,")
+        lines.append("  restart with --lan (and read the warning it prints).")
+    else:
+        lines.append(f"  Open:  http://localhost:{port}          (on the rig itself)")
+        try:
+            hostname = socket.gethostname().split(".")[0]
+            if hostname:
+                lines.append(f"         http://{hostname}.local:{port}   (needs mDNS/avahi)")
+        except Exception:
+            pass
+        addrs = _local_addresses()
+        lines.extend(f"         http://{ip}:{port}" for ip in addrs)
+        if not addrs:
+            lines.append("         (no network address found — is the cable in / wifi up?)")
+    print("\n".join(lines) + "\n", file=sys.stderr, flush=True)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Membrane rig web UI")
     ap.add_argument("--config", default="config.yaml")
@@ -556,10 +641,18 @@ def main(argv=None) -> int:
     # reach the rig through the Cloudflare tunnel, which brings TLS. Binding
     # wide is now a deliberate --host 0.0.0.0, not the default nobody chose.
     ap.add_argument("--host", default="127.0.0.1")
+    # Plain-language alias for --host 0.0.0.0. A systemd unit reading "--lan"
+    # states the intent; one reading "--host 0.0.0.0" states a magic number, and
+    # the difference matters when someone is deciding whether to keep it.
+    ap.add_argument("--lan", action="store_true",
+                    help="serve the local network too, so a laptop on the same "
+                         "wire or wifi can open it (prints the URLs)")
     ap.add_argument("--port", type=int, default=8000)
     ap.add_argument("--sim", action="store_true")
     ap.add_argument("--hardware", action="store_true")
     args = ap.parse_args(argv)
+    if args.lan:
+        args.host = "0.0.0.0"
     cfg = Config.load(args.config)
     if args.sim:
         cfg.mode = "sim"
@@ -574,6 +667,7 @@ def main(argv=None) -> int:
               f"The login is sent in the clear\n         over plain HTTP — prefer the "
               f"tunnel (docs/REMOTE_ACCESS.md).", file=sys.stderr)
     app = create_app(cfg)
+    _print_banner(args.host, args.port, cfg.mode)
     uvicorn.run(app, host=args.host, port=args.port, log_level="warning")
     return 0
 
