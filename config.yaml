@@ -79,9 +79,8 @@ valve:
   # desacoplado y sin carga, con los dos periféricos de reloj.
   # Requiere en config.txt: dtoverlay=pwm,pin=18,func=2  y NINGUNA linea gpio=18=
   type: servo_kpwm
-  invert: true         # 2026-08-06, Adrián at the handle: SHUT is the 180 deg end of travel.
-                       # 0% (startup/abort/sensor-fault) = 1130 us = 175 deg = SHUT, held 5 deg
-                       # short of the stop so the servo is not pushing on it forever.
+  invert: true         # 2026-08-07, Adrián at the handle with the servo COUPLED:
+                       # 0% (startup/abort/sensor-fault) = 1759 us = 260 deg = SHUT.
   min_command: 0.0
   max_command: 100.0
 
@@ -91,18 +90,15 @@ valve:
   # stalls and cooks the servo. In the frame marked on the valve, 0% is 175 deg
   # (shut) and 100% is 93 deg (open); the servo's own zero reads as 90 there.
   #
-  # WARNING — THESE ENDPOINTS ARE NOT VALIDATED AGAINST THE VALVE (2026-08-06).
-  # They were read off the SERVO HORN while the servo was NOT coupled to the
-  # handle, so they describe the horn's travel, not the valve's. Re-find them
-  # against the actual stem before trusting any run: shut is wherever flow stops
-  # with the supply on, not wherever the horn looked right.
+  # MEASURED 2026-08-07 against the valve WITH THE SERVO COUPLED, by Adrián at
+  # the handle: OPEN is 170 deg on the dial, SHUT is 260 deg. The two numbers
+  # check each other — the travel between them is exactly 90 deg, which is what
+  # a quarter-turn valve must give. The earlier 520/1130 pair came off the servo
+  # HORN while it was uncoupled and described the horn's travel, not the stem's.
   #
-  # 1130 rather than 1167 was a back-off from what I believed was the handle's
-  # mechanical stop, to stop the servo thrashing while held. That explanation
-  # was WRONG — with the servo uncoupled there was no stop and no load, so it
-  # was never stalling. The thrash has an electrical cause still being chased.
-  # The value is kept only because it is harmless and unvalidated either way;
-  # do not read it as a measured seating position.
+  # With invert: true, 0% lands on servo_max_us. So max is SHUT and min is OPEN,
+  # which keeps the pair numerically ordered while 0% still means lowest
+  # pressure. Do not "fix" the naming by swapping them without flipping invert.
   # Servo needs its OWN 5-6V supply (UBEC), not the Pi rail.
   #
   # It does NOT seal without power — and it does not hold either. Measured
@@ -112,8 +108,8 @@ valve:
   # is meant to cover that case but is IN HAND, NOT FITTED — until it is mounted
   # and set, the panel valve closed by hand is the only remedy.
   servo_pin: 18        # BCM hardware-PWM pin: 12, 13, 18 or 19
-  servo_min_us: 520    # pulse (us) at 0%   -> LOWEST pressure (inline: closed / bleed: open)
-  servo_max_us: 1130   # pulse (us) at 100% -> HIGHEST pressure (inline: open / bleed: closed)
+  servo_min_us: 1093   # tus 170 deg = ABIERTO  (con invert: es el pulso de 100%)
+  servo_max_us: 1759   # tus 260 deg = CERRADO  (con invert: es el pulso de 0%, el estado seguro)
   # SEATS the valve when a test ends. 0% above is the bottom of the CONTROL
   # range — where regulation stops, not necessarily where the valve seals; with
   # backlash in the printed coupling it can sit slightly cracked. Calibrate:
