@@ -688,6 +688,20 @@ housekeeping. Each check forces a real fault and demands the documented response
       dead-ended cell rises to the regulator setting. **Expected: abort at 30 kPa
       with `pressure … exceeded run ceiling 30.0 kPa`.** Nothing delicate is exposed,
       because there is no membrane in the rig.
+- [ ] **10.6a FIRST: does the servo have power at all?** Before any test that
+      commands the valve, meter the servo's own red-to-black: **expect 5-6 V**.
+      The servo is fed by the UBEC, the UBEC is fed by the **12 V rail**, and the
+      12 V rail is OFF until the Stage 0 cold checks pass — so on a rig that has
+      not reached Stage 0 yet, **the servo is unpowered and cannot move no matter
+      what the pulse looks like.**
+      Learned the expensive way on 2026-08-06: an entire evening went into
+      swapping pulse generators (pigpio, pigpio with -t 0, kernel hardware PWM)
+      for a servo with no supply. Every measurement of the Pi side came back
+      perfect — correct pulse width, correct period, pin routed to PWM0 — because
+      the Pi side was never the problem. An unpowered servo also *twitches*, since
+      the signal line parasitically feeds its electronics and it browns out in
+      cycles, which reads exactly like a bad pulse and sends you back to software.
+      **Check the actuator has power before you debug what you are sending it.**
 - [ ] **10.6b Servo quiet at boot.** Reboot the Pi and **run nothing**. Watch the
       servo for ~20 s. **Expected: it does not move at all.** If it thrashes, the
       boot config is missing or landed in a conditional section — check
