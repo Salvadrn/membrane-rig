@@ -86,14 +86,18 @@ valve:
   # stalls and cooks the servo. In the frame marked on the valve, 0% is 175 deg
   # (shut) and 100% is 93 deg (open); the servo's own zero reads as 90 there.
   #
-  # The shut end is 1130 and not 1167 for a reason that cost a debugging round:
-  # 1167 us = 175+5 = the handle's own STOP. Held there the servo pushes against
-  # it forever and thrashes — which only showed up once close() started holding
-  # instead of releasing, because a brief push is invisible and a permanent one
-  # is not. 5 deg of back-off keeps holding torque on a position the servo can
-  # actually reach. A quarter-turn ball sealed well before its handle stop.
-  # If the valve ever leaks at 0%, move this UP a few us and re-check — do not
-  # go back to the stop.
+  # WARNING — THESE ENDPOINTS ARE NOT VALIDATED AGAINST THE VALVE (2026-08-06).
+  # They were read off the SERVO HORN while the servo was NOT coupled to the
+  # handle, so they describe the horn's travel, not the valve's. Re-find them
+  # against the actual stem before trusting any run: shut is wherever flow stops
+  # with the supply on, not wherever the horn looked right.
+  #
+  # 1130 rather than 1167 was a back-off from what I believed was the handle's
+  # mechanical stop, to stop the servo thrashing while held. That explanation
+  # was WRONG — with the servo uncoupled there was no stop and no load, so it
+  # was never stalling. The thrash has an electrical cause still being chased.
+  # The value is kept only because it is harmless and unvalidated either way;
+  # do not read it as a measured seating position.
   # Servo needs its OWN 5-6V supply (UBEC), not the Pi rail.
   #
   # It does NOT seal without power — and it does not hold either. Measured
