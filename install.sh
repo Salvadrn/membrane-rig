@@ -39,13 +39,30 @@ else
   # starves the Raspberry Pi Connect agent, which drops the remote shell
   # mid-build and takes the session with it. -j1 with nice is slower and
   # survives.
-  echo "==> pigpio no esta en apt (normal en Trixie) — compilando desde fuente"
-  ( cd /tmp && rm -rf pigpio \
-    && git clone -q --depth 1 https://github.com/joan2937/pigpio.git \
-    && cd pigpio && nice -n 15 make -j1 && sudo make install ) \
-    && PIGPIO_OK=1 || PIGPIO_OK=0
-  [ "$PIGPIO_OK" = "1" ] && echo "  pigpio compilado e instalado en /usr/local/bin/pigpiod" \
-                        || echo "  !! fallo la compilacion — el SERVO queda bloqueado, el sensado NO"
+  # NOT built by default any more (2026-08-07). The rig moved off pigpio
+  # entirely: the servo runs on the kernel's hardware PWM (valve.type:
+  # servo_kpwm) because on this Pi the servo misbehaves on every pigpio-generated
+  # pulse, and the diverter goes through gpiozero/lgpio. Nothing starts the
+  # daemon, so a source build on every fresh install spent minutes producing
+  # something no process opens.
+  #
+  # Kept as OPT-IN rather than deleted, because valve.type "servo" is still a
+  # valid config and tools/valve_check.py --readback still speaks to the daemon
+  # when it is selected. Removing the build outright would make that path fail
+  # with an ImportError that says nothing about why.
+  if [ "${MEMBRANE_RIG_BUILD_PIGPIO:-0}" = "1" ]; then
+    echo "==> compilando pigpio desde fuente (MEMBRANE_RIG_BUILD_PIGPIO=1)"
+    ( cd /tmp && rm -rf pigpio \
+      && git clone -q --depth 1 https://github.com/joan2937/pigpio.git \
+      && cd pigpio && nice -n 15 make -j1 && sudo make install ) \
+      && PIGPIO_OK=1 || PIGPIO_OK=0
+    [ "$PIGPIO_OK" = "1" ] && echo "  pigpio instalado en /usr/local/bin/pigpiod" \
+                          || echo "  !! fallo la compilacion"
+  else
+    PIGPIO_OK=0
+    echo "==> pigpio OMITIDO — el rig usa el PWM del kernel para el servo"
+    echo "    (si necesitas valve.type: servo, re-corre con MEMBRANE_RIG_BUILD_PIGPIO=1)"
+  fi
 fi
 
 echo "==> Enabling I2C (ADS1115) and 1-Wire (DS18B20)"

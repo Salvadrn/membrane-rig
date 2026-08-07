@@ -59,7 +59,19 @@ from .interfaces import ProportionalValve
 
 class ServoValve(ProportionalValve):
     def __init__(self, cfg) -> None:
-        import pigpio  # type: ignore
+        try:
+            import pigpio  # type: ignore
+        except ImportError as e:
+            # install.sh stopped building pigpio by default on 2026-08-07 — the
+            # rig drives the servo from the kernel PWM now. Say that here rather
+            # than letting a bare ImportError look like a broken install.
+            raise RuntimeError(
+                "pigpio no esta instalado. El rig usa valve.type: servo_kpwm "
+                "(PWM del kernel) desde 2026-08-07; en esta Pi el servo se "
+                "comporta mal con cada pulso que pigpio genera. Si de verdad "
+                "quieres el camino de pigpio, re-corre install.sh con "
+                "MEMBRANE_RIG_BUILD_PIGPIO=1."
+            ) from e
 
         self.cfg = cfg.valve
         self._pi = pigpio.pi()
