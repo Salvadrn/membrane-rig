@@ -87,7 +87,31 @@ fi
 
 if [ "${PIGPIO_OK:-0}" = "1" ]; then
   echo "==> pigpio daemon (hardware-timed servo pulses)"
+
+  # Claim the servo pin the instant the daemon comes up, every time.
+  #
+  # `gpio=18=op,dl` in config.txt only fires at BOOT. pigpiod resets the pin to
+  # an INPUT when it starts, so every daemon restart re-opens the same window:
+  # the signal wire floats, the servo reads noise as commands and thrashes.
+  # Found the hard way — restarting pigpiod for an unrelated measurement set the
+  # servo off again, hours after the boot-time fix was declared done. A boot-only
+  # guard is not a guard, it is a coincidence that holds until something restarts.
+  #
+  # ExecStartPost runs after every start, restart and reload, which is exactly
+  # the set of events config.txt cannot see. The sleep lets the daemon open its
+  # socket before pigs connects to it.
+  sudo mkdir -p /etc/systemd/system/pigpiod.service.d
+  sudo tee /etc/systemd/system/pigpiod.service.d/servo-pin.conf >/dev/null <<'UNIT'
+[Service]
+# Servo signal (GPIO18): drive it LOW as soon as pigpiod is up, so it never
+# floats between daemon start and the first set_servo_pulsewidth() from the app.
+ExecStartPost=/bin/sh -c 'sleep 0.5; pigs modes 18 w; pigs w 18 0'
+UNIT
+  sudo systemctl daemon-reload
   sudo systemctl enable --now pigpiod
+  sudo systemctl restart pigpiod
+  sleep 1
+  echo "    GPIO18 modo=$(pigs mg 18) (1=salida)  nivel=$(pigs r 18) (0=bajo)"
 else
   echo "==> pigpiod omitido (pigpio no instalado) — el servo no funcionará todavía"
 fi
