@@ -52,9 +52,11 @@ sudo reboot        # required the FIRST time (1-Wire overlay loads on boot)
 ```
 
 The script installs system packages, enables **I2C** (ADS1115) and **1-Wire**
-(DS18B20), starts **pigpiod** (servo pulses), and builds the Python venv with
-all dependencies (the Pi-only hardware libs install automatically here — they
-are platform-gated in requirements.txt).
+(DS18B20), and builds the Python venv with all dependencies (the Pi-only hardware
+libs install automatically here — they are platform-gated in requirements.txt).
+It still sets up **pigpio** (compiling from source on Trixie, which is slow), but
+the rig **no longer uses it** — the servo runs on the kernel's hardware PWM and the
+diverter on gpiozero/lgpio (see §7). That step is now vestigial.
 
 ## 5. Configure
 
