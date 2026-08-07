@@ -25,26 +25,39 @@ Dueño: **Salvador Adrián Martínez García**. Repo privado
   **medición**, no lectura (sin deriva ni histéresis visible; CSV+PNG en `runs/`).
 - **Calibración de ESTE banco, medida y no asumida (`config.yaml`):** `divider_ratio`
   **= 0.7346** (verde 0.500 V con multímetro → A0 0.3673 V), cero **0.01 kPa**, ruido
-  de fondo **±0.04 kPa** p-p, ~1 parte en 1000 contra 35 kPa. Ese 0.7346 contra el
-  nominal 0.6875 es **6.8 %** — con el nominal el rig reportaba **+7 kPa a presión
+  de fondo **±0.04 kPa** p-p **con el servo desconectado** (era ~1 parte en 1000 vs
+  35 kPa). ⚠ Con el servo conectado el ruido subió a **~0.35 kPa p-p** (acoplamiento
+  eléctrico, no pigpio — medido con demonio corriendo/parado/rearrancado): 0.6–1.7 % a
+  20–60 kPa, no arruina Darcy pero **el "1 parte en 1000" ya no aplica**. Ese 0.7346
+  contra el nominal 0.6875 es **6.8 %** — con el nominal el rig reportaba **+7 kPa a presión
   cero**. La procedencia está en el comentario de `config.yaml`: **no lo "corrijas" de
   vuelta a 0.6875** viendo resistencias marcadas 10k/22k; el medido manda.
-- **Lo que SIGUE sin existir (no lo contradigas):** **no hay ningún `k` medido.** La
-  presión está **medida, no controlada** — sin servo (pigpiod fuera de Trixie), sin
-  diverter (falta montar el 1N5819), y el riel de 12 V **sin energizar** (chequeos en
-  frío del Stage 0.0 pendientes). **No existe ni un par (ΔP, Q).** Todo resultado
-  **publicado** (paper, charla) sigue siendo de simulación.
-- **Servo bloqueado en Trixie — RESUELTO para el bring-up (`76f3f97` + validación de
-  Control):** `pigpio`/`pigpiod` ya no existen en Trixie (Debian 13), y
-  `ServoValve.__init__` lanza al importarlos. Como `build_hal` (`src/hal/__init__.py`)
-  construye la válvula **antes** que el `Ads1115Sensor`, eso tumbaba
-  `RigController.__init__` y la app entera no arrancaba (el `0x48` es de `i2cdetect`,
-  no de la app). Solución: **`valve.type: "none"`** → driver `NoOpValve`
-  (`src/hal/noop_valve.py`), que deja arrancar la app para leer sensores sin servo.
-  `config.py:397` **solo valida** la lista `("servo","pwm","none")`; a propósito **NO
-  rechaza `none` con setpoints configurados** (razonamiento en `config.py:399-408`).
-  Port del servo pendiente: PWM del kernel (GPIO18 es HW-PWM), no el software-PWM de
-  lgpio (tiembla).
+- **Lo que SIGUE sin existir (no lo contradigas):** **no hay ningún `k` medido, ni
+  un par (ΔP, Q).** La válvula de aire (servo) YA se mueve y calibró, pero
+  **presurizar está BLOQUEADO por DOS cosas**, no una: (a) **Stage 8.3** —medir y
+  fijar el regulador de aire, que con el alivio EN LA MANO pero SIN MONTAR es el
+  **único backstop**— sigue en `unknown`; y (b) los **chequeos en frío del Stage 0
+  NUNCA se corrieron** (ninguno; la causa del corto de la Pi 1 sigue abierta). El
+  **riel de 12 V nunca se energizó**, así que el **diverter jamás ha operado** (y le
+  falta el conmutador MOSFET/relevador y el 1N5819 montado). Lo que protegió al
+  proyecto hasta hoy es que **nada tocó el 12 V**: sensado a 3.3 V, transductor y
+  servo a 5 V. Todo resultado **publicado** (paper, charla) sigue siendo de simulación.
+- **Servo — PORT A PWM DEL KERNEL HECHO, acoplado y calibrado (2026-08-07).** El
+  bloqueo de Trixie (pigpio no existe; `ServoValve` lanzaba al importarlo y tumbaba
+  toda la app porque `build_hal` construye la válvula antes que el sensor) se resolvió
+  primero con `valve.type: "none"` (`NoOpValve`, para leer sensores) y ahora con el
+  driver real **`servo_kpwm`** (`src/hal/servo_kpwm_valve.py`, `ServoKernelPwmValve`):
+  usa el **PWM por hardware del kernel** en GPIO18, no pigpio ni el software-PWM de
+  lgpio. Calibrado por Adrián en la manija, **acoplado**: `0% = 260° = CERRADO
+  (1759 µs, estado seguro)`, `100% = 170° = ABIERTO (1093 µs)`, **`invert: true`** — la
+  dirección viene de SU medición, no de inferencia (el recorrido da 90°, el cuarto de
+  vuelta de una bola, y se auto-valida). **UBEC FUERA:** dejó de entregar la noche del
+  2026-08-06 y se sacó de la línea; el servo ahora corre del **5 V del Pi (pin 2)**,
+  retorno **pin 20**, con cap ≥1000 µF pegado al servo (`docs/wiring_sin_ubec.md`,
+  `6965275`). Pendiente antes de presión: pasada formal de `valve_check` (los 3 pasos);
+  `servo_close_us` sigue en `0` (cierre a fondo sin calibrar); y **hacia dónde deriva
+  al cortar energía sin medir** (COMMISSIONING 10.7). `config.py` valida
+  `("servo","pwm","servo_kpwm","none")`.
 - **Principio (de ese arreglo, no lo violes) — tiene DOS mitades, ambas obligatorias:**
   1. Un actuador ausente es **opt-in, nunca fallback automático**. `build_hal` NO
      captura el fallo del servo para sustituirlo solo: un rig que arranca callado sin
