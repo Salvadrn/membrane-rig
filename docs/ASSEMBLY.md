@@ -506,6 +506,18 @@ Before soldering:
   modelled, a healthy sensor can repeat a value and trip a spurious fault. If
   that happens, **raise N** — the script tells you to what — rather than
   removing the check.
+- **Boot config for the servo pin (measured 2026-08-06).** `/boot/firmware/config.txt`
+  needs `gpio=18=op,dl` under `[all]`, and `dtparam=audio=off`. Without them the
+  servo thrashes on power-up, before any rig software runs: GPIO18 is an INPUT
+  until pigpio claims it, so the signal wire floats beside a 12 V rail and a
+  switching MOSFET and the servo reads the noise as commands. `audio=off` frees
+  the PWM block that pigpio times its pulses with — this rig has no audio.
+  `install.sh` applies both, idempotently. It lives on the **SD card**, not in
+  git, so a re-flashed Pi gets the thrash back with nothing in the repo to
+  explain it — that is why it is written down twice.
+  Append it under an explicit `[all]`: a bare append can land inside a
+  conditional section (`[pi5]`, `[cm4]`) and then silently does nothing, which
+  looks exactly like "the fix didn't work".
 - Servo power loss: the valve does not spring shut — **and it does not hold
   either.** Measured 2026-08-06: released, this servo drifts off the commanded
   angle rather than staying put, so a power cut leaves the valve wherever the

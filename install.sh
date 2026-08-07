@@ -52,6 +52,39 @@ echo "==> Enabling I2C (ADS1115) and 1-Wire (DS18B20)"
 sudo raspi-config nonint do_i2c 0
 sudo raspi-config nonint do_onewire 0
 
+# --- Servo pin sanity at boot (measured 2026-08-06, do not drop) -------------
+# Symptom this fixes: on power-up the servo thrashes — "se mueve como loco" —
+# before any rig software runs, and keeps thrashing until some program claims
+# the pin. Two causes, fixed together because they are both one line:
+#
+#   gpio=18=op,dl   Until pigpio claims it, GPIO18 is an INPUT. The servo's
+#                   signal wire then floats next to a 12 V rail and a switching
+#                   MOSFET, reads the noise as pulse commands, and hunts.
+#                   Driven low from boot = no valid pulses = the servo sits still.
+#   audio=off       The onboard audio driver (snd_bcm2835) claims the PWM block
+#                   that pigpio uses to time its pulses. This rig has no audio;
+#                   the servo is the entire purpose of that pin.
+#
+# This lives here rather than only in the docs because it is BOOT config, not
+# repo config: it survives on the SD card and nowhere else, so a re-flashed Pi
+# silently gets the thrash back with no trace of why. Idempotent — safe to re-run.
+CFG=/boot/firmware/config.txt
+[ -f "$CFG" ] || CFG=/boot/config.txt
+if [ -f "$CFG" ]; then
+  echo "==> Servo pin boot config ($CFG)"
+  sudo cp -n "$CFG" "$CFG.bak-preinstall" || true
+  sudo sed -i 's/^dtparam=audio=on/dtparam=audio=off/' "$CFG"
+  if ! grep -q '^gpio=18=' "$CFG"; then
+    # Appended under [all] explicitly: a bare append can land inside a
+    # conditional section ([pi5], [cm4]) and then silently does nothing.
+    printf '\n[all]\n# servo signal: driven low from boot so it cannot float (see install.sh)\ngpio=18=op,dl\n' \
+      | sudo tee -a "$CFG" >/dev/null
+  fi
+  grep -nE '^(dtparam=audio|gpio=18)' "$CFG" | sed 's/^/    /'
+else
+  echo "!! no encontré config.txt — aplica a mano: dtparam=audio=off y gpio=18=op,dl"
+fi
+
 if [ "${PIGPIO_OK:-0}" = "1" ]; then
   echo "==> pigpio daemon (hardware-timed servo pulses)"
   sudo systemctl enable --now pigpiod

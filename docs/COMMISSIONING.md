@@ -688,6 +688,12 @@ housekeeping. Each check forces a real fault and demands the documented response
       dead-ended cell rises to the regulator setting. **Expected: abort at 30 kPa
       with `pressure … exceeded run ceiling 30.0 kPa`.** Nothing delicate is exposed,
       because there is no membrane in the rig.
+- [ ] **10.6b Servo quiet at boot.** Reboot the Pi and **run nothing**. Watch the
+      servo for ~20 s. **Expected: it does not move at all.** If it thrashes, the
+      boot config is missing or landed in a conditional section — check
+      `grep -n '^\[' /boot/firmware/config.txt` and that `gpio=18=op,dl` sits under
+      `[all]` (see ASSEMBLY). Do this BEFORE 10.7: a servo that already twitches
+      untouched makes every later observation about drift unreadable.
 - [ ] **10.7 Power-cut behaviour, at pressure.** Pull the 12 V with the cell
       pressurised. **Expected: the diverter drops to waste (de-energised = waste).
       The servo does NOT seal — and it does not hold, either:** released, it drifts
