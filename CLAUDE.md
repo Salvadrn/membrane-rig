@@ -26,9 +26,16 @@ Dueño: **Salvador Adrián Martínez García**. Repo privado
 - **Calibración de ESTE banco, medida y no asumida (`config.yaml`):** `divider_ratio`
   **= 0.7346** (verde 0.500 V con multímetro → A0 0.3673 V), cero **0.01 kPa**, ruido
   de fondo **±0.04 kPa** p-p **con el servo desconectado** (era ~1 parte en 1000 vs
-  35 kPa). ⚠ Con el servo conectado el ruido subió a **~0.35 kPa p-p** (acoplamiento
-  eléctrico, no pigpio — medido con demonio corriendo/parado/rearrancado): 0.6–1.7 % a
-  20–60 kPa, no arruina Darcy pero **el "1 parte en 1000" ya no aplica**. Ese 0.7346
+  35 kPa). ⚠ Con el servo conectado subió a **~0.35 kPa p-p** (acoplamiento eléctrico, no
+  pigpio). **Su impacto en k está SIN RESOLVER, y no es cuestión de tamaño** (análisis
+  de Datos): el punto de la regresión es la **media de ~1200 muestras**. Si el ruido es
+  **aleatorio**, impacto en k = **0.0000 %** (se promedia). Si el acoplamiento **escala
+  con el duty del PWM** (el servo trabaja 6× más a 60 que a 20 kPa), es un **sesgo de
+  −0.72 % que R² NO ve** (se queda en 0.99999) — sería la única fuente que sesga k. Lo
+  distingue una prueba barata (cero a varios comandos de válvula; Datos la pidió a
+  Hardware). Y **el sim NO puede detectar el caso sesgado**: `MockPlant` usa
+  `random.gauss` independiente, solo produce el aleatorio — hay que modelarlo antes de
+  confiar en cualquier validación de exactitud de k. El "1 parte en 1000" ya no aplica. Ese 0.7346
   contra el nominal 0.6875 es **6.8 %** — con el nominal el rig reportaba **+7 kPa a presión
   cero**. La procedencia está en el comentario de `config.yaml`: **no lo "corrijas" de
   vuelta a 0.6875** viendo resistencias marcadas 10k/22k; el medido manda.
