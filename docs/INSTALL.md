@@ -70,11 +70,16 @@ nano config.yaml
 ## 6. Test
 
 ```bash
-./.venv/bin/python run.py web        # binds 127.0.0.1; add --host 0.0.0.0 to serve the LAN
+./.venv/bin/python run.py web --hardware          # Pi only (binds 127.0.0.1)
+./.venv/bin/python run.py web --hardware --lan     # also serve the laptop over the LAN
 ```
 
-From your laptop: **http://membrane-rig.local:8000** — you should see the live
-pressure reading (~0 kPa at atmosphere). Sanity checks:
+`--lan` (a plain alias of `--host 0.0.0.0`) prints the exact URLs to open, and warns
+that the login travels **in the clear** over the lab network — an accepted tradeoff
+for LAN use, since a login is still required. From your laptop, with `--lan`
+running: **http://membrane-rig.local:8000** (needs mDNS/avahi on the Pi — see below),
+or the numeric `http://10.x.x.x:8000` the startup banner prints. You should see the
+live pressure reading (~0 kPa at atmosphere). Sanity checks:
 
 ```bash
 i2cdetect -y 1                      # ADS1115 shows up at 0x48
@@ -91,7 +96,7 @@ After=network-online.target pigpiod.service
 
 [Service]
 WorkingDirectory=/home/pi/membrane-rig
-ExecStart=/home/pi/membrane-rig/.venv/bin/python run.py web --hardware
+ExecStart=/home/pi/membrane-rig/.venv/bin/python run.py web --hardware --lan
 Restart=always
 User=pi
 
@@ -101,8 +106,21 @@ EOF
 sudo systemctl enable --now membrane-rig
 ```
 
-From then on the rig is live at `membrane-rig.local:8000` whenever it has power.
-Logs: `journalctl -u membrane-rig -f`.
+From then on the rig is live at `membrane-rig.local:8000` whenever it has power —
+**as long as two provisioning facts hold, both worth checking with the cable in:**
+
+1. **avahi/mDNS is installed on the Pi**, or `membrane-rig.local` won't resolve from
+   the laptop. Install with `sudo apt install -y avahi-daemon`; if it's missing, the
+   startup banner still prints a numeric IP, so there's always a fallback.
+2. **The lab's Ethernet port does not isolate clients.** `UCSD-Conferences` isolates
+   (that is why direct SSH failed), and if the wired port does too, the `--lan` page
+   will not reach the laptop no matter what — the route is then the Cloudflare tunnel
+   (still blocked on the domain decision). This is unknown until tested with the cable
+   connected.
+
+`--lan` serves the login **in the clear** — acceptable on a trusted LAN with a login
+required, not over the open campus. The banner says so each boot. Logs:
+`journalctl -u membrane-rig -f`.
 
 ## Updating later
 
