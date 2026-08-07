@@ -63,6 +63,7 @@ SAFETY
 from __future__ import annotations
 
 import argparse
+import csv
 import statistics as st
 import sys
 import time
@@ -127,7 +128,7 @@ def main() -> int:
         us = pulse_for(cfg.valve, c)
         deg = (us - 500.0) / US_PER_DEG + HIS_OFFSET
         m = st.fmean(ps)
-        rows.append((c, m))
+        rows.append((c, m, us, deg, max(ps) - min(ps), st.pstdev(ps), len(ps)))
         print(f"  {c:5.0f} %  {us:7.0f}    {deg:5.0f}      {m:+9.4f}   "
               f"{max(ps) - min(ps):6.3f}  {st.pstdev(ps):6.4f}")
 
@@ -151,7 +152,7 @@ def main() -> int:
                 moving.append(r.pressure_kpa)
     valve.to_safe()
 
-    quiet = [y for _, y in rows]
+    quiet = [r[1] for r in rows]
     if moving:
         m_mov, p_mov = st.fmean(moving), max(moving) - min(moving)
         print(f"  {'moviendo':>9}          {'':7}    {'':5}      {m_mov:+9.4f}   "
@@ -206,9 +207,31 @@ def main() -> int:
         print("      la presion, o sea AL REVES que el comando. Rango tan estrecho")
         print("      que el sesgo en k es ~ +0.07 %%: despreciable.")
         print("      No hace falta mitigar nada por esto.")
+    # Written to disk rather than left on screen. Datos needs the five RAW
+    # points, not the fitted slope: only the points can separate a non-linear
+    # coupling from a linear one, and only they can show a mixed mechanism
+    # (current and signal duty acting at once, with opposite signs) that a global
+    # fit would average into nothing. Transcribing five rows of four decimals by
+    # hand at the bench is precisely where that detail gets lost.
+    outdir = ROOT / "runs"
+    outdir.mkdir(exist_ok=True)
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    path = outdir / f"crosstalk_{stamp}.csv"
+    with path.open("w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["phase", "command_pct", "pulse_us", "dial_deg",
+                    "mean_kpa", "p2p_kpa", "sd_kpa", "n"])
+        for c, m, us, deg, p2p, sd, nn in rows:
+            w.writerow(["held", c, f"{us:.0f}", f"{deg:.1f}",
+                        f"{m:.5f}", f"{p2p:.4f}", f"{sd:.5f}", nn])
+        if moving:
+            w.writerow(["moving", "", "", "", f"{m_mov:.5f}", f"{p_mov:.4f}",
+                        f"{st.pstdev(moving):.5f}", len(moving)])
     print()
-    print("  Pásale la pendiente, el corrimiento y la fila 'moviendo' a Datos:")
-    print("  con eso calculan el sesgo en k para los setpoints reales.")
+    print(f"  CSV con los cinco puntos crudos: {path.relative_to(ROOT)}")
+    print("  Mándale ESE archivo a Datos, no la pendiente sola — solo los puntos")
+    print("  distinguen un acoplamiento no lineal, y solo ellos delatan un")
+    print("  mecanismo mixto que el ajuste global promediaria hasta desaparecer.")
     return 0
 
 
