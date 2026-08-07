@@ -92,19 +92,29 @@ ls /sys/bus/w1/devices/             # DS18B20 shows as 28-xxxxxxxx
 sudo tee /etc/systemd/system/membrane-rig.service > /dev/null <<'EOF'
 [Unit]
 Description=Membrane permeability rig
-After=network-online.target pigpiod.service
+After=network-online.target
 
 [Service]
 WorkingDirectory=/home/pi/membrane-rig
 ExecStart=/home/pi/membrane-rig/.venv/bin/python run.py web --hardware --lan
 Restart=always
 User=pi
+SupplementaryGroups=gpio
 
 [Install]
 WantedBy=multi-user.target
 EOF
 sudo systemctl enable --now membrane-rig
 ```
+
+`SupplementaryGroups=gpio` is what lets the service drive the servo. With
+`valve.type: servo_kpwm` the driver writes `/sys/class/pwm`, which is root-only
+until `install.sh` lays down the udev rule that hands it to the `gpio` group.
+Without both, the service starts, builds the HAL, and dies constructing the
+valve — the whole app fails to come up, sensor included.
+
+`pigpiod` is no longer in `After=`: the servo runs on the kernel's hardware PWM
+and the diverter on gpiozero/lgpio, so nothing in the rig needs the daemon.
 
 From then on the rig is live at `membrane-rig.local:8000` whenever it has power —
 **as long as two provisioning facts hold, both worth checking with the cable in:**

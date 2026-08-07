@@ -123,6 +123,27 @@ else
   echo "==> pigpiod omitido (pigpio no instalado) — el servo no funcionará todavía"
 fi
 
+# --- PWM del kernel accesible sin root (servo, valve.type: servo_kpwm) --------
+# ServoKernelPwmValve escribe /sys/class/pwm, que por defecto es solo de root.
+# membrane-rig.service corre como User=pi, así que sin esta regla el servicio
+# arranca, construye el HAL, y MUERE al crear la válvula — la app entera no
+# levanta. Es el mismo patrón de "el actuador bloquea al sensor" que este
+# proyecto ya arregló una vez, esta vez por permisos y no por un import.
+#
+# La regla reasigna el grupo al exportar el canal, que es cuando udev dispara.
+echo "==> PWM del kernel accesible al grupo gpio"
+sudo tee /etc/udev/rules.d/99-pwm-gpio.rules >/dev/null <<'UDEV'
+SUBSYSTEM=="pwm*", PROGRAM="/bin/sh -c '\
+  chown -R root:gpio /sys/class/pwm 2>/dev/null;\
+  chmod -R g+rwX /sys/class/pwm 2>/dev/null;\
+  chown -R root:gpio /sys/devices/platform/*/pwm/pwmchip* 2>/dev/null;\
+  chmod -R g+rwX /sys/devices/platform/*/pwm/pwmchip* 2>/dev/null\
+'"
+UDEV
+sudo udevadm control --reload-rules && sudo udevadm trigger --subsystem-match=pwm || true
+sudo usermod -aG gpio "${SUDO_USER:-$USER}" 2>/dev/null || true
+echo "    (el cambio de grupo aplica al siguiente login o reinicio)"
+
 echo "==> Python environment"
 python3 -m venv .venv
 ./.venv/bin/pip install --upgrade pip
