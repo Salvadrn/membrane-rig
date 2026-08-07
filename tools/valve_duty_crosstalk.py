@@ -23,6 +23,17 @@ The test that separates them: hold the pressure constant (atmosphere is fine —
 nothing needs to be pressurised) and read the zero at several valve commands. If
 the mean does not move, it is Case A. If the mean tracks the command, Case B.
 
+Two phases, because a held position and a moving servo stress the supply in
+different ways: a SUSTAINED duty is what Case B needs, while the transients of
+starting and reversing are a separate mechanism a static sweep cannot see.
+
+THE RESULT IS ASYMMETRIC and the tool says so rather than letting a clean run
+read as an all-clear: a "yes" in dry conditions is definitive, a "no" is
+provisional. At atmosphere the servo works against no pressure and draws less
+than it will in a real run, so if the source is its current, the effect grows
+with load. A dry null has to be repeated under pressure before the question is
+closed.
+
 This cannot be answered in simulation: MockPlant models sensor noise as
 independent gaussian, so by construction it only ever produces Case A. Only the
 bench can tell us.
@@ -64,6 +75,8 @@ def main() -> int:
                     help="comandos de valvula en %%, separados por comas")
     ap.add_argument("--settle", type=float, default=3.0, help="s de asentamiento tras mover")
     ap.add_argument("--samples", type=int, default=300, help="lecturas por punto")
+    ap.add_argument("--moving", type=float, default=20.0,
+                    help="s de la fase con el servo moviendose (0 para saltarla)")
     ap.add_argument("--config", default=str(ROOT / "config.yaml"))
     args = ap.parse_args()
 
@@ -102,7 +115,33 @@ def main() -> int:
         print(f"  {c:5.0f} %  {us:7.0f}    {deg:5.0f}      {m:+9.4f}   "
               f"{max(ps) - min(ps):6.3f}  {st.pstdev(ps):6.4f}")
 
+    # --- fase 2: el servo MOVIENDOSE, no sosteniendo -------------------------
+    # Datos' point: a held position and a moving servo stress the rail in
+    # different ways. A sustained duty is what Case B needs; the transients of
+    # starting and reversing are a separate mechanism that a static sweep cannot
+    # see at all. Sampled while the valve is driven back and forth.
+    print()
+    print("  fase 2 — el servo MOVIENDOSE entre 5 % y 25 %")
+    moving = []
+    t0 = time.time()
+    flip = True
+    while time.time() - t0 < args.moving:
+        valve.set_command(25.0 if flip else 5.0)
+        flip = not flip
+        t1 = time.time()
+        while time.time() - t1 < 1.5:
+            r = sensor.read()
+            if r.healthy:
+                moving.append(r.pressure_kpa)
     valve.to_safe()
+
+    quiet = [y for _, y in rows]
+    if moving:
+        m_mov, p_mov = st.fmean(moving), max(moving) - min(moving)
+        print(f"  {'moviendo':>9}          {'':7}    {'':5}      {m_mov:+9.4f}   "
+              f"{p_mov:6.3f}  {st.pstdev(moving):6.4f}")
+    else:
+        m_mov = p_mov = float("nan")
 
     xs = [r[0] for r in rows]
     ys = [r[1] for r in rows]
@@ -122,18 +161,27 @@ def main() -> int:
     print(f"  corrimiento total: {spread:.4f} kPa entre {min(xs):.0f} % y {max(xs):.0f} %")
     print(f"  error de la media: {sem:.4f} kPa por punto (referencia)")
     print()
+    if moving:
+        print(f"  moviendo vs quieto: {m_mov - st.fmean(quiet):+.4f} kPa de diferencia "
+              f"en la media, ruido {p_mov:.3f} vs {max(quiet) - min(quiet):.3f} p-p")
+    print()
     if spread < 4 * sem:
-        print("  >>> CASO A — el cero NO se mueve con el comando.")
+        print("  >>> CASO A (en seco) — el cero NO se mueve con el comando.")
         print("      El ruido es aleatorio, se promedia, y no sesga k.")
-        print("      No hace falta apantallar nada.")
+        print()
+        print("      PERO ESTE 'NO' ES PROVISIONAL. A atmosfera el servo no hace")
+        print("      fuerza contra presion y consume menos que en una corrida real.")
+        print("      Si la fuente es su corriente, crecera con la carga. Hay que")
+        print("      repetirlo CON presion despues del gate 8.3 antes de cerrarlo.")
     else:
         print("  >>> CASO B — el cero SIGUE al comando.")
         print("      Es un sesgo que NO se promedia y que R^2 no puede ver.")
+        print("      Esto SI es definitivo: en seco basta para confirmarlo.")
         print("      Antes del primer k publicable: apantalla el cable de señal")
         print("      del transductor y separa el retorno del servo.")
     print()
-    print("  Pásale la pendiente y el corrimiento a Datos: con eso calculan el")
-    print("  sesgo en k para los setpoints reales.")
+    print("  Pásale la pendiente, el corrimiento y la fila 'moviendo' a Datos:")
+    print("  con eso calculan el sesgo en k para los setpoints reales.")
     return 0
 
 
