@@ -81,8 +81,17 @@ valve:
   # --- servo on the air-inlet ball valve (type: servo) ---
   # Endpoints below are MEASURED on the rig (2026-08-06), not nominal: they are
   # the ends of the ball valve's useful sub-range, NOT hard stops — over-driving
-  # stalls and cooks the servo. In the frame marked on the valve, 0% is 180 deg
+  # stalls and cooks the servo. In the frame marked on the valve, 0% is 175 deg
   # (shut) and 100% is 93 deg (open); the servo's own zero reads as 90 there.
+  #
+  # The shut end is 1130 and not 1167 for a reason that cost a debugging round:
+  # 1167 us = 175+5 = the handle's own STOP. Held there the servo pushes against
+  # it forever and thrashes — which only showed up once close() started holding
+  # instead of releasing, because a brief push is invisible and a permanent one
+  # is not. 5 deg of back-off keeps holding torque on a position the servo can
+  # actually reach. A quarter-turn ball sealed well before its handle stop.
+  # If the valve ever leaks at 0%, move this UP a few us and re-check — do not
+  # go back to the stop.
   # Servo needs its OWN 5-6V supply (UBEC), not the Pi rail.
   #
   # It does NOT seal without power — and it does not hold either. Measured
@@ -93,7 +102,7 @@ valve:
   # and set, the panel valve closed by hand is the only remedy.
   servo_pin: 18        # BCM hardware-PWM pin: 12, 13, 18 or 19
   servo_min_us: 520    # pulse (us) at 0%   -> LOWEST pressure (inline: closed / bleed: open)
-  servo_max_us: 1167   # pulse (us) at 100% -> HIGHEST pressure (inline: open / bleed: closed)
+  servo_max_us: 1130   # pulse (us) at 100% -> HIGHEST pressure (inline: open / bleed: closed)
   # SEATS the valve when a test ends. 0% above is the bottom of the CONTROL
   # range — where regulation stops, not necessarily where the valve seals; with
   # backlash in the printed coupling it can sit slightly cracked. Calibrate:
