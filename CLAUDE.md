@@ -68,10 +68,17 @@ Dueño: **Salvador Adrián Martínez García**. Repo privado
   vuelta de una bola, y se auto-valida). **UBEC FUERA:** dejó de entregar la noche del
   2026-08-06 y se sacó de la línea; el servo ahora corre del **5 V del Pi (pin 2)**,
   retorno **pin 20**, con cap ≥1000 µF pegado al servo (`docs/wiring_sin_ubec.md`,
-  `6965275`). Pendiente antes de presión: pasada formal de `valve_check` (los 3 pasos);
-  `servo_close_us` sigue en `0` (cierre a fondo sin calibrar); y **hacia dónde deriva
-  al cortar energía sin medir** (COMMISSIONING 10.7). `config.py` valida
-  `("servo","pwm","servo_kpwm","none")`.
+  `6965275`). **Bajo systemd:** el servicio corre como `User=pi` y `ServoKernelPwmValve`
+  escribe `/sys/class/pwm` (root-only) → sin la regla de udev + `SupplementaryGroups=gpio`
+  el servicio moría **creando la válvula** (app entera abajo, sensor incluido — el mismo
+  "actuador bloquea al sensor", esta vez por permisos). Resuelto (`b3b14f9`, ya en la Pi).
+  **Pendientes:** (1) pasada formal de `valve_check` (los 3 pasos); (2) `servo_close_us`
+  en `0` (cierre a fondo sin calibrar); (3) **hacia dónde deriva al cortar energía**,
+  sin medir (COMMISSIONING 10.7); y (4) **verificación que solo un reinicio da** — se
+  quitó `gpio=18=op,dl` de `config.txt`, así que el overlay del PWM debe tomar GPIO18
+  solo al boot (antes se forzaba con `pinctrl set 18 a5`); `sudo reboot` + `pinctrl get 18`
+  debe decir `GPIO18 = PWM0_0` sin intervención, o el servicio arranca sin válvula.
+  `config.py` valida `("servo","pwm","servo_kpwm","none")`.
 - **Principio (de ese arreglo, no lo violes) — tiene DOS mitades, ambas obligatorias:**
   1. Un actuador ausente es **opt-in, nunca fallback automático**. `build_hal` NO
      captura el fallo del servo para sustituirlo solo: un rig que arranca callado sin
@@ -86,6 +93,18 @@ Dueño: **Salvador Adrián Martínez García**. Repo privado
   No agrega peligro: `to_safe()` es no-op, pero tampoco hay nada que pueda ABRIR la
   válvula → no puede producir presión; la red de siempre sigue siendo la única: la
   válvula del panel se cierra a mano.
+- **Un cambio de arquitectura deja caminos viejos que fallan MUDOS — hazlos hablar.**
+  Cuando cambies qué ruta usa el sistema (pigpio → PWM del kernel; UBEC → 5 V del Pi;
+  un pin, un permiso, un overlay), la ruta vieja no desaparece: queda seleccionable y
+  **falla sin decir por qué**, y ese error mudo parece *instalación rota* en vez de
+  *cambio deliberado* — manda al siguiente a cazar el problema equivocado (a Hardware le
+  costó una tarde con `gpio=18=op,dl`, donde nada erroraba de forma útil). El arreglo no
+  es solo cambiar la ruta nueva: es hacer que la vieja **falle con una frase que se
+  explique sola** — qué cambió, cuándo, por qué, y cómo recuperarla si de verdad la
+  quieres (así quedó `ServoValve.__init__`: su `ImportError` ahora cuenta que el rig usa
+  `servo_kpwm` desde 2026-08-07). Es primo del principio de arriba (fallar fuerte >
+  degradar callado) y de la regla de oro (barrer lo derivado), aplicado al *código* que
+  queda atrás, no solo a los *documentos*.
 - **Acceso remoto:** el directo (SSH por cable / misma red) **no funciona** — UCSD
   aísla clientes en `UCSD-Conferences`. El canal de trabajo es la **consola de Pi
   Connect** (alguien pega comandos). El túnel de Cloudflare (para la UI web) sigue
