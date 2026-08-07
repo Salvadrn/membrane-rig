@@ -12,12 +12,28 @@ noise measurement cannot answer, and Datos framed it exactly right:
   ~1200 samples, so the error of the mean is ~0.0025 kPa and the effect on k is
   nil. Nothing to do.
 
-  CASE B — the coupling scales with the valve command. It does NOT average away,
-  because it is a pressure error that depends on the pressure: the valve works
-  harder at higher setpoints, so each point is pulled by a different amount and
-  the SLOPE tilts. That biases k in one fixed direction — and R² stays ~0.99999,
-  so the Darcy criterion never flags it. A bias the goodness-of-fit cannot see is
-  worse than noise it can.
+  CASE B — the coupling scales with something that tracks the setpoint. It does
+  NOT average away: each point is pulled by a different amount, the SLOPE tilts,
+  and k is biased in one fixed direction while R² stays ~0.99999 — the Darcy
+  criterion never flags it. A bias the goodness-of-fit cannot see is worse than
+  noise it can.
+
+THE SIGN OF THE SLOPE IDENTIFIES THE MECHANISM, and the two predict opposite
+things (Datos, 2026-08-07). The valve command and the signal line's electrical
+duty move in OPPOSITE directions: commands of 4.2 / 11.1 / 25.0 % at 20/40/60 kPa
+are pulses of 1731 / 1685 / 1592 us, so the duty goes 8.66 -> 8.42 -> 7.96 % as
+the pressure rises.
+
+  offset RISES with the command  -> tracks the servo's holding CURRENT -> k biased
+                                    about -0.72 %. This is the one that matters.
+  offset FALLS with the command  -> tracks the signal's electrical duty. The range
+                                    is so narrow that k moves about +0.07 %:
+                                    negligible even if it is the real mechanism.
+
+That is also why a dry null is weak rather than merely cautious: at atmosphere
+the servo works against nothing, so its holding current is the minimum possible.
+The dangerous mechanism is barely exercised, and a clean result here mostly rules
+out the harmless one.
 
 The test that separates them: hold the pressure constant (atmosphere is fine —
 nothing needs to be pressurised) and read the zero at several valve commands. If
@@ -157,7 +173,11 @@ def main() -> int:
     sem = st.pstdev(ps) / (len(ps) ** 0.5)
 
     print()
+    signo = ("SUBE con el comando -> sigue la CORRIENTE de sostenimiento"
+             if slope > 0 else
+             "BAJA con el comando -> sigue el DUTY ELECTRICO de la señal")
     print(f"  pendiente        : {slope:+.5f} kPa por % de comando")
+    print(f"  lectura del signo: el offset {signo}")
     print(f"  corrimiento total: {spread:.4f} kPa entre {min(xs):.0f} % y {max(xs):.0f} %")
     print(f"  error de la media: {sem:.4f} kPa por punto (referencia)")
     print()
@@ -166,19 +186,26 @@ def main() -> int:
               f"en la media, ruido {p_mov:.3f} vs {max(quiet) - min(quiet):.3f} p-p")
     print()
     if spread < 4 * sem:
-        print("  >>> CASO A (en seco) — el cero NO se mueve con el comando.")
-        print("      El ruido es aleatorio, se promedia, y no sesga k.")
+        print("  >>> EN SECO NO SE VE — el cero no se mueve con el comando.")
         print()
-        print("      PERO ESTE 'NO' ES PROVISIONAL. A atmosfera el servo no hace")
-        print("      fuerza contra presion y consume menos que en una corrida real.")
-        print("      Si la fuente es su corriente, crecera con la carga. Hay que")
-        print("      repetirlo CON presion despues del gate 8.3 antes de cerrarlo.")
+        print("      ESTE 'NO' ES DEBIL, y por una razon precisa: a atmosfera el")
+        print("      servo no hace fuerza contra nada, asi que su corriente de")
+        print("      sostenimiento es la MINIMA posible. El mecanismo peligroso es")
+        print("      justamente ese, de modo que en seco casi no se ejercita.")
+        print("      Un nulo aqui descarta sobre todo el mecanismo que de todas")
+        print("      formas era inofensivo. REPETIR CON PRESION tras el gate 8.3.")
+    elif slope > 0:
+        print("  >>> SIGUE A LA CORRIENTE — el offset SUBE con el comando.")
+        print("      Este es el caso que importa: sesga k en una direccion fija")
+        print("      (~ -0.7 %% segun Datos) y R^2 no lo puede ver.")
+        print("      Antes del primer k publicable: separa el retorno del servo")
+        print("      y apantalla el cable de señal del transductor.")
     else:
-        print("  >>> CASO B — el cero SIGUE al comando.")
-        print("      Es un sesgo que NO se promedia y que R^2 no puede ver.")
-        print("      Esto SI es definitivo: en seco basta para confirmarlo.")
-        print("      Antes del primer k publicable: apantalla el cable de señal")
-        print("      del transductor y separa el retorno del servo.")
+        print("  >>> SIGUE AL DUTY ELECTRICO — el offset BAJA con el comando.")
+        print("      El duty de la linea de señal va de 8.66 %% a 7.96 %% al subir")
+        print("      la presion, o sea AL REVES que el comando. Rango tan estrecho")
+        print("      que el sesgo en k es ~ +0.07 %%: despreciable.")
+        print("      No hace falta mitigar nada por esto.")
     print()
     print("  Pásale la pendiente, el corrimiento y la fila 'moviendo' a Datos:")
     print("  con eso calculan el sesgo en k para los setpoints reales.")
