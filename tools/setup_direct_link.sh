@@ -43,6 +43,18 @@ say() { printf '\n== %s\n' "$*"; }
 command -v nmcli >/dev/null 2>&1 || die "nmcli not found — this expects NetworkManager (Raspberry Pi OS Bookworm/Trixie)."
 ip link show "$IFACE" >/dev/null 2>&1 || die "no interface '$IFACE'. Set RIG_LINK_IFACE=<name> and re-run."
 
+# Shared mode works by NetworkManager starting its own dnsmasq on the interface.
+# A system-wide dnsmasq already holding port 53 makes that fail, and the symptom
+# is unhelpful: the profile activates, the laptop plugs in, and no address ever
+# arrives. Say so up front instead of letting it look like a cable problem.
+if systemctl is-active --quiet dnsmasq 2>/dev/null; then
+  echo "WARNING: a system dnsmasq service is running. NetworkManager needs to start"
+  echo "         its own on $IFACE, and the two collide on port 53 — the laptop"
+  echo "         would plug in and never get an address."
+  echo "         If this rig does not need that dnsmasq:  sudo systemctl disable --now dnsmasq"
+  echo "         Continuing anyway; check with the plug-in test at the end."
+fi
+
 say "Configuring $IFACE as a shared network at $PI_IP/24"
 # Replace rather than edit: re-running this must converge to the same state
 # instead of stacking half-configured profiles.
