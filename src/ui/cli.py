@@ -11,6 +11,7 @@ import argparse
 import signal
 import sys
 import time
+from typing import Optional
 
 from ..app import RigController
 from ..config import Config
@@ -105,6 +106,7 @@ def run(cfg: Config, setpoints=None) -> int:
     print(f"Run {res['run_name']} started — setpoints {sp_disp} {u} "
           f"(mode={cfg.mode}). Ctrl+C to stop.\n")
     was_held = False
+    weighed_here = {"v": False}     # edge-trigger: ask once per pause, not per tick
     try:
         while True:
             st = ctl.get_status()
@@ -147,6 +149,17 @@ def run(cfg: Config, setpoints=None) -> int:
                 print("\nStopping (operator)...")
                 ctl.stop("stopped by operator (SIGINT)")
                 break
+            # Parked between points with the feed sealed, waiting to be weighed.
+            # Asking here rather than at the end is the whole point: the beaker
+            # has to come off a rig that is not still filling it, and the next
+            # point's stabilise clock only starts on resume, so taking a while at
+            # the balance costs nothing.
+            if st.get("awaiting_operator") and not weighed_here["v"]:
+                weighed_here["v"] = True
+                print()
+                _weigh_and_resume(ctl, st)
+            elif not st.get("awaiting_operator"):
+                weighed_here["v"] = False
             time.sleep(1.0)
     finally:
         results = ctl.get_status()["results"]
@@ -163,10 +176,13 @@ def run(cfg: Config, setpoints=None) -> int:
             print(f"Meta: {ctl.logger.meta_path}")
 
         # On hardware there's no flow sensor -> ask for the measured volumes.
+        # Only points still without a weight — the pauses have normally caught
+        # them already, so this is the tail case (a skipped prompt, or a run that
+        # did not pause), not the main path.
         needs_vol = cfg.mode == "hardware" and any(
             r["success"] and r.get("flow_m3s", 0) <= 0 for r in results)
         if needs_vol and sys.stdin.isatty():
-            _prompt_volumes(ctl, results, u)
+            _prompt_masses(ctl, results, u)
 
         # Auto Q-vs-ΔP fit + Darcy k + pore size (+ PNG plot).
         _print_analysis(ctl.compute_and_save_analysis())
@@ -174,20 +190,95 @@ def run(cfg: Config, setpoints=None) -> int:
     return 0
 
 
-def _prompt_volumes(ctl, results, u) -> None:
-    print("\nEnter the permeate volume collected for each point (mL):")
-    volumes = {}
+# A balance reading, not a meniscus. Weighing takes the manual error from ~0.4 %
+# to ~0.01 %, and the controller keeps the grams as the primary datum — the
+# millilitres are derived from them with the density at the recorded temperature,
+# so a better density later can recompute the volume from what was actually
+# measured.
+MIN_G, MAX_G = 0.05, 3000.0
+
+
+def _ask_mass_g(label: str) -> Optional[float]:
+    """One weight, in grams, with the unit spelled out and absurd values refused.
+
+    Both halves earn their keep. There are now TWO units in play (g and mL), and
+    a number typed in the wrong one is invisible downstream — it just makes k
+    wrong, and R² does not notice. The range catches the obvious slip; naming the
+    unit on every line is what stops the slip at eleven at night after six hours
+    at the bench.
+    """
+    while True:
+        try:
+            raw = input(f"  {label} — weight in GRAMS (g): ").strip()
+        except EOFError:
+            print("  (skipped)")
+            return None
+        if not raw:
+            print("  (skipped)")
+            return None
+        try:
+            g = float(raw.replace(",", "."))
+        except ValueError:
+            print(f"  Not a number. Type the grams, e.g. 98.76  (or Enter to skip)")
+            continue
+        if not (MIN_G <= g <= MAX_G):
+            print(f"  {g:g} g is outside {MIN_G:g}–{MAX_G:g} g. This asks for GRAMS,"
+                  f" not millilitres — retype it, or Enter to skip.")
+            continue
+        return g
+
+
+def _weigh_and_resume(ctl, st: dict) -> None:
+    """The pause between points: weigh this one, then let the rig carry on.
+
+    Without a terminal there is nobody to ask, so it does NOT resume by itself —
+    the rig stays parked with the feed sealed, which is the safe state, and says
+    where to finish the job. Guessing a weight, or continuing without one, would
+    put a made-up number into k.
+    """
+    pt = st.get("awaiting_point")
+    label = f"point {pt}" if pt else "this point"
+    print("=" * 64)
+    print(f"  COLLECTED — weigh {label}. The feed is shut and the rig is waiting.")
+    print("=" * 64)
+    if not sys.stdin.isatty():
+        print("  No terminal attached, so nothing is being asked here and the rig")
+        print("  will stay parked. Enter the weight from the web page, or re-run")
+        print("  this from a shell.\n")
+        return
+    g = _ask_mass_g(label)
+    if g is None:
+        print("  No weight recorded for this point. Resuming anyway — you can still")
+        print("  enter it afterwards, but the point has no flow until you do.")
+    else:
+        idx = (pt - 1) if pt else 0          # status is 1-based, results are 0-based
+        try:
+            ctl.set_volumes(volumes_g={idx: g})
+            print(f"  Recorded {g:g} g for {label}.")
+        except Exception as exc:
+            print(f"  Could not record it: {exc}")
+    print("  Empty the beaker and put it back before continuing.")
+    try:
+        input("  Press Enter to run the next point... ")
+    except EOFError:
+        pass
+    res = ctl.resume_next_point()
+    print("  Resuming.\n" if res.get("ok") else f"  Could not resume: {res.get('error')}\n")
+
+
+def _prompt_masses(ctl, results, u) -> None:
+    """Fallback for a run that finished without pausing between points."""
+    print("\nWeigh what each point collected. Grams, from the balance:")
+    masses = {}
     for i, r in enumerate(results):
         if not r["success"]:
             continue
-        prompt = (f"  point {i} — setpoint {r['setpoint_kpa']:.1f} kPa, "
-                  f"t={r['collection_s']:.0f}s: ")
-        try:
-            volumes[i] = float(input(prompt))
-        except (ValueError, EOFError):
-            print("  (skipped)")
-    if volumes:
-        ctl.set_volumes(volumes)
+        g = _ask_mass_g(f"point {i + 1} — setpoint {r['setpoint_kpa']:.1f} kPa, "
+                        f"t={r['collection_s']:.0f}s")
+        if g is not None:
+            masses[i] = g
+    if masses:
+        ctl.set_volumes(volumes_g=masses)
 
 
 def _print_analysis(a) -> None:

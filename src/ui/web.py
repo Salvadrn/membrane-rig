@@ -96,7 +96,9 @@ class StartRequest(BaseModel):
 
 
 class AnalyzeRequest(BaseModel):
-    # measured permeate volumes (mL) keyed by point index (hardware mode)
+    # Measured permeate keyed by point index (hardware mode). Grams preferred —
+    # see VolumesRequest for why the mass is the datum and the volume is derived.
+    volumes_g: Optional[Dict[int, float]] = None
     volumes_ml: Optional[Dict[int, float]] = None
 
 
@@ -130,8 +132,16 @@ class MoveRequest(BaseModel):
 
 
 class VolumesRequest(BaseModel):
+    """Measured permeate for a queued item, keyed by point index.
+
+    Grams are what the operator now reads off the balance, and the controller
+    keeps them as the primary datum — the millilitres are derived from them at a
+    single point, with the density and temperature used recorded alongside. Send
+    `volumes_g`. `volumes_ml` stays for anything still posting volumes directly.
+    """
     id: str
-    volumes_ml: Dict[int, float]
+    volumes_g: Optional[Dict[int, float]] = None
+    volumes_ml: Optional[Dict[int, float]] = None
 
 
 class LimitRequest(BaseModel):
@@ -395,9 +405,20 @@ def create_app(cfg: Config) -> FastAPI:
 
     @app.post("/analyze")
     def analyze(req: AnalyzeRequest) -> dict:
-        if req.volumes_ml:
-            ctl.set_volumes(req.volumes_ml)
+        if req.volumes_g:
+            ctl.set_volumes(volumes_g=req.volumes_g)
+        elif req.volumes_ml:
+            ctl.set_volumes(volumes_ml=req.volumes_ml)
         return ctl.compute_and_save_analysis()
+
+    # The rig parks between points with the feed sealed so the operator can put
+    # the beaker on the balance. Nothing auto-resumes: the whole reason it stops
+    # is that a person has to do something first, and a timer that gave up on
+    # waiting would restart pressurisation while they were still weighing.
+    @app.post("/resume")
+    def resume() -> JSONResponse:
+        res = ctl.resume_next_point()
+        return JSONResponse(res, status_code=200 if res.get("ok") else 400)
 
     @app.get("/plot")
     def plot():
@@ -483,7 +504,11 @@ def create_app(cfg: Config) -> FastAPI:
 
     @app.post("/playlist/volumes")
     def playlist_volumes(req: VolumesRequest) -> JSONResponse:
-        res = ctl.set_item_volumes(req.id, req.volumes_ml)
+        if req.volumes_g is None and req.volumes_ml is None:
+            return JSONResponse({"ok": False, "error": "send volumes_g (or volumes_ml)"},
+                                status_code=400)
+        res = ctl.set_item_volumes(req.id, volumes_ml=req.volumes_ml,
+                                   volumes_g=req.volumes_g)
         return JSONResponse(res, status_code=200 if res.get("ok") else 400)
 
     @app.post("/playlist/analyze")
@@ -1652,15 +1677,27 @@ function renderGate(d){
     title=`✓ “${last.label||"experiment"}” finished`;
     const pts=(last.results||[]).filter(r=>r.success);
     if(MODE==="hardware" && pts.some(r=>!(r.volume_ml>0))){
-      body="Read the graduated cylinder and enter the collected volume, then empty it before the next run.";
+      // Grams off the balance, not millilitres off a meniscus. The controller
+      // keeps the mass as the primary datum and derives the volume from it, so
+      // this field must send what was actually read. Both surfaces changed
+      // together — a CLI in grams and a page in millilitres would put two units
+      // behind one number and nothing downstream would notice.
+      body="Weigh what each point collected and enter the GRAMS from the balance, "+
+           "then empty the beaker before the next run.";
       vols="<div style='margin-top:8px'>";
       (last.results||[]).forEach((r,i)=>{ if(!r.success) return;
-        vols+=`<label>point ${i+1} — ${fmt(toDisp(r.setpoint_kpa))} ${U}, ${r.collection_s}s</label>`+
-              `<input class="gvol" data-i="${i}" type="number" step="0.1" placeholder="mL" value="${r.volume_ml||""}"/>`;});
-      vols+=`<button class="ghost" id="saveVols" data-id="${last.id}">Save volumes</button></div>`;
+        const id="gm"+i;
+        vols+=`<label for="${id}">point ${i+1} — ${fmt(toDisp(r.setpoint_kpa))} ${U}, `+
+              `${r.collection_s}s — weight in grams</label>`+
+              `<input class="gvol" id="${id}" data-i="${i}" type="number" step="0.01" `+
+              `min="0.05" max="3000" placeholder="grams (g)" value="${r.mass_g||""}"/>`;});
+      vols+=`<div class="bandnote">Grams, not millilitres. The volume is worked out `+
+            `from the weight and the water temperature.</div>`+
+            `<button class="ghost" id="saveVols" data-id="${last.id}">Save weights</button>`+
+            `<div class="err" id="volErr"></div></div>`;
     } else {
-      const v=pts.map(r=>fmt(r.volume_ml,0)+" mL").join(", ");
-      body=`Collected ${v||"–"}. Empty the cylinder before the next run.`;
+      const v=pts.map(r=>(r.mass_g?fmt(r.mass_g,2)+" g":fmt(r.volume_ml,0)+" mL")).join(", ");
+      body=`Collected ${v||"–"}. Empty the beaker before the next run.`;
     }
   } else if(last && last.status==="failed"){
     title=`✗ “${last.label||"experiment"}” did not complete`;
@@ -1680,10 +1717,22 @@ function renderGate(d){
   $("gateVols").innerHTML=vols;
   const sv=$("saveVols");
   if(sv) sv.onclick=async()=>{
-    const v={}; document.querySelectorAll(".gvol").forEach(inp=>{
-      const x=parseFloat(inp.value); if(!isNaN(x)) v[inp.dataset.i]=x;});
-    await post("/playlist/volumes",{id:sv.dataset.id,volumes_ml:v});
-    loadPlaylist(true);
+    // Same guard as the CLI prompt, for the same reason: with two units in play
+    // a number typed in the wrong one is invisible downstream — it only makes k
+    // wrong, and R² never notices.
+    const v={}; let bad=null;
+    document.querySelectorAll(".gvol").forEach(inp=>{
+      const x=parseFloat(inp.value);
+      if(isNaN(x)) return;
+      if(x<0.05||x>3000){ bad=bad||`${x} g is outside 0.05–3000 g. This field is in GRAMS.`; return; }
+      v[inp.dataset.i]=x;
+    });
+    const e=$("volErr"); if(e) e.textContent=bad||"";
+    if(bad) return;
+    if(!Object.keys(v).length){ if(e) e.textContent="Enter at least one weight."; return; }
+    const r=await act(sv,"/playlist/volumes",{id:sv.dataset.id,volumes_g:v},"Saved");
+    if(!r.ok && e) e.textContent=(r.data&&r.data.error)||"could not save the weights";
+    if(r.ok) loadPlaylist(true);
   };
 }
 
@@ -1810,7 +1859,12 @@ function showAnalysis(a, combined){
          `(${Number(a.k_stderr_pct).toFixed(2)}%)</span>`)+
      `<span>pore d <b>${Number(a.pore_size_um).toFixed(3)}</b> µm</span>`+
      `<span title="R² measures how well the points fit a line, not how tightly `+
-     `the slope is pinned down">${a.follows_darcy?"✓ follows Darcy's law":"⚠ low R²"}</span>`;
+     `the slope is pinned down">${a.follows_darcy?"✓ follows Darcy's law":"⚠ low R²"}</span>`+
+     // Beside k, not tucked away in the meta row. k goes as viscosity and
+     // viscosity goes as temperature, so a temperature that was not measured is
+     // this number's largest error — and this is the line where the number is
+     // being claimed.
+     (a.temp_warning?`<span class="prov bad">⚠ ${esc(a.temp_warning)}</span>`:"");
   const base=combined?"/playlist/file/":"";
   $("downloads").innerHTML = a.xlsx_file
     ? `<a href="${combined?"/playlist/file/xlsx":"/download?ts="+Date.now()}"
