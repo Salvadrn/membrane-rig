@@ -36,9 +36,18 @@ WATER_BUOYANCY_FACTOR = 1.001054
 def water_density_kg_m3(temp_c: float) -> float:
     """Density of air-free pure water vs temperature (0-100 C), in kg/m^3.
 
-    Kell (1975), the standard polynomial fit. Checks: 4 C -> 999.972,
-    20 C -> 998.207, 25 C -> 997.047. SI to match the rest of the pipeline;
-    g/mL is this / 1000.
+    Kell (1975), the standard polynomial fit. SI to match the rest of the
+    pipeline; g/mL is this / 1000.
+
+    It reproduces modern tables to ~3 ppm, NOT exactly, and that residual is
+    expected — do not go hunting for a mistyped coefficient. Kell is stated on
+    IPTS-68 while today's tables are on ITS-90, and the signature is unmistakable:
+    the fit is exact at 0 C (999.8395) and at the 4 C density maximum (999.9720)
+    and only separates above ~15 C (2.87 ppm at 20 C, 2.11 at 25 C). A mistyped
+    coefficient would miss everywhere, the origin included. Closing the gap means
+    converting ITS-90 -> IPTS-68 before evaluating, not editing the numbers — and
+    it is not worth doing: 0.0003% is ~365x smaller than the buoyancy correction
+    below, and equivalent to a 0.0001 C temperature error against mu's 2.43 %/C.
 
     Used to turn a WEIGHED permeate mass into the volume the Darcy fit consumes.
     Weighing removes the meniscus read, the largest manual uncertainty left
