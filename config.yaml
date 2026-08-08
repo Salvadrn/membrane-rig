@@ -252,6 +252,12 @@ test:
   # The rig rises fast but falls SLOWLY (closing the valve doesn't drop pressure
   # quickly — it only decays by permeation). So: run points low->high, and ramp
   # the PID target so it approaches each setpoint from below without overshoot.
+  # Between points the feed is shut COMPLETELY and the run waits for you. This is
+  # a MEASUREMENT requirement before a safety one: the permeate is weighed between
+  # points and cannot be weighed while flow is still arriving. The run resumes only
+  # when you say so, and the point restarts its stabilisation clock then, so a long
+  # weighing pause cannot time it out. Set false for unattended runs.
+  pause_between_points: true
   sort_ascending: true       # always run setpoints in ascending order
   ramp_kpa_s: 3.0            # PID-target ramp rate (0 = jump straight to setpoint)
 

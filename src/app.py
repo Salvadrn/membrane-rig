@@ -92,6 +92,11 @@ class RigController:
         # faults are never recoverable. See _enter_held.
         self._held = False
         self._held_alarm: Optional[dict] = None
+        # Between-point pause: the feed is SHUT COMPLETELY and the run waits for
+        # the operator to weigh the permeate. Distinct from HELD, which is an
+        # alarm — this one is a planned stop and nothing is wrong.
+        self._awaiting_operator = False
+        self._pause_between_points = cfg.test.pause_between_points
         self._hold_count = 0             # consecutive holds on the current point
         self._hold_point_idx: Optional[int] = None
         self._retry_max = cfg.safety.ceiling_retry_max
@@ -158,6 +163,9 @@ class RigController:
             # retry_advised the Retry button keys off — never parse the prose.
             "held": False,
             "held_alarm": None,
+            # planned pause between points (weigh the permeate), NOT an alarm
+            "awaiting_operator": False,
+            "awaiting_point": None,
         }
         # rolling history for the live chart: (elapsed_s, pressure_disp, setpoint_disp)
         self.history = deque(maxlen=4000)
@@ -286,6 +294,9 @@ class RigController:
             self._wd_rose = False
             self._held = False
             self._held_alarm = None
+            self._awaiting_operator = False
+            self.status["awaiting_operator"] = False
+            self.status["awaiting_point"] = None
             self._hold_count = 0
             # A run always starts on point 0. Leaving this None meant a run that
             # holds on its FIRST tick (residual pressure from the previous item
@@ -960,6 +971,29 @@ class RigController:
         self._p_rate = 0.0
         self._exit_held()
 
+    def _enter_point_pause(self, now: float, pressure: float, done_points: int) -> None:
+        """Seal the feed and wait for the operator between points. NOT an alarm:
+        nothing is wrong, the permeate simply cannot be weighed while flow is still
+        arriving. Uses _safe_all (full_close, not to_safe) because a seat is what
+        is wanted here, and re-asserts it every paused tick. Lock held."""
+        self._safe_all()
+        self._awaiting_operator = True
+        self.status["awaiting_operator"] = True
+        self.status["awaiting_point"] = done_points   # 1-based: which point to weigh
+
+    def resume_next_point(self) -> dict:
+        """Operator has weighed the permeate; carry on with the next point."""
+        with self._lock:
+            if not self._awaiting_operator:
+                return {"ok": False, "error": "the rig is not waiting between points"}
+            # restart the (already advanced) point so its stabilisation clock
+            # starts now, not when the previous point ended
+            self._resume_point(time.monotonic())
+            self._awaiting_operator = False
+            self.status["awaiting_operator"] = False
+            self.status["awaiting_point"] = None
+            return {"ok": True, "action": "resume"}
+
     # --- operator recovery actions -------------------------------------------
     def recover_retry(self) -> dict:
         """Re-run the point that hit the ceiling, same ceiling."""
@@ -1134,6 +1168,9 @@ class RigController:
         self._safe_all()              # feed fully shut, diverter to waste
         self.safety.disarm()          # idle again: back to the global cutoff
         self._exit_held()             # a run can't stay 'held' once it has ended
+        self._awaiting_operator = False
+        self.status["awaiting_operator"] = False
+        self.status["awaiting_point"] = None
         self._start_close_check(self.status.get("pressure_kpa", 0.0))
         # Provenance rides along into the run's CSV footer: a k from a run whose
         # ceiling was raised must be traceable in the artefacts, not just in RAM.
@@ -1242,6 +1279,17 @@ class RigController:
                     self.plant.step(self._dt)
                 return
 
+            # --- paused between points: feed sealed, waiting to be weighed ---
+            if self._awaiting_operator:
+                self._safe_all()      # keep it SHUT for as long as we wait
+                self._update_status(pressure, None, 0.0, False,
+                                    self.sequencer.phase, self.status.get("index", 0),
+                                    self.status.get("total", 0), now - self._run_start,
+                                    0.0, in_band=False)
+                if self.plant is not None:
+                    self.plant.step(self._dt)
+                return
+
             if state != SafetyState.OK:
                 # A RUN-ceiling overpressure is recoverable: stop to safe, alarm,
                 # and let the operator decide. The global cutoff and sensor faults
@@ -1283,6 +1331,21 @@ class RigController:
                     self._hold_point_idx = seq.index
                     self._hold_count = 0
                 self._accumulate_volume(seq, prev_n)
+                # A point just finished and more remain: seal the feed and wait
+                # for the operator to weigh this point's permeate. The sequencer
+                # has already advanced, so the resume restarts the NEW point's
+                # stabilisation clock — a long weighing pause cannot time it out.
+                if (self._pause_between_points and len(self.sequencer.results) > prev_n
+                        and seq.phase != Phase.DONE):
+                    self._enter_point_pause(now, pressure, len(self.sequencer.results))
+                    # publish immediately: the feed is sealed NOW, so the screen
+                    # must not keep showing the command from the tick before
+                    self._update_status(pressure, None, 0.0, False, seq.phase,
+                                        seq.index, seq.total, now - self._run_start,
+                                        0.0, in_band=False)
+                    if self.plant is not None:
+                        self.plant.step(self._dt)
+                    return
                 if seq.phase == Phase.DONE:
                     self._final_elapsed = now - self._run_start
                     self._final_index, self._final_total = seq.index, seq.total

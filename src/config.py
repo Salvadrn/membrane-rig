@@ -143,6 +143,12 @@ class TestConfig:
     setpoints_kpa: List[float] = field(default_factory=list)
     # The plant is ASYMMETRIC: pressure rises fast (open the air valve) but falls
     # slowly (only by permeation once the valve is closed). Two mitigations:
+    # Between points the feed is SHUT COMPLETELY and the run waits for the
+    # operator. Adrián's requirement, and it is a measurement one before it is a
+    # safety one: the permeate is weighed between points, and it cannot be weighed
+    # with flow still arriving. Set false only for unattended runs (a sim sweep
+    # has nothing to weigh).
+    pause_between_points: bool = True
     sort_ascending: bool = True   # run setpoints low->high so we never wait on a slow fall
     ramp_kpa_s: float = 3.0       # ramp the PID target toward each setpoint (0 = off)
                                   # so the loop approaches from below without overshoot
@@ -318,6 +324,7 @@ class Config:
             collection_s=float(t.get("collection_s", 60.0)),
             stabilize_timeout_s=float(t.get("stabilize_timeout_s", 120.0)),
             setpoints_kpa=[k(x) for x in t.get("setpoints", [])],
+            pause_between_points=bool(t.get("pause_between_points", True)),
             sort_ascending=bool(t.get("sort_ascending", True)),
             ramp_kpa_s=k(t.get("ramp_kpa_s", 3.0)),
         )
