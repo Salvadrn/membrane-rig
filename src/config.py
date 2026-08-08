@@ -92,7 +92,7 @@ class SafetyConfig:
     fault_grace_reads: int = 3
     # Per-run ceiling. While a test is running the effective cutoff drops to
     # max(setpoints) + this margin. Without it, a 20 kPa test could drift all the
-    # way to the 80 kPa global cutoff before aborting — enough to destroy a
+    # way to the global cutoff before aborting — enough to destroy a
     # delicate mesh. 0 disables it (global cutoff governs).
     overshoot_margin_kpa: float = 10.0
     # After a run ends the feed is shut, so pressure MUST start falling. If it

@@ -174,9 +174,11 @@ safety:
   #   ceiling = setpoint + max(absolute_floor, fraction*setpoint)
   # keeps tightness consistent high while guaranteeing an absolute floor low. Do
   # this then too: clamp the ceiling to the specimen limit so a fault can't push
-  # the mesh past its declared limit (today sp 60 + 10 = 70 can top a 65 kPa
-  # specimen). Both move the safety ladder -> Adrián's OK + Paper heads-up; NOT
-  # needed at the <=35 kPa the rig actually runs.
+  # the mesh past its declared limit. (Whether it binds depends on the ladder of
+  # the day: with setpoints <= 60 and the specimen at 85 the run ceiling of 70
+  # governs and the clamp is idle; it starts biting again if the specimen limit is
+  # tightened below max(setpoint)+margin.) Moving this touches the safety ladder
+  # -> Adrián's OK + Paper heads-up.
   # After a run the feed is shut, so pressure MUST start bleeding down through
   # the membrane. If it hasn't dropped by close_check_min within close_check_s,
   # the valve did not actually seat -> warn in the UI rather than leave a
@@ -268,13 +270,17 @@ sim:
   k_in: 0.3                # inflow gain at full open (fast rise)
   k_drain: 0.05            # permeation-only decay (slow fall)
   # DERIVED CEILING (matters for sim coverage): with the valve full open the
-  # plant settles at k_in*supply/(k_in+k_drain) = 0.3*100/0.35 = 85.7 kPa. That
-  # is only 5.7 kPa (~7%) above the 80 kPa global cutoff — which is the ONLY
-  # reason the sim can still exercise an OVERPRESSURE abort at all. Raising
-  # safety.max_pressure, lowering supply_pressure, or raising k_drain shrinks (or
-  # closes) that window, and the sim would then pass without ever tripping its own
-  # global cutoff, silently. If you touch any of the three, re-check that the
-  # ceiling still clears the cutoff with margin.
+  # plant settles at k_in*supply/(k_in+k_drain) = 0.3*100/0.35 = 85.7 kPa.
+  #
+  # THAT WINDOW IS NOW CLOSED. This comment used to warn that raising
+  # safety.max_pressure would close it; the 2026-08-07 raise to 97 kPa did exactly
+  # that, so 85.7 < 97 and **an end-to-end sim run can no longer reach the global
+  # cutoff**. The sim still exercises the run ceiling and the specimen limit (both
+  # well under 85.7), and the global-cutoff path is still covered by unit tests
+  # that inject pressure directly — but nobody should read a clean sim as evidence
+  # that the global cutoff fires. To restore end-to-end coverage, supply_pressure
+  # would need ~113 kPa (cutoff*(k_in+k_drain)/k_in); that is a change to the plant
+  # identification, so it is a decision, not a tweak.
   process_noise: 0.05      # plant noise (std)
   sensor_noise: 0.15       # measurement noise (std)
   # Simulated permeate flow so sim mode auto-produces a Darcy Q-vs-dP line.

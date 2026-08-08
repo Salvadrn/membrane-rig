@@ -4,8 +4,8 @@ Failure modes handled:
   * OVERPRESSURE   pressure above the effective cutoff -> immediate abort (no
                    grace). The cutoff is not fixed: `arm_for_run` tightens it to
                    max(setpoint) + margin for the duration of a run, so a 20 kPa
-                   test aborts near 30 kPa instead of coasting to the 80 kPa
-                   global limit. Meshes are delicate; the ceiling should track
+                   test aborts near 30 kPa instead of coasting to the global
+                   cutoff. Meshes are delicate; the ceiling should track
                    what the test actually asked for.
   * SENSOR_FAULT   driver reported unhealthy, or the reading is outside the
                    physically plausible range (e.g. a disconnected 4-20mA loop
@@ -48,7 +48,7 @@ class SafetyMonitor:
     def arm_for_run(self, setpoints_kpa, specimen_limit_kpa=None) -> float:
         """Tighten the cutoff to what THIS run actually needs.
 
-        A test at 20 kPa has no business ever reaching the 80 kPa global cutoff;
+        A test at 20 kPa has no business ever reaching the global cutoff;
         letting it get there before aborting would destroy a delicate specimen.
         The run ceiling is max(setpoint) + overshoot margin, clamped to BOTH the
         global cutoff and the specimen limit — so a fault can never push the mesh
@@ -77,7 +77,7 @@ class SafetyMonitor:
         # overshoot_margin = 0 disables the per-run ceiling, but the mesh's
         # declared limit is not the run's to waive — folding this into the branch
         # above meant margin = 0 silently dropped it and let the cutoff sit at 80
-        # on a 65 kPa specimen, contradicting this docstring.
+        # on the mounted specimen, contradicting this docstring.
         if specimen_limit_kpa and specimen_limit_kpa > 0:
             if ceiling is None or specimen_limit_kpa < ceiling:
                 ceiling = specimen_limit_kpa
@@ -91,10 +91,11 @@ class SafetyMonitor:
         """Back to the global cutoff (idle: no run ceiling applies).
 
         DELIBERATE, NOT AN OVERSIGHT — Adrián's decision, 2026-07-31. The idle
-        cutoff returns to the GLOBAL 80 kPa and is *not* clamped to the mounted
-        specimen's limit, so with a 65 kPa mesh mounted an idle overpressure does
-        not alarm until 80. The trade-off he accepted: the alarm fires up to 15 kPa
-        above what the mesh was declared to tolerate.
+        cutoff returns to the GLOBAL cutoff and is *not* clamped to the mounted
+        specimen's limit, so an idle overpressure does not alarm until the global
+        cutoff even with a lower specimen limit declared. The trade-off he
+        accepted: the alarm fires above what the mesh was declared to tolerate
+        (the gap is safety.max_pressure - the specimen limit, whatever they are).
 
         Do not "fix" this. It looks like the arm_for_run bug that WAS fixed (an
         audit found the specimen clamp being dropped when overshoot_margin = 0, and
