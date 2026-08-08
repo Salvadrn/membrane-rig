@@ -200,19 +200,23 @@ def build() -> str:
     o.append(txt(BX + 14, hy + 20, "RASPBERRY PI 4 — header de 40 pines", 12.5, weight="500"))
     pins = [("1", "3.3 V", "var(--ok)"), ("2", "5 V", "var(--pwr)"),
             ("3", "SDA", "var(--dat)"), ("5", "SCL", "var(--dat)"),
-            ("7", "GPIO4", "var(--sig)"), ("9", "GND", "var(--gnd)"),
-            ("12", "GPIO18", "var(--sig)"), ("16", "GPIO23", "var(--act)"),
+            ("4", "5 V", "var(--pwr)"), ("9", "GND", "var(--gnd)"),
+            ("12", "GPIO18", "var(--sig)"), ("20", "GND", "var(--gnd)"),
+            ("16", "GPIO23", "var(--act)"),
             ("6", "GND", "var(--bad)"), ("14", "GND", "var(--bad)")]
     px = {}
     for i, (pn, nm, c) in enumerate(pins):
-        x = BX + 60 + i * 92
+        x = BX + 52 + i * 84
         px[pn] = x
         o.append(txt(x, hy + 46, f"pin {pn}", 11, fill=c, anchor="middle", weight="500"))
         o.append(txt(x, hy + 61, nm, 10, fill=c, anchor="middle", op=".85"))
     o.append(txt((px["6"] + px["14"]) / 2, hy + 74, "DAÑADOS — no metas cable", 9.5,
                  fill="var(--bad)", anchor="middle", weight="500"))
-    o.append(txt(px["12"], hy + 74, "directo al servo,", 9, fill="var(--sig)", anchor="middle", op=".8"))
+    o.append(txt(px["12"], hy + 74, "señal del servo,", 9, fill="var(--sig)", anchor="middle", op=".8"))
     o.append(txt(px["12"], hy + 86, "no toca protoboard", 9, fill="var(--sig)", anchor="middle", op=".8"))
+    o.append(txt(px["4"], hy + 74, "5 V del SERVO", 9, fill="var(--pwr)", anchor="middle", op=".8"))
+    o.append(txt(px["20"], hy + 74, "retorno del SERVO", 9, fill="var(--gnd)", anchor="middle", op=".8"))
+    o.append(txt(px["20"], hy + 86, "aparte del pin 9", 9, fill="var(--gnd)", anchor="middle", op=".8"))
     o.append(txt(px["16"], hy + 74, "va a la placa B", 9, fill="var(--act)", anchor="middle", op=".8"))
 
     # ---------------- board A ----------------
@@ -229,7 +233,7 @@ def build() -> str:
     # R2's leg (row C) share the NODE, never the hole.
     o += resistor(A, "C", 21, 24, "R2 22k")
     o += descr(A, 21, ["Divisor 10k/22k, kit 1 % · cols 18-24",
-                       "col 21 es el NODO", "ratio 0.6875"], "var(--res)")
+                       "col 21 es el NODO", "ratio MEDIDO 0.7346"], "var(--res)")
 
     o += module(A, "B", 31, 3, "DS18B20", ["ROJO", "AMAR", "NEGRO"], "var(--sig)")
     # Pull-up: DATA (col 32) to VDD (col 34, jumpered to the 3.3 V rail below).
@@ -291,8 +295,9 @@ def build() -> str:
                (cx(5), cy(A, "E"))], DT, 1.8, dash="5 3")
     o += wire([(px["5"], hy + 76), (px["5"], A - 74), (cx(4), A - 74),
                (cx(4), cy(A, "E"))], DT, 1.8, dash="5 3")
-    o += wire([(px["7"], hy + 76), (px["7"], A - 28), (cx(32), A - 28),
-               (cx(32), cy(A, "B"))], SG, 1.8, dash="5 3")
+    # El pin 7 (GPIO4, 1-Wire) alimentaba la sonda DS18B20. Adrián la retiró del
+    # rig el 2026-08-06 y la temperatura va en `manual` — el cable ya no existe,
+    # así que tampoco se dibuja. Si algún día vuelve la sonda, vuelve esta línea.
     o += wire([(px["2"], hy + 76), (px["2"], A - 88), (cx(45), A - 88),
                (cx(45), cy(A, "B"))], PW, 2.6, dash="5 3")
     o.append(txt(cx(45) + 8, A - 92, "5 V ← pin 2 · UN SOLO HOYO, nunca a un riel", 10.5,
@@ -309,6 +314,24 @@ def build() -> str:
     o.append(txt(cx(18) + 8, rail_y(A, "bm") + 34,
                  "riel − → TORNILLO ESTRELLA — UN solo cable, la única salida de tierra de las placas",
                  10.5, fill=GN, weight="500"))
+
+    # El servo salió del UBEC el 2026-08-07 y ahora cuelga del header. Sus tres
+    # cables NO entran al protoboard: un contacto de protoboard está dado a ~1 A
+    # y el arranque del servo pide más. Y su retorno va al pin 20, no al 9,
+    # porque la caída de su corriente sobre la tierra del sensado se le suma a lo
+    # que mide el ADC — medido: el ruido pasó de 0.04 a 0.35 kPa p-p al conectarlo.
+    sy = HA - 116
+    o.append(f'<rect x="{BX}" y="{sy}" width="{BW}" height="74" rx="8" '
+             f'fill="var(--pwr)" fill-opacity=".05" stroke="var(--pwr)" '
+             f'stroke-width="1.6" stroke-dasharray="7 4"/>')
+    o.append(txt(BX + 14, sy + 20, "SERVO — sus tres cables NO tocan el protoboard", 11.5,
+                 fill="var(--pwr)", weight="500"))
+    o.append(txt(BX + 14, sy + 38,
+                 "rojo ← pin 4 (5 V) · señal ← pin 12 · negro → pin 20   "
+                 "· capacitor ≥1000 µF entre rojo y negro, PEGADO al servo", 10.5, op=".8"))
+    o.append(txt(BX + 14, sy + 56,
+                 "el negro va al 20 y no al 9: su corriente de retorno no debe cruzar "
+                 "la tierra del sensado (0.04 → 0.35 kPa p-p medido)", 10, op=".62"))
 
     o.append(txt(W / 2, HA - 14,
                  "Si por un cable pasan más de ~1 A, ese cable no toca el protoboard.",

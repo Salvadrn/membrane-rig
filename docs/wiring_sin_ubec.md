@@ -27,8 +27,8 @@ que eso pasó la da el propio Pi (ver *Comprobación* al final).
 | Qué | De dónde | Notas |
 |---|---|---|
 | ADS1115 `VDD` | Pi **pin 1** (3.3 V) | nunca 5 V: sus entradas no toleran más que su propio riel |
-| Transductor rojo | Pi **pin 4** (5 V) | consume unos mA, no molesta |
-| Servo rojo | Pi **pin 2** (5 V) | + capacitor, ver sección C |
+| Transductor rojo | Pi **pin 2** (5 V) | consume unos mA, no molesta |
+| Servo rojo | Pi **pin 4** (5 V) | + capacitor, ver sección C |
 | Bobina V1738 | **+12 V**, salida del fusible | NO pasa por ningún riel de protoboard |
 
 El +12 V **no vive en un riel**: un contacto de protoboard está dado a ~1 A y por
@@ -39,7 +39,7 @@ dedicadas en la placa B.
 
 | Desde | Hasta |
 |---|---|
-| Transductor **rojo** | Pi pin 4 (5 V) |
+| Transductor **rojo** | Pi pin 2 (5 V) |
 | Transductor **negro** | riel − de A |
 | Transductor **verde** (señal) | R1 **10 kΩ** en serie |
 | R1 → R2, ese nodo | **A0** del ADS1115 |
@@ -61,7 +61,7 @@ El divisor es lo único entre una fuente de 4.5 V y un chip de 3.3 V. Relación
 
 | Desde | Hasta |
 |---|---|
-| Pi **pin 2** (5 V) | rojo del servo |
+| Pi **pin 4** (5 V) | rojo del servo |
 | Pi **pin 20** (GND) | negro del servo |
 | Pi **pin 12** (GPIO18) | señal del servo |
 | **Capacitor ≥1000 µF** | entre rojo y negro, **pegado al servo** |
