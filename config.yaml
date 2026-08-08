@@ -145,7 +145,14 @@ pid:
 
 # ----------------------------------------------------------------- safety ---
 safety:
-  max_pressure: 80.0       # HARD cutoff -> vent + abort if exceeded
+  # RAISED 2026-08-07 by Adrián, from 80.0. He asked for a higher envelope so
+  # tests up to 80 kPa are possible; the ladder below is derived from that.
+  # 97 is not a preference, it is the practical maximum: the transducer
+  # SATURATES at 103.4 kPa, and above that the rig is BLIND — a saturated
+  # sensor cannot trigger any layer below, so the cutoff has to leave room to
+  # see the excursion and act on it. 6 kPa is that room. Do not raise further
+  # without a wider-range transducer; there would be nothing measuring.
+  max_pressure: 97.0       # HARD cutoff -> shut the feed + abort if exceeded
   min_plausible: -5.0      # below this the sensor is considered faulted
   max_plausible: 105.0     # above sensor full-scale -> faulted
   fault_grace_reads: 3     # consecutive bad reads before declaring a fault
@@ -290,7 +297,14 @@ membrane:
   # Pressure this SPECIMEN tolerates. Meshes are delicate and this sits well
   # below the vessel/safety limit. Nothing above it can be queued or started.
   # Editable per specimen from the web UI (it can only tighten, never loosen).
-  max_pressure: 65.0
+  #
+  # RAISED 2026-08-07 by Adrián, from 65.0, to allow tests up to 80 kPa.
+  # THE SETPOINTS DID NOT MOVE and that was his instruction, in his words: the
+  # experiments cannot run at the limit because the specimen has to be measured
+  # first. This number is the CEILING, not the working point — 20/40/60 stays
+  # until a membrane is characterised, and this only says how far one COULD be
+  # asked to go afterwards.
+  max_pressure: 85.0
 
 # ---------------------------------------------------------- temperature ---
 # Water temperature = a test variable (distilled water; you vary the bath). mu is
