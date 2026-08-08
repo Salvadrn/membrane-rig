@@ -51,6 +51,15 @@ class TestResult:
     # from the simulated plant; on hardware the operator enters the volume.
     volume_ml: float = 0.0
     flow_m3s: float = 0.0
+    # WEIGHED permeate: the mass is the PRIMARY measurement and volume_ml is
+    # derived from it. The density and the temperature it was evaluated at are
+    # stored beside it so the volume stays recomputable — without them a derived
+    # millilitre is a dead end that still looks like a hard number, the same hole
+    # the temperature provenance closed. 0.0 = this point was entered as a volume.
+    mass_g: float = 0.0
+    density_kg_m3: float = 0.0
+    density_temp_c: float = 0.0
+    buoyancy_factor: float = 0.0
     # Provenance: this point was collected after the operator raised the run's
     # ceiling, i.e. at a pressure envelope the specimen was not declared for.
     # Stamped by the controller; the run-level flag lives on the playlist item.

@@ -24,6 +24,40 @@ def water_viscosity_pa_s(temp_c: float) -> float:
     return 2.414e-5 * 10 ** (247.8 / (t_k - 140.0))
 
 
+# Air-buoyancy correction for a weighed permeate: true mass / balance reading,
+# with rho_air 0.0012, rho_water 0.998 and steel weights 8.0 g/cm^3. A systematic
+# +0.105% — always the same direction, so leaving it out makes every volume (and
+# every k) low by that amount. It is ~10x the weighing error the balance buys, so
+# not applying it would throw away part of the improvement; its own uncertainty is
+# negligible (+/-3% on rho_air moves it 0.003%), so a documented constant suffices.
+WATER_BUOYANCY_FACTOR = 1.001054
+
+
+def water_density_kg_m3(temp_c: float) -> float:
+    """Density of air-free pure water vs temperature (0-100 C), in kg/m^3.
+
+    Kell (1975), the standard polynomial fit. Checks: 4 C -> 999.972,
+    20 C -> 998.207, 25 C -> 997.047. SI to match the rest of the pipeline;
+    g/mL is this / 1000.
+
+    Used to turn a WEIGHED permeate mass into the volume the Darcy fit consumes.
+    Weighing removes the meniscus read, the largest manual uncertainty left
+    (~0.4% on a cylinder): a 0.01 g balance over ~100 g is 1 part in 10 000.
+
+    Note the asymmetry that makes the water TEMPERATURE the thing to get right
+    once you weigh: k depends on density only through the volume (-0.021 %/C at
+    20 C) but on viscosity directly (-2.43 %/C) — ~100x more. A 2 C error moves k
+    by -4.65%, nearly all of it through mu. So with a balance, the temperature's
+    PROVENANCE stops being metadata and becomes the dominant error term."""
+    t = float(temp_c)
+    return ((999.83952 + 16.945176 * t
+             - 7.9870401e-3 * t ** 2
+             - 46.170461e-6 * t ** 3
+             + 105.56302e-9 * t ** 4
+             - 280.54253e-12 * t ** 5)
+            / (1.0 + 16.879850e-3 * t))
+
+
 def to_kpa(value: float, units: str) -> float:
     return float(value) * PSI_TO_KPA if units.lower() == "psi" else float(value)
 

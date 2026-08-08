@@ -25,7 +25,8 @@ from pathlib import Path
 import dataclasses
 
 from .analysis import fit_permeability
-from .config import Config, water_viscosity_pa_s
+from .config import (Config, WATER_BUOYANCY_FACTOR, water_density_kg_m3,
+                     water_viscosity_pa_s)
 from .control.pid import PID
 from .export_excel import export_permeability_xlsx, xlsx_available
 from .hal import build_hal
@@ -437,23 +438,37 @@ class RigController:
             "points": len(self.playlist.collected_points()),
         }
 
-    def set_item_volumes(self, item_id: str, volumes_ml) -> dict:
+    def set_item_volumes(self, item_id: str, volumes_ml=None, volumes_g=None) -> dict:
         """Attach measured volumes to a finished playlist item and recompute its
         flow rates. Works after the run has ended, which is the whole point of
         the pause between experiments."""
         item = self.playlist.get(item_id)
         if item is None:
             return {"ok": False, "error": "no such experiment"}
-        entries = volumes_ml.items() if isinstance(volumes_ml, dict) else enumerate(volumes_ml)
+        src = volumes_g if volumes_g is not None else volumes_ml
+        if src is None:
+            return {"ok": False, "error": "no volumes or masses provided"}
+        as_mass = volumes_g is not None
+        entries = src.items() if isinstance(src, dict) else enumerate(src)
         for i, v in entries:
             i = int(i)
             if not (0 <= i < len(item.results)):
                 continue
             v = float(v)
             r = item.results[i]
-            r["volume_ml"] = v
+            if as_mass:
+                # same single conversion point as the live path, so the CLI and the
+                # web cannot end up with two different millilitres for one gram
+                with self._lock:
+                    ml, rho, t, buoy = self._mass_to_volume_ml(v)
+                r["mass_g"] = v
+                r["density_kg_m3"], r["density_temp_c"], r["buoyancy_factor"] = rho, t, buoy
+                r["volume_ml"] = ml
+            else:
+                r["mass_g"] = 0.0
+                r["volume_ml"] = v
             cs = r.get("collection_s") or 0.0
-            r["flow_m3s"] = (v * 1e-6 / cs) if cs > 0 else 0.0
+            r["flow_m3s"] = (r["volume_ml"] * 1e-6 / cs) if cs > 0 else 0.0
         self.playlist.save()
         # keep the live sequencer results in step when it's the current item
         with self._lock:
@@ -463,6 +478,10 @@ class RigController:
                     if i < len(live):
                         live[i].volume_ml = r.get("volume_ml", 0.0)
                         live[i].flow_m3s = r.get("flow_m3s", 0.0)
+                        live[i].mass_g = r.get("mass_g", 0.0)
+                        live[i].density_kg_m3 = r.get("density_kg_m3", 0.0)
+                        live[i].density_temp_c = r.get("density_temp_c", 0.0)
+                        live[i].buoyancy_factor = r.get("buoyancy_factor", 0.0)
                 self.status["results"] = [x.__dict__ for x in live]
         return {"ok": True}
 
@@ -491,19 +510,53 @@ class RigController:
         snap["pressure_limit"] = round(self.cfg.disp(self.pressure_limit_kpa()), 2)
         return snap
 
-    def set_volumes(self, volumes_ml) -> None:
-        """Attach measured permeate volumes (mL) to completed points, keyed by
-        point index. Used on hardware where the operator reads the graduated
-        cylinder. dict{index: mL} or a list aligned to results order."""
+    def _mass_to_volume_ml(self, mass_g: float) -> tuple:
+        """The ONE place a weighed mass becomes a volume, so the conversion cannot
+        drift between the CLI and the web. Returns (mL, density, temp, buoyancy)
+        so the caller can store what it was computed from — a derived millilitre
+        without its density and temperature is a dead end that still looks like a
+        hard number. Lock held (reads the cached water temperature)."""
+        t = self._water_temp_c
+        rho = water_density_kg_m3(t)                    # kg/m^3 == g/L
+        true_g = float(mass_g) * WATER_BUOYANCY_FACTOR  # balance reading -> true mass
+        return (true_g / (rho / 1000.0), rho, t, WATER_BUOYANCY_FACTOR)
+
+    def _apply_measure(self, r, *, volume_ml=None, mass_g=None) -> None:
+        """Attach a measured permeate quantity to one live result. Lock held."""
+        if mass_g is not None:
+            ml, rho, t, buoy = self._mass_to_volume_ml(mass_g)
+            r.mass_g = float(mass_g)
+            r.density_kg_m3, r.density_temp_c, r.buoyancy_factor = rho, t, buoy
+            r.volume_ml = ml
+        else:
+            r.mass_g = 0.0
+            r.volume_ml = float(volume_ml)
+        cs = r.collection_s
+        r.flow_m3s = (r.volume_ml * 1e-6 / cs) if cs > 0 else 0.0
+
+    def set_volumes(self, volumes_ml=None, volumes_g=None) -> None:
+        """Attach measured permeate to completed points, keyed by point index.
+        dict{index: value} or a list aligned to results order.
+
+        `volumes_g` is a WEIGHED mass and is the preferred input: it removes the
+        meniscus read (~0.4%, the largest manual uncertainty left) for a balance
+        error of ~0.01%. The mass is stored as the PRIMARY measurement and the
+        volume derived from it, with the density, its temperature and the buoyancy
+        factor kept alongside — so the volume stays recomputable if any of them is
+        ever revised. `volumes_ml` stays for cylinder entry."""
+        src = volumes_g if volumes_g is not None else volumes_ml
+        if src is None:
+            return
+        as_mass = volumes_g is not None
         with self._lock:
             results = self.sequencer.results
-            items = volumes_ml.items() if isinstance(volumes_ml, dict) else enumerate(volumes_ml)
+            items = src.items() if isinstance(src, dict) else enumerate(src)
             for i, v in items:
                 i, v = int(i), float(v)
                 if 0 <= i < len(results):
-                    results[i].volume_ml = v
-                    cs = results[i].collection_s
-                    results[i].flow_m3s = (v * 1e-6 / cs) if cs > 0 else 0.0
+                    self._apply_measure(results[i],
+                                        mass_g=v if as_mass else None,
+                                        volume_ml=None if as_mass else v)
 
     def compute_and_save_analysis(self) -> dict:
         """Fit Q vs ΔP over the collected points, derive Darcy k + pore size,
@@ -589,6 +642,16 @@ class RigController:
             # mu came from a configured constant is not the same evidence as one
             # from a probe reading, and the number alone cannot say which.
             "water_temp_source": temp_source,
+            # With a balance the weighing error is ~0.01%, so the water TEMPERATURE
+            # becomes the dominant term: k depends on mu directly (-2.43 %/C at
+            # 20 C), ~100x its dependence through density. A 2 C error moves k by
+            # -4.65% — worse than the cylinder the balance replaced. So when the
+            # temperature was not measured, that has to sit NEXT TO k, not be
+            # inferrable from a provenance field the reader may not connect.
+            "temp_warning": (
+                None if temp_source == "probe" else
+                f"k assumes a water temperature that was not measured "
+                f"({temp_source}): mu, and therefore k, shift about -2.4% per degree"),
             "viscosity_pa_s": mu,
             "json_file": Path(json_path).name if json_path else None,
             "plot_file": Path(plot_path).name if plot_path else None,
@@ -688,6 +751,16 @@ class RigController:
             # mu came from a configured constant is not the same evidence as one
             # from a probe reading, and the number alone cannot say which.
             "water_temp_source": temp_source,
+            # With a balance the weighing error is ~0.01%, so the water TEMPERATURE
+            # becomes the dominant term: k depends on mu directly (-2.43 %/C at
+            # 20 C), ~100x its dependence through density. A 2 C error moves k by
+            # -4.65% — worse than the cylinder the balance replaced. So when the
+            # temperature was not measured, that has to sit NEXT TO k, not be
+            # inferrable from a provenance field the reader may not connect.
+            "temp_warning": (
+                None if temp_source == "probe" else
+                f"k assumes a water temperature that was not measured "
+                f"({temp_source}): mu, and therefore k, shift about -2.4% per degree"),
             "viscosity_pa_s": mu,
             **files,
         }
