@@ -1059,6 +1059,11 @@ holding steady.">?</span></label>
         <dt>Permeability (k)</dt><dd>What the whole experiment is for: how easily liquid
           passes through this specimen. It comes from the slope of flow against
           pressure across several tests, so one test is never enough.</dd>
+        <dt>Water temperature</dt><dd>Not a background reading — it sets the water's
+          viscosity, and <b>k is proportional to that</b>. About <b>2.4 % of k per
+          °C</b>, so a temperature that was typed rather than measured carries
+          straight into the answer. That is why the reading always says where it
+          came from.</dd>
       </dl>
     </details>
 
@@ -1986,13 +1991,25 @@ async function poll(){
     $("wtemp").textContent=fmt(s.water_temp_c,1);
     const src=s.water_temp_source||"unknown";
     const srcEl=$("wtempSrc");
+    // `manual` is red, not amber, and the reason is a number from Datos: k goes
+    // as µ, and µ moves −2.43 %/°C while ρ moves only −0.021 %/°C. So a
+    // temperature that was typed instead of measured is not a footnote about
+    // provenance — it is THE dominant term in k's error budget, and 2 °C off
+    // means about −4.7 % in k. That was already true before the switch to
+    // weighing; the graduated cylinder's ~0.4 % was simply louder and hid it.
+    // Weighing to 0.01 % strips it bare, so a `manual` run can now be worse than
+    // the measurement it replaced. Amber would undersell that.
     const known={"probe":["measured","ok"],
-                 "manual":["set in config, not measured","warn"],
+                 "manual":["not measured — set in config; ±1 °C ≈ ∓2.4 % in k","bad"],
                  "sim":["simulated","warn"],
                  "probe (no recent reading)":["⚠ probe not answering — last value","bad"]};
     const d=known[src]||[src+" — provenance unknown","bad"];
     srcEl.textContent="("+d[0]+")";
     srcEl.className="prov "+d[1];
+    srcEl.title=(src==="probe")
+      ? "Measured by the DS18B20 probe."
+      : "Water temperature sets the viscosity, and k is proportional to it. "+
+        "A value that was not measured carries straight into the published k.";
     HELD=!!s.held;
     CURRENT_ITEM_ID=s.item_id||null;
     $("barPv").textContent=fmt(s.pressure_disp);
