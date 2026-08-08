@@ -22,6 +22,14 @@ SCI = "0.000E+00"
 PROVENANCE_COLS = ["experiment_id", "experiment_label", "ceiling_raised",
                    "collected_under_raised_ceiling"]
 
+# When permeate is weighed rather than read off a cylinder, volume_ml is DERIVED:
+# ml = mass_g · buoyancy_factor / (density_kg_m3/1000). Carry the measured mass
+# and the three constants that turned it into a volume, or the millilitre is a
+# dead end that looks like hard data — nobody could recompute it if the density
+# or the buoyancy factor were ever revised. buoyancy_factor 0.0 means the point
+# was captured as a volume, not weighed.
+WEIGHING_COLS = ["mass_g", "density_kg_m3", "density_temp_c", "buoyancy_factor"]
+
 RAISED_FILL = "FFF2CC"      # soft amber: this row's run ran above its declared ceiling
 
 
@@ -213,7 +221,8 @@ def export_permeability_xlsx(result, out_path, *, title: str = "Q vs ΔP",
         # This sheet mixes rows from several runs, so provenance has to be
         # per-row; a scalar couldn't label it. Only append the columns the
         # caller actually stamped.
-        cols += [c for c in PROVENANCE_COLS if any(c in d for d in points_detail)]
+        cols += [c for c in WEIGHING_COLS + PROVENANCE_COLS
+                 if any(c in d for d in points_detail)]
         for c, name in enumerate(cols, start=1):
             ps.cell(row=1, column=c, value=name).font = bold
         amber = PatternFill("solid", fgColor=RAISED_FILL)
